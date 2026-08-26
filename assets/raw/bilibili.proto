@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package bilibili.community.service.dm.v1;
+
+message DmSegMobileReply {
+    // 弹幕列表
+    repeated DanmakuElem elems = 1;
+    // 是否已关闭弹幕
+    // 0:未关闭 1:已关闭
+    int32 state = 2;
+    // 弹幕云屏蔽ai评分值
+    DanmakuAIFlag ai_flag = 3;
+    repeated DmColorful colorfulSrc = 5;
+}
+
+message DanmakuElem {
+    // 弹幕dmid
+    int64 id = 1;
+    // 弹幕出现位置(单位ms)
+    int32 progress = 2;
+    // 弹幕类型 1 2 3:普通弹幕 4:底部弹幕 5:顶部弹幕 6:逆向弹幕 7:高级弹幕 8:代码弹幕 9:BAS弹幕(pool必须为2)
+    int32 mode = 3;
+    // 弹幕字号
+    int32 fontsize = 4;
+    // 弹幕颜色
+    uint32 color = 5;
+    // 发送者mid hash
+    string midHash = 6;
+    // 弹幕正文
+    string content = 7;
+    // 发送时间
+    int64 ctime = 8;
+    // 权重 用于屏蔽等级 区间:[1,10]
+    int32 weight = 9;
+    // 动作
+    string action = 10;
+    // 弹幕池 0:普通池 1:字幕池 2:特殊池(代码/BAS弹幕)
+    int32 pool = 11;
+    // 弹幕dmid str
+    string idStr = 12;
+    // 弹幕属性位(bin求AND)
+    // bit0:保护 bit1:直播 bit2:高赞
+    int32 attr = 13;
+    //
+    string animation = 22;
+    // 大会员专属颜色
+    DmColorfulType colorful = 24;
+}
+
+message DanmakuAIFlag {
+    // 弹幕ai云屏蔽条目
+    repeated DanmakuFlag dm_flags = 1;
+}
+
+message DanmakuFlag {
+    // 弹幕dmid
+    int64 dmid = 1;
+    // 评分
+    uint32 flag = 2;
+}
+
+message DmColorful {
+    DmColorfulType type = 1; // 颜色类型
+    string src          = 2; //
+}
+
+enum DmColorfulType {
+    NoneType        = 0;     // 无
+    VipGradualColor = 60001; // 渐变色
+}
+
+// bilibili-API-collect/src/commit/cfc5fddcc8a94b74d91970bb5b4eaeb349addc47/docs/danmaku/danmaku_view_proto.md
+// 分段弹幕包信息？
+message DmSegConfig {
+    int64 pageSize = 1; // 分段时间？
+    int64 total = 2;    // 最大分页数？
+}
+
+//
+message DanmakuFlagConfig {
+    int32 recFlag = 1;   //
+    string recText = 2;  //
+    int32 recSwitch = 3; //
+}
+
+// 互动弹幕条目
+message CommandDm {
+    int64 id = 1;       // 弹幕dmid
+    int64 oid = 2;      // 视频cid
+    int64 mid = 3;      // 发送者mid
+    string command = 4; // 弹幕指令
+    string content = 5; // 弹幕文字
+    int32 progress = 6; // 弹幕出现时间
+    string ctime = 7;   //
+    string mtime = 8;   //
+    string extra = 9;   // 弹幕负载数据
+    string idStr = 10;  // 弹幕dmid（字串形式）
+}
+
+//弹幕个人配置
+message DanmuWebPlayerConfig{
+    bool dmSwitch=1;      // 弹幕开关
+    bool aiSwitch=2;      // 智能云屏蔽
+    int32 aiLevel=3;      // 智能云屏蔽级别
+    bool blocktop=4;      // 屏蔽类型-顶部
+    bool blockscroll=5;   // 屏蔽类型-滚动
+    bool blockbottom=6;   // 屏蔽类型-底部
+    bool blockcolor=7;    // 屏蔽类型-彩色
+    bool blockspecial=8;  // 屏蔽类型-特殊
+    bool preventshade=9;  // 防挡弹幕（底部15%）
+    bool dmask=10;        // 智能防挡弹幕（人像蒙版）
+    float opacity=11;     // 弹幕不透明度
+    int32 dmarea=12;      // 弹幕显示区域
+    float speedplus=13;   // 弹幕速度
+    float fontsize=14;    // 字体大小
+    bool screensync=15;   // 跟随屏幕缩放比例
+    bool speedsync=16;    // 根据播放倍速调整速度
+    string fontfamily=17; // 字体类型？
+    bool bold=18;         // 粗体？
+    int32 fontborder=19;  // 描边类型
+    string drawType=20;   // 渲染类型？
+}
+
+message DmWebViewReply {
+    int32 state = 1;                     // 弹幕开放状态
+    string text = 2;                     //
+    string textSide = 3;                 //
+    DmSegConfig dmSge = 4;               // 分段弹幕包信息？
+    DanmakuFlagConfig flag = 5;          //
+    repeated string specialDms = 6;      // BAS（代码）弹幕专包url
+    bool checkBox = 7;                   //
+    int64 count = 8;                     // 实际弹幕总数
+    repeated CommandDm commandDms = 9;   // 互动弹幕条目
+    DanmuWebPlayerConfig dmSetting = 10; // 弹幕个人配置
+}

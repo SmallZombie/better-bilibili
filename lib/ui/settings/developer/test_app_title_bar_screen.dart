@@ -1,0 +1,30 @@
+import 'package:better_bilibili/ui/core/app_shell/app_title_bar_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class TestAppTitleBarScreen extends StatelessWidget {
+  const TestAppTitleBarScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Test App Title Bar')),
+      body: ListView(
+        children: [
+          ListTile(
+            title: const Text('Show Title Bar'),
+            onTap: () {
+              context.read<AppTitleBarController>().setTitleBarVisible(true);
+            },
+          ),
+          ListTile(
+            title: const Text('Hide Title Bar'),
+            onTap: () {
+              context.read<AppTitleBarController>().setTitleBarVisible(false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}

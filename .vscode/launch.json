@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "better_bilibili (debug mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+        },
+        {
+            "name": "better_bilibili (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "better_bilibili (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "better_bilibili (dev debug mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_development.dart"
+        },
+        {
+            "name": "better_bilibili (dev profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main_development.dart"
+        },
+        {
+            "name": "better_bilibili (dev release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_development.dart"
+        }
+    ]
+}
