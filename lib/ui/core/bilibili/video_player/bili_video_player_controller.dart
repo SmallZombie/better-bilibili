@@ -53,6 +53,11 @@ class BiliVideoPlayerController {
       windowFullscreen: _windowFullscreenController.stream,
     );
     state = BiliVideoPlayerState(player: player);
+
+    _subscriptions.addAll([
+      playerConfig.stream.preferredCodec.listen(_onPreferredCodecChange),
+      playerConfig.stream.fallbackCodec.listen(_onFallbackCodecChange),
+    ]);
   }
 
   final List<StreamSubscription> _subscriptions = [];
@@ -70,9 +75,9 @@ class BiliVideoPlayerController {
     state = state.copyWith(fullscreen: value);
   }
 
-  void emitWindowFullscreen(bool toggle) {
-    _windowFullscreenController.add(toggle);
-    state = state.copyWith(windowFullscreen: toggle);
+  void emitWindowFullscreen(bool value) {
+    _windowFullscreenController.add(value);
+    state = state.copyWith(windowFullscreen: value);
   }
 
   void dispose() {
@@ -98,7 +103,7 @@ class BiliVideoPlayerController {
   List<MediaTrack> get videoTracks => List.unmodifiable(_videoTracks);
   List<MediaTrack> get audioTracks => List.unmodifiable(playInfo.audioTracks);
 
-  QualityPanelValues _quality = QualityPanelValues(video: 0, audio: 0);
+  QualityPanelValues _quality = QualityPanelValues(video: 0);
   QualityPanelValues get quality => _quality;
   Future<void> setQuality(QualityPanelValues newValue) async {
     if (newValue.video == _quality.video && newValue.audio == _quality.audio) {
@@ -149,36 +154,15 @@ class BiliVideoPlayerController {
 
     _player.setVolume(_playerConfig.volume);
 
-    _videoTracks = _getTracksByCodec(playInfo.videoTracks, _playerConfig.preferredCodec);
-    if (_videoTracks.isEmpty) {
-      if (_playerConfig.fallbackCodec != _playerConfig.preferredCodec) {
-        _videoTracks = _getTracksByCodec(playInfo.videoTracks, _playerConfig.fallbackCodec);
-      }
-      if (_videoTracks.isEmpty) {
-        _videoTracks = _getTracksByCodec(playInfo.videoTracks, playInfo.videoTracks.first.codec);
-      }
-    }
-
-    final videoTrack = _getTrackByQuality(_videoTracks, _playerConfig.videoQuality);
-    if (videoTrack != null) {
-      _log.i('selected video track: ${videoTrack.url} | ${videoTrack.id} | ${videoTrack.codecProfile}');
-    } else {
-      _log.i('no audio track selected');
-    }
-
-    final audioTrack = _getTrackByQuality(playInfo.audioTracks, _playerConfig.audioQuality);
-    if (audioTrack != null) {
-      _log.i('selected audio track: ${audioTrack.url} | ${audioTrack.id} | ${audioTrack.codecProfile}');
-    } else {
-      _log.i('no audio track selected');
-    }
+    _reloadAvailableVideoTracks();
 
     if (_player.platform is NativePlayer) {
       final p = _player.platform as NativePlayer;
       p.setProperty('referrer', 'https://www.bilibili.com/video/${playInfo.bvid}/');
       p.setProperty('user-agent', (await _authRepository.getAccount()).userAgent!);
     }
-    setQuality(QualityPanelValues(video: videoTrack?.id ?? 0, audio: audioTrack?.id));
+
+    _resetQuality();
 
     if (extraPlayInfo.subtitles.isNotEmpty) {
       final subtitle = extraPlayInfo.subtitles.first;
@@ -192,8 +176,8 @@ class BiliVideoPlayerController {
       _player.stream.completed.listen((e) {
         if (!e) return;
         if (_playerConfig.loopPlayback) {
-          if (audioTrack != null) {
-            _player.setAudioTrack(AudioTrack.uri(audioTrack.url));
+          if (state.audioTrack != null) {
+            _player.setAudioTrack(AudioTrack.uri(state.audioTrack!.url));
           }
           play();
         }
@@ -216,7 +200,6 @@ class BiliVideoPlayerController {
   void play() => _player.play();
   void pause() => _player.pause();
   void setVolume(double volume) => _player.setVolume(volume);
-
   Future<void> loadSubtitle(String url) async {
     final client = await _authRepository.getClient();
     final resp = await client.get(url);
@@ -245,7 +228,7 @@ class BiliVideoPlayerController {
     _player.setSubtitleTrack(SubtitleTrack.data(data));
   }
 
-  /// 返回过滤为目标编码的列表
+  /// 返回目标编码方式的列表
   List<MediaTrack> _getTracksByCodec(List<MediaTrack> tracks, CodecEnum targetCodec) {
     return tracks.where((v) => v.codec == targetCodec).toList();
   }
@@ -276,6 +259,56 @@ class BiliVideoPlayerController {
     _log.i('seek to $newPosition');
     _player.seek(newPosition);
     emitSeekEnd(newPosition);
+  }
+
+  bool _useFallbackCodec = false;
+
+  void _reloadAvailableVideoTracks() {
+    _videoTracks = _getTracksByCodec(playInfo.videoTracks, _playerConfig.preferredCodec);
+    if (_videoTracks.isEmpty) {
+      _useFallbackCodec = true;
+
+      if (_playerConfig.fallbackCodec != _playerConfig.preferredCodec) {
+        _videoTracks = _getTracksByCodec(playInfo.videoTracks, _playerConfig.fallbackCodec);
+      }
+      if (_videoTracks.isEmpty) {
+        _videoTracks = _getTracksByCodec(playInfo.videoTracks, playInfo.videoTracks.first.codec);
+      }
+    } else {
+      _useFallbackCodec = false;
+    }
+
+    _log.i('reloadAvailableVideoTracks, videoTracks=${_videoTracks.length}, useFallbackCodec=$_useFallbackCodec');
+  }
+
+  void _resetQuality() {
+    _quality = QualityPanelValues(video: 0);
+
+    final videoTrack = _getTrackByQuality(_videoTracks, _playerConfig.videoQuality);
+    if (videoTrack != null) {
+      _log.i('selected video track: ${videoTrack.url} | ${videoTrack.id} | ${videoTrack.codec} | ${videoTrack.codecProfile}');
+    } else {
+      _log.i('no audio track selected');
+    }
+
+    final audioTrack = _getTrackByQuality(playInfo.audioTracks, _playerConfig.audioQuality);
+    if (audioTrack != null) {
+      _log.i('selected audio track: ${audioTrack.url} | ${audioTrack.id} | ${audioTrack.codecProfile}');
+    } else {
+      _log.i('no audio track selected');
+    }
+
+    setQuality(QualityPanelValues(video: videoTrack?.id ?? 0, audio: audioTrack?.id));
+  }
+
+  void _onPreferredCodecChange(CodecEnum event) {
+    _reloadAvailableVideoTracks();
+    _resetQuality();
+  }
+
+  void _onFallbackCodecChange(CodecEnum event) {
+    _reloadAvailableVideoTracks();
+    _resetQuality();
   }
 }
 

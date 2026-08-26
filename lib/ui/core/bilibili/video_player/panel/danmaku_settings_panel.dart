@@ -206,7 +206,10 @@ class DanmakuSettingsPanel extends StatelessWidget {
               PanelTile(
                 title: Text('全局弹幕过滤器'),
                 subtitle: Text('前往设置'),
-                trailing: const Icon(Icons.keyboard_arrow_right_outlined),
+                trailing: Icon(
+                  Icons.keyboard_arrow_right_outlined,
+                  color: Colors.white.withAlpha(200),
+                ),
                 onTap: () => {},
               ),
               // const SizedBox(height: 16.0),

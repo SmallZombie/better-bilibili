@@ -68,9 +68,9 @@ class VideoDetailViewModel extends SafeChangeNotifier {
 
   @override
   void dispose() {
-    _videoController?.dispose();
-    _danmakuController?.dispose();
     _biliHistoryReporter?.dispose();
+    _danmakuController?.dispose();
+    _videoController?.dispose();
 
     super.dispose();
   }
@@ -197,6 +197,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   void _getPlayInfoSuccess(GetPlayInfoResult result) {
     _playInfo = result.playInfo;
     _extraPlayInfo = result.extraPlayInfo;
+
+    _biliHistoryReporter?.dispose();
+    _danmakuController?.dispose();
+    _videoController?.dispose();
+
     _videoController = BiliVideoPlayerController(
       authRepository: authRepository,
       playerConfig: playerConfig,
@@ -426,7 +431,13 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   bool get isPlayerWindowFullscreen => _isPlayerWindowFullscreen;
   void onToggleWindowFullscreen(bool event) {
     _isPlayerWindowFullscreen = event;
-    appTitleBarController.setTitleBarVisible(!event);
+
+    if (event) {
+      appTitleBarController.setTitleBarVisible(false);
+    } else if (!_isPlayerFullscreen) {
+      appTitleBarController.setTitleBarVisible(true);
+    }
+
     notifyListeners();
   }
 
@@ -434,7 +445,13 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   bool get isPlayerFullscreen => _isPlayerFullscreen;
   void onToggleFullscreen(bool event) {
     _isPlayerFullscreen = event;
-    appTitleBarController.setTitleBarVisible(!event);
+
+    if (event) {
+      appTitleBarController.setTitleBarVisible(false);
+    } else if (!_isPlayerWindowFullscreen) {
+      appTitleBarController.setTitleBarVisible(true);
+    }
+
     notifyListeners();
   }
 }

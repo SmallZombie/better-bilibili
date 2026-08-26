@@ -1,6 +1,8 @@
 import 'package:better_bilibili/config/player_config.dart';
-import 'package:better_bilibili/ui/core/bilibili/video_player/panel/settings/codec_selection_panel.dart';
+import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/selection_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/settings/settings_panel.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_header.dart';
 import 'package:flutter/material.dart';
 
 enum SettingsRoute {
@@ -49,13 +51,33 @@ class _SettingsShellState extends State<SettingsShell> {
         onSelectPreferredCodec: () => _go(SettingsRoute.preferredCodec),
         onSelectFallbackCodec: () => _go(SettingsRoute.fallbackCodec),
       ),
-      SettingsRoute.preferredCodec => CodecSelectionPanel(
-        key: const ValueKey(SettingsRoute.preferredCodec),
-        onBack: _backToHome,
+      SettingsRoute.preferredCodec => StreamBuilder(
+        stream: widget.playerConfig.stream.preferredCodec,
+        initialData: widget.playerConfig.preferredCodec,
+        builder: (context, asyncSnapshot) {
+          final preferredCodec = asyncSnapshot.data!;
+          return SelectionPanel(
+            key: const ValueKey(SettingsRoute.preferredCodec),
+            header: PanelHeader(title: const Text('选择编码'), onBack: _backToHome),
+            items: CodecEnum.values.map((v) => SelectionPanelItem(label: v.value, value: v)).toList(),
+            value: preferredCodec,
+            onChange: widget.playerConfig.setPreferredCodec,
+          );
+        },
       ),
-      SettingsRoute.fallbackCodec => CodecSelectionPanel(
-        key: const ValueKey(SettingsRoute.fallbackCodec),
-        onBack: _backToHome,
+      SettingsRoute.fallbackCodec => StreamBuilder(
+        stream: widget.playerConfig.stream.fallbackCodec,
+        initialData: widget.playerConfig.fallbackCodec,
+        builder: (context, asyncSnapshot) {
+          final fallbackCodec = asyncSnapshot.data!;
+          return SelectionPanel(
+            key: const ValueKey(SettingsRoute.fallbackCodec),
+            header: PanelHeader(title: const Text('选择编码'), onBack: _backToHome),
+            items: CodecEnum.values.map((v) => SelectionPanelItem(label: v.value, value: v)).toList(),
+            value: fallbackCodec,
+            onChange: widget.playerConfig.setFallbackCodec,
+          );
+        },
       ),
     };
 

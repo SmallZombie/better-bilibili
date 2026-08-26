@@ -2,9 +2,10 @@ import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/danmaku_settings_panel.dart';
-import 'package:better_bilibili/ui/core/bilibili/video_player/panel/playback_rate_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/quality_panel.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/selection_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/settings/settings_shell.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_header.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/subtitle_settings/subtitle_settings_shell.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel_player_state.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class VideoPlayerPanel extends StatelessWidget {
   final String? activePanel;
   final VoidCallback onClose;
   final PanelPlayerState? panelState;
-  final ValueChanged<double>? onPlaybackRateChanged;
+  final ValueChanged<double> onPlaybackRateChanged;
   final List<QualityPanelLabel> availableVideoQuality;
   final List<QualityPanelLabel> availableAudioQuality;
   final ValueChanged<QualityPanelValues>? onQualityChanged;
@@ -35,7 +36,7 @@ class VideoPlayerPanel extends StatelessWidget {
     this.activePanel,
     required this.onClose,
     this.panelState,
-    this.onPlaybackRateChanged,
+    required this.onPlaybackRateChanged,
     this.availableVideoQuality = const [],
     this.availableAudioQuality = const [],
     this.onQualityChanged,
@@ -79,9 +80,19 @@ class VideoPlayerPanel extends StatelessWidget {
                         stream: controller.stream.rate,
                         builder: (context, asyncSnapshot) {
                           final rate = asyncSnapshot.data ?? controller.state.rate;
-                          return PlaybackRatePanel(
+                          return SelectionPanel(
+                            header: PanelHeader(title: Text('播放速度'), onBack: onClose),
+                            items: const [
+                              SelectionPanelItem(label: '0.1x', value: 0.1),
+                              SelectionPanelItem(label: '0.2x', value: 0.2),
+                              SelectionPanelItem(label: '0.5x', value: 0.5),
+                              SelectionPanelItem(label: '1.0x', value: 1.0),
+                              SelectionPanelItem(label: '1.5x', value: 1.5),
+                              SelectionPanelItem(label: '2.0x', value: 2.0),
+                              SelectionPanelItem(label: '2.5x', value: 2.5),
+                              SelectionPanelItem(label: '3.0x', value: 3.0),
+                            ],
                             value: rate,
-                            onBack: onClose,
                             onChange: onPlaybackRateChanged,
                           );
                         },

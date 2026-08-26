@@ -478,6 +478,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
           );
         } else {
           return BiliVideoPlayer(
+            key: ObjectKey(controller),
             controller: controller,
             playerConfig: context.read(),
             danmakuConfig: context.read(),
@@ -492,23 +493,34 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                 StreamBuilder(
                   stream: controller.stream.fullscreen,
                   builder: (context, asyncSnapshot) {
-                    return Row(
-                      mainAxisSize: .min,
-                      spacing: 4.0,
-                      children: [
-                        IconButton(
-                          onPressed: () => context.pop(),
-                          icon: Icon(Icons.arrow_back_outlined, color: Colors.white),
-                          hoverColor: Colors.white24,
-                          tooltip: '返回',
-                        ),
-                        IconButton(
-                          onPressed: () => context.popToRoot(),
-                          icon: Icon(Icons.home_outlined, color: Colors.white),
-                          hoverColor: Colors.white24,
-                          tooltip: '返回主页',
-                        ),
-                      ],
+                    final isFullscreen = asyncSnapshot.data ?? controller.state.fullscreen;
+                    return StreamBuilder(
+                      stream: controller.stream.windowFullscreen,
+                      builder: (context, asyncSnapshot) {
+                        final isWindowFullscreen = asyncSnapshot.data ?? controller.state.windowFullscreen;
+                        if (isFullscreen || isWindowFullscreen) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Row(
+                          mainAxisSize: .min,
+                          spacing: 4.0,
+                          children: [
+                            IconButton(
+                              onPressed: () => context.pop(),
+                              icon: Icon(Icons.arrow_back_outlined, color: Colors.white),
+                              hoverColor: Colors.white24,
+                              tooltip: '返回',
+                            ),
+                            IconButton(
+                              onPressed: () => context.popToRoot(),
+                              icon: Icon(Icons.home_outlined, color: Colors.white),
+                              hoverColor: Colors.white24,
+                              tooltip: '返回主页',
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -546,6 +558,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                   }
 
                   return DanmakuLayer(
+                    key: ObjectKey(controller),
                     controller: widget.viewModel.danmakuController!,
                     positionStream: controller.stream.position,
                     playingStream: controller.stream.playing,

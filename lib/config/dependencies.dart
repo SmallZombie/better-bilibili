@@ -111,8 +111,14 @@ List<SingleChildWidget> get providersOnline => [
   ChangeNotifierProvider<UserDialogViewModel>(
     create: (context) => UserDialogViewModel(userRepository: context.read()),
   ),
-  ChangeNotifierProvider<PlayerConfig>(create: (context) => PlayerConfig()),
-  Provider<DanmakuConfig>(create: (context) => DanmakuConfig()),
+  Provider<PlayerConfig>(
+    create: (_) => PlayerConfig(),
+    dispose: (_, value) => value.dispose(),
+  ),
+  Provider<DanmakuConfig>(
+    create: (_) => DanmakuConfig(),
+    dispose: (_, value) => value.dispose(),
+  ),
   ChangeNotifierProvider<AppTitleBarController>(create: (context) => AppTitleBarController()),
   ChangeNotifierProvider<CommentReportSheetViewModel>(
     create: (context) => CommentReportSheetViewModel(commentRepository: context.read()),

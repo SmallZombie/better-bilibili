@@ -59,10 +59,11 @@ class MediaTrack {
 }
 
 enum CodecEnum {
-  h264('h.264'),
-  h265('h.265'),
-  av1('av1'),
-  mp4('mp4');
+  h264('H.264'),
+  h265('H.265'),
+  h266('H.266'),
+  av1('AV1'),
+  mp4('MP4');
 
   final String value;
   const CodecEnum(this.value);

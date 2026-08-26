@@ -26,31 +26,35 @@ class DanmakuLayer extends StatefulWidget {
 
 class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderStateMixin {
   late final Ticker _renderTicker;
-  StreamSubscription<Duration>? _positionSubscription;
-  StreamSubscription<bool>? _playingSubscription;
+  final List<StreamSubscription> subscriptions = [];
 
   @override
   void initState() {
     super.initState();
 
     _renderTicker = createTicker((elapsed) {
+      if (widget.controller.disposed) return;
       widget.controller.onTick(elapsed);
     });
 
-    _positionSubscription = widget.positionStream.listen((position) {
-      if (!mounted) return;
-      widget.controller.onVideoPositionChanged(position);
-    });
-
-    _playingSubscription = widget.playingStream.listen(_onPlaying);
+    subscriptions.addAll([
+      widget.positionStream.listen((position) {
+        if (!mounted) return;
+        widget.controller.onVideoPositionChanged(position);
+      }),
+      widget.playingStream.listen(_onPlaying),
+    ]);
 
     if (widget.playing) _onPlaying(true);
   }
 
   @override
   void dispose() {
-    _positionSubscription?.cancel();
-    _playingSubscription?.cancel();
+    for (final subscription in subscriptions) {
+      subscription.cancel();
+    }
+    subscriptions.clear();
+
     _renderTicker.stop();
     super.dispose();
   }

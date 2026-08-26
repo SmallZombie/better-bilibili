@@ -62,6 +62,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     _subscriptions.addAll([
       controller.stream.volume.listen((event) => widget.playerConfig.setVolume(event)),
       appRouteObserver.events.listen(_onRouteChanged),
+      controller.stream.fullscreen.listen(_onFullscreen),
       controller.stream.windowFullscreen.listen(_onWindowFullscreen),
     ]);
   }
@@ -101,36 +102,34 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     if (_depth == -1) controller.pause();
   }
 
-  Future<void> _enterFullscreen() async {
-    controller.emitFullscreen(true);
-    // await defaultEnterNativeFullscreen();
-    _onFullscreen(true);
-  }
-
-  Future<void> _exitFullscreen() async {
-    controller.emitFullscreen(false);
-    // await defaultExitNativeFullscreen();
-    _onFullscreen(false);
-  }
-
-  void _putVideoToNewRoute() {
+  void _putVideoToNewRoute({bool forWindowFullscreenUse = false}) {
     Navigator.of(context).push(
       PageRouteBuilder(
         fullscreenDialog: true,
         transitionDuration: .zero,
         reverseTransitionDuration: .zero,
         pageBuilder: (context, animation, secondaryAnimation) {
-          return Video(
-            controller: controller.controller,
-            controls: (_) => _PlayerOverlay(
-              controller: controller,
-              title: widget.title,
-              layers: widget.layers,
-              playerConfig: widget.playerConfig,
-              danmakuConfig: widget.danmakuConfig,
-              onEnterFullscreen: _enterFullscreen,
-              onExitFullscreen: _exitFullscreen,
-            ),
+          return StreamBuilder(
+            stream: controller.stream.fullscreen,
+            builder: (context, asyncSnapshot) {
+              final isFullscreen = asyncSnapshot.data ?? controller.state.fullscreen;
+              if (forWindowFullscreenUse && isFullscreen) {
+                return const Placeholder();
+              }
+
+              return Video(
+                controller: controller.controller,
+                controls: (_) => _PlayerOverlay(
+                  controller: controller,
+                  title: widget.title,
+                  layers: widget.layers,
+                  playerConfig: widget.playerConfig,
+                  danmakuConfig: widget.danmakuConfig,
+                  onEnterFullscreen: () => controller.emitFullscreen(true),
+                  onExitFullscreen: () => controller.emitFullscreen(false),
+                ),
+              );
+            },
           );
         },
       ),
@@ -138,10 +137,13 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   }
 
   void _onWindowFullscreen(bool event) {
+    // 全屏时不能窗口全屏，但窗口全屏时可以全屏
+    assert(!controller.state.fullscreen);
+
     widget.onToggleWindowFullscreen?.call(event);
 
     if (event) {
-      _putVideoToNewRoute();
+      _putVideoToNewRoute(forWindowFullscreenUse: true);
     } else {
       context.pop();
     }
@@ -234,8 +236,8 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
                     layers: widget.layers,
                     playerConfig: widget.playerConfig,
                     danmakuConfig: widget.danmakuConfig,
-                    onEnterFullscreen: _enterFullscreen,
-                    onExitFullscreen: _exitFullscreen,
+                    onEnterFullscreen: () => controller.emitFullscreen(true),
+                    onExitFullscreen: () => controller.emitFullscreen(false),
                   ),
                 ),
               ],
@@ -512,26 +514,47 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                             height: buttonBarHeight,
                             margin: bottomBarMargin,
                             child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisSize: .max,
+                              mainAxisAlignment: .start,
+                              crossAxisAlignment: .center,
                               children: [
                                 const MaterialDesktopSkipPreviousButton(),
                                 const MaterialDesktopPlayOrPauseButton(),
                                 const MaterialDesktopSkipNextButton(),
                                 const MaterialDesktopVolumeButton(),
                                 const Spacer(),
-                                _ControlButton(
-                                  label: '剧集',
-                                  onPressed: () => {},
-                                ),
-                                _ControlButton(
-                                  label: '列表',
-                                  onPressed: () => {},
-                                ),
-                                _ControlButton(
-                                  label: '合集',
-                                  onPressed: () => {},
+                                StreamBuilder(
+                                  stream: controller.stream.fullscreen,
+                                  builder: (context, asyncSnapshot) {
+                                    final isFullscreen = asyncSnapshot.data ?? controller.state.fullscreen;
+                                    return StreamBuilder(
+                                      stream: controller.stream.windowFullscreen,
+                                      builder: (context, asyncSnapshot) {
+                                        final isWindowFullscreen = asyncSnapshot.data ?? controller.state.windowFullscreen;
+                                        if (!isFullscreen && !isWindowFullscreen) {
+                                          return const SizedBox.shrink();
+                                        }
+
+                                        return Row(
+                                          mainAxisSize: .min,
+                                          children: [
+                                            _ControlButton(
+                                              label: '剧集',
+                                              onPressed: () => {},
+                                            ),
+                                            _ControlButton(
+                                              label: '列表',
+                                              onPressed: () => {},
+                                            ),
+                                            _ControlButton(
+                                              label: '合集',
+                                              onPressed: () => {},
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
                                 ),
                                 _ControlIconButton(
                                   onPressed: () => {},
@@ -568,13 +591,23 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                                   },
                                 ),
                                 StreamBuilder(
-                                  stream: controller.stream.windowFullscreen,
-                                  builder: (context, snapshot) {
-                                    final state = snapshot.data ?? controller.state.windowFullscreen;
-                                    return _ControlIconButton(
-                                      onPressed: () => controller.emitWindowFullscreen(!state),
-                                      icon: state ? Icons.close_fullscreen : Icons.fit_screen_outlined,
-                                      tooltip: state ? '退出窗口全屏' : '窗口全屏',
+                                  stream: controller.stream.fullscreen,
+                                  builder: (context, asyncSnapshot) {
+                                    final isFullscreen = asyncSnapshot.data ?? controller.state.fullscreen;
+                                    if (isFullscreen) {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    return StreamBuilder(
+                                      stream: controller.stream.windowFullscreen,
+                                      builder: (context, snapshot) {
+                                        final state = snapshot.data ?? controller.state.windowFullscreen;
+                                        return _ControlIconButton(
+                                          onPressed: () => controller.emitWindowFullscreen(!state),
+                                          icon: state ? Icons.close_fullscreen : Icons.fit_screen_outlined,
+                                          tooltip: state ? '退出窗口全屏' : '窗口全屏',
+                                        );
+                                      },
                                     );
                                   },
                                 ),

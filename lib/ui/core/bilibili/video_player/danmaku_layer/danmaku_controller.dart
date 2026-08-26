@@ -183,6 +183,16 @@ class DanmakuController extends ChangeNotifier {
     _coordinator = _ReplicationCoordinator(state: _state, topModule: _topModule);
   }
 
+  bool _disposed = false;
+  bool get disposed => _disposed;
+
+  @override
+  void dispose() {
+    _disposed = true;
+
+    super.dispose();
+  }
+
   Duration _lastTick = Duration.zero;
 
   void load(List<Danmaku> data) {
