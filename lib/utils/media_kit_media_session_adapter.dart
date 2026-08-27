@@ -91,14 +91,6 @@ class MediaKitMediaSessionAdapter implements MediaSessionAdapter {
             currentMedia.extras?['artworkUri']?.toString() ??
             currentMedia.extras?['cover']?.toString() ??
             currentMedia.extras?['picture']?.toString();
-
-        // Try to parse filename from URI if title is still unresolved
-        if (title == null || title.isEmpty) {
-          try {
-            final uriStr = currentMedia.uri;
-            title = Uri.decodeFull(uriStr.split('/').last.split('?').first);
-          } catch (_) {}
-        }
       }
 
       metadata = MediaMetadata(

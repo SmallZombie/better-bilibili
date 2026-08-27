@@ -48,6 +48,7 @@ protoc --dart_out=lib/data/model/bilibili -I assets assets/bilibili.proto --plug
 - LRC File: https://en.wikipedia.org/wiki/LRC_(file_format)
 - File/Path picker: https://github.com/miguelpruivo/flutter_file_picker/wiki
 - L10n: https://docs.flutter.dev/ui/internationalization
+- MediaSession: https://github.com/wyrindev/flutter-media-session/blob/main/doc/usage.md
 
 
 ## 自定义图标

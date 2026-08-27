@@ -255,7 +255,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       if (id != videoId) return;
       if (getDetail.error) return;
 
-      if (_videoController?.initTitle == null) {
+      if (_videoController?.title == null) {
         _videoController?.updateTitle(_detail!.title);
       }
     }

@@ -30,6 +30,7 @@ void main() async {
   // debugRepaintRainbowEnabled = true;
 
   if (Platform.isWindows) {
+    // https://github.com/wyrindev/flutter-media-session/blob/main/doc/windows_setup.md#the-challenge
     if (kDebugMode) {
       await FlutterMediaSession().setWindowsAppUserModelId(
         kAppId,

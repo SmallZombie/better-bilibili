@@ -29,7 +29,7 @@ class BiliVideoPlayerController {
 
   final Duration initPosition;
   final NoticeController noticeController;
-  final String? initTitle;
+  String? title;
 
   late final Player _player;
   late final VideoController _controller;
@@ -49,10 +49,11 @@ class BiliVideoPlayerController {
     required this.extraPlayInfo,
     this.initPosition = .zero,
     required this.noticeController,
-    this.initTitle,
+    String? initTitle,
   }) : _authRepository = authRepository,
        _playerConfig = playerConfig,
-       _danmakuConfig = danmakuConfig {
+       _danmakuConfig = danmakuConfig,
+       title = initTitle {
     init = Command0(_init)..execute();
 
     _player = Player(configuration: PlayerConfiguration(bufferSize: 64 * 1024 * 1024));
@@ -137,7 +138,7 @@ class BiliVideoPlayerController {
           Media(
             newTrack.url,
             extras: {
-              'title': initTitle,
+              'title': title,
               'artist': kAppName,
             },
           ),
@@ -341,6 +342,7 @@ class BiliVideoPlayerController {
   }
 
   void updateTitle(String newTitle) {
+    title = newTitle;
     state.playlist.medias[state.playlist.index].extras?['title'] = newTitle;
     _sessionAdapter.updateMetadata();
   }
