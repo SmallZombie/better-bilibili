@@ -10,10 +10,11 @@ import 'package:better_bilibili/data/services/bilibili/model/get_recommend_video
 import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/ui/core/app_shell/app_title_bar_controller.dart';
+import 'package:better_bilibili/ui/core/app_shell/app_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/history_reporter/bili_history_reporter.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku_layer/bili_danmaku_controller.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_controller.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
@@ -26,7 +27,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   final AuthRepository authRepository;
   final PlayerConfig playerConfig;
   final DanmakuConfig danmakuConfig;
-  final AppTitleBarController appTitleBarController;
+  final AppController appController;
 
   String videoId;
   String? episodeId;
@@ -39,7 +40,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     required this.authRepository,
     required this.playerConfig,
     required this.danmakuConfig,
-    required this.appTitleBarController,
+    required this.appController,
     required this.videoId,
     this.episodeId,
     String? initCover,
@@ -85,7 +86,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   VideoCollection? get collection => _collection;
   List<RecommendVideo>? _recommandVideos;
   List<RecommendVideo> get recommandVideos => _recommandVideos ?? const [];
-  List<VideoDetailEpisode> get episodes => _detail?.episodes != null && _detail!.episodes.length > 1 ? _detail!.episodes : const [];
+  List<VideoDetailEpisode> get episodes => _detail?.episodes != null ? _detail!.episodes : const [];
 
   Future<Result<GetVideoDetailResponse>> _getDetail() async {
     final result = await videoRepository.getVideoDetail(videoId: videoId);
@@ -157,6 +158,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   BiliDanmakuController? get danmakuController => _danmakuController;
   BiliHistoryReporter? _biliHistoryReporter;
   BiliHistoryReporter? get biliHistoryReporter => _biliHistoryReporter;
+  final NoticeController _noticeController = NoticeController();
 
   Future<Result<GetPlayInfoResult>> _getPlayInfo() async {
     final [
@@ -208,7 +210,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       danmakuConfig: danmakuConfig,
       playInfo: result.playInfo,
       extraPlayInfo: result.extraPlayInfo,
+      initPosition: _initPosition,
+      noticeController: _noticeController,
+      initTitle: detail?.title,
     );
+
     _danmakuController = BiliDanmakuController(
       contentType: .video,
       contentId: result.playInfo.videoId,
@@ -224,6 +230,8 @@ class VideoDetailViewModel extends SafeChangeNotifier {
 
     notifyListeners();
   }
+
+  Duration _initPosition = .zero;
 
   Future<void> reload() async {
     getDetail.cancel();
@@ -246,6 +254,10 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       await getDetail.execute();
       if (id != videoId) return;
       if (getDetail.error) return;
+
+      if (_videoController?.initTitle == null) {
+        _videoController?.updateTitle(_detail!.title);
+      }
     }
 
     getVideoInteraction.execute();
@@ -261,17 +273,19 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     _detailStats = null;
     _interaction = null;
     _playInfo = null;
+    _initPosition = .zero;
 
     notifyListeners();
     reload();
   }
 
-  Future<void> switchEpisode(VideoDetailEpisode episode) async {
+  Future<void> switchEpisode(VideoDetailEpisode episode, {Duration initPosition = .zero}) async {
     _log.info('switchEpisode: episodeId = ${episode.episodeId}, cover = ${episode.cover}');
 
     episodeId = episode.episodeId;
     cover = episode.cover;
     _playInfo = null;
+    _initPosition = initPosition;
 
     notifyListeners();
     reload();
@@ -433,9 +447,9 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     _isPlayerWindowFullscreen = event;
 
     if (event) {
-      appTitleBarController.setTitleBarVisible(false);
+      appController.setTitleBarVisible(false);
     } else if (!_isPlayerFullscreen) {
-      appTitleBarController.setTitleBarVisible(true);
+      appController.setTitleBarVisible(true);
     }
 
     notifyListeners();
@@ -447,9 +461,9 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     _isPlayerFullscreen = event;
 
     if (event) {
-      appTitleBarController.setTitleBarVisible(false);
+      appController.setTitleBarVisible(false);
     } else if (!_isPlayerWindowFullscreen) {
-      appTitleBarController.setTitleBarVisible(true);
+      appController.setTitleBarVisible(true);
     }
 
     notifyListeners();

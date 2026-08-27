@@ -50,7 +50,7 @@ class MovieCard extends StatelessWidget {
         fit: .cover,
       ),
       coverItems: [
-        if (duration != null) MetadataItem(value: formatDuration(duration!)),
+        if (duration != null) MetadataItem(value: formatSeconds(duration!)),
       ],
       contentItems: [
         if (watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(watchTime!)),

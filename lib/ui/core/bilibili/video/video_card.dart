@@ -179,7 +179,7 @@ class _VideoCardState extends State<VideoCard> {
         if (widget.duration != null)
           MetadataItem(
             key: '时长',
-            value: formatDuration(widget.duration!),
+            value: formatSeconds(widget.duration!),
           ),
       ],
       leading: switch (widget.user) {

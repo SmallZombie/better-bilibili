@@ -55,7 +55,7 @@ class AudioCard extends StatelessWidget {
             icon: Icons.play_circle_outline,
             value: formatCountToHumanReadable(playCount!),
           ),
-        if (duration != null) MetadataItem(value: formatDuration(duration!)),
+        if (duration != null) MetadataItem(value: formatSeconds(duration!)),
       ],
       contextActions: contextActions,
       onTap: onTap ?? () => _onTap(context),

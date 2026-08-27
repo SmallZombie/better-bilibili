@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 
 class JumpProgressParseNode implements ParseNode {
   final Color primaryColor;
-  final Function(int ep, double time)? onTap;
+  final Function(int episodeIndex, Duration time)? onTap;
 
   JumpProgressParseNode({required this.primaryColor, this.onTap});
 
-  final jumpRegex = RegExp(r'(?:(\d+)#)?(\b\d+(?:[:：]\d{2,})+\b)');
+  final jumpRegex = RegExp(r'(?:(\d+)#)?(\d+(?:[:：]\d{2,})+)');
 
   @override
   List<RichSegment> parse(String rawText) {
@@ -17,13 +17,13 @@ class JumpProgressParseNode implements ParseNode {
     final matches = jumpRegex.allMatches(rawText);
     for (final match in matches) {
       final String text = match.group(0)!.replaceAll('：', ':');
-      final String? epStr = match.group(1);
+      final String? indexStr = match.group(1);
       final String timeStr = match.group(2)!.replaceAll('：', ':');
 
-      final int ep = epStr != null ? int.parse(epStr) : 0;
-      final double time = _timeStringToDouble(timeStr);
+      final int episodeIndex = indexStr != null ? int.parse(indexStr) - 1 : 0;
+      final Duration time = _parseTimeStr(timeStr);
 
-      final recognizer = TapGestureRecognizer()..onTap = () => onTap?.call(ep, time);
+      final recognizer = TapGestureRecognizer()..onTap = () => onTap?.call(episodeIndex, time);
       segments.add(
         RichSegment(
           start: match.start,
@@ -40,19 +40,19 @@ class JumpProgressParseNode implements ParseNode {
 
     return segments;
   }
+}
 
-  double _timeStringToDouble(String timeStr) {
-    final parts = timeStr.split(':');
+Duration _parseTimeStr(String timeStr) {
+  final parts = timeStr.split(':');
 
-    double totalSeconds = 0.0;
-    double weight = 1.0;
+  double totalSeconds = 0.0;
+  double weight = 1.0;
 
-    for (int i = parts.length - 1; i >= 0; i--) {
-      final double value = double.parse(parts[i]);
-      totalSeconds += value * weight;
-      weight *= 60.0;
-    }
-
-    return totalSeconds;
+  for (int i = parts.length - 1; i >= 0; i--) {
+    final double value = double.parse(parts[i]);
+    totalSeconds += value * weight;
+    weight *= 60.0;
   }
+
+  return Duration(microseconds: (totalSeconds * Duration.microsecondsPerSecond).round());
 }

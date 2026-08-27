@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 extension SaveImage on BuildContext {
   Future<void> saveImage(String url, String fileName, String fileExt) async {
     if (kIsWeb) {
-      return showInfo('不支持的平台: Web');
+      return showInfo('Unsupported platform: Web');
     }
 
     try {

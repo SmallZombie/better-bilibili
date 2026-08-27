@@ -61,10 +61,26 @@ String formatCountToHumanReadable(int count) {
 }
 
 /// 格式化秒到 `mm:ss` 格式
-String formatDuration(double duration) {
+String formatSeconds(double duration) {
   int minutes = duration.toInt() ~/ 60;
   int seconds = duration.toInt() % 60;
   return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
+String formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+
+  final mm = minutes.toString().padLeft(2, '0');
+  final ss = seconds.toString().padLeft(2, '0');
+
+  if (hours > 0) {
+    final hh = hours.toString().padLeft(2, '0');
+    return '$hh:$mm:$ss';
+  }
+
+  return '$mm:$ss';
 }
 
 /// 格式化秒级时间戳到更易读的字符串格式

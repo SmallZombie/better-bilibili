@@ -316,7 +316,7 @@ final GoRouter router = GoRouter(
           episodeId: state.uri.queryParameters['episodeId'],
           initCover: state.uri.queryParameters['initCover'],
           playlistId: state.uri.queryParameters['playlistId'],
-          appTitleBarController: context.read(),
+          appController: context.read(),
         ),
         builder: (context, child) => VideoDetailScreen(viewModel: context.read()),
       ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// 分页组件，显示页码，允许用户切换页数
 ///
-/// 用法示例：
+/// 用法：
 ///
 /// ```dart
 /// Paginator(

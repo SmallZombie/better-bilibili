@@ -22,7 +22,12 @@ class PanelTile extends StatelessWidget {
       onTap: onTap,
       dense: true,
       title: title,
-      subtitle: subtitle,
+      subtitle: subtitle != null
+          ? DefaultTextStyle.merge(
+              style: TextStyle(color: Colors.white70, fontSize: 12.5),
+              child: subtitle!,
+            )
+          : null,
       textColor: Colors.white,
       selected: selected,
       trailing: trailing,

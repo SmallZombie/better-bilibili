@@ -28,14 +28,21 @@ class RangeSliderPanelTile extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: DefaultTextStyle.merge(
-              style: TextStyle(color: Colors.white, fontSize: 12.5),
-              child: Column(
-                mainAxisSize: .min,
-                crossAxisAlignment: .start,
-                spacing: 2.0,
-                children: [title, ?subtitle],
-              ),
+            child: Column(
+              mainAxisSize: .min,
+              crossAxisAlignment: .start,
+              spacing: 2.0,
+              children: [
+                DefaultTextStyle.merge(
+                  style: TextStyle(color: Colors.white, fontSize: 12.5),
+                  child: title,
+                ),
+                if (subtitle != null)
+                  DefaultTextStyle.merge(
+                    style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                    child: subtitle!,
+                  ),
+              ],
             ),
           ),
           Transform.scale(

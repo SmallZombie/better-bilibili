@@ -26,12 +26,14 @@ class CommentTile extends StatefulWidget {
   final ValueChanged<Comment> onReply;
   final ValueChanged<Comment> onDelete;
   final bool compact;
+  final Function(int episodeIndex, Duration time)? onTapTime;
 
   const CommentTile({
     super.key,
     required this.onReply,
     required this.onDelete,
     this.compact = false,
+    this.onTapTime,
   });
 
   @override
@@ -217,7 +219,11 @@ class _CommentTileState extends State<CommentTile> {
                                 onTapVideo: _onTapVideo,
                                 onTapUser: _onTapUser,
                               ),
-                              JumpProgressParseNode(primaryColor: colorScheme.primary),
+                              if (widget.onTapTime != null)
+                                JumpProgressParseNode(
+                                  primaryColor: colorScheme.primary,
+                                  onTap: widget.onTapTime!,
+                                ),
                               StickerParseNode(stickers: comment.content.stickers),
                             ],
                             maxLines: 4,
@@ -454,6 +460,7 @@ class _CommentTileState extends State<CommentTile> {
                   onReply: widget.onReply,
                   onDelete: widget.onDelete,
                   compact: true,
+                  onTapTime: widget.onTapTime,
                 ),
               ),
             ),

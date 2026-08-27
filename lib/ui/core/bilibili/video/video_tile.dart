@@ -108,7 +108,7 @@ class VideoTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            formatDuration(duration!),
+                            formatSeconds(duration!),
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),

@@ -8,14 +8,11 @@ class PanelSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14.0, 16.0, 0.0, 6.0),
+      padding: const .fromLTRB(16.0, 16.0, 0.0, 6.0),
       child: title != null
           ? Text(
               title!,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline,
-                fontSize: 12.0,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 12.0),
             )
           : SizedBox.shrink(),
     );

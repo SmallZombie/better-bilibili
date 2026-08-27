@@ -17,8 +17,13 @@ import 'package:provider/provider.dart';
 
 class CommentPanel extends StatefulWidget {
   final CommentPanelViewModel viewModel;
+  final Function(int episodeIndex, Duration time)? onTapTime;
 
-  const CommentPanel({super.key, required this.viewModel});
+  const CommentPanel({
+    super.key,
+    required this.viewModel,
+    this.onTapTime,
+  });
 
   @override
   State<CommentPanel> createState() => _CommentPanelState();
@@ -125,6 +130,7 @@ class _CommentPanelState extends State<CommentPanel> with AutomaticKeepAliveClie
                       child: CommentTile(
                         onReply: (target) => _onReply(target),
                         onDelete: _onDelete,
+                        onTapTime: widget.onTapTime,
                       ),
                     );
                   },

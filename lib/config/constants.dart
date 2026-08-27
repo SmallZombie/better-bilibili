@@ -1,7 +1,7 @@
 /// 应用名
 const String kAppName = 'Better Bilibili';
 
-/// 应用英文ID
+/// 应用英文名
 const String kAppId = 'better_bilibili';
 
 /// B站请求需要的 Referer

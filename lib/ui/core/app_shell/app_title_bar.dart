@@ -1,3 +1,5 @@
+import 'package:better_bilibili/config/constants.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -63,9 +65,10 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
               child: Padding(
                 padding: const EdgeInsets.only(left: 16),
                 child: Row(
+                  spacing: 6.0,
                   children: [
                     Text(
-                      'Better Bilibili',
+                      kAppName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -73,6 +76,13 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    if (kDebugMode)
+                      Text(
+                        '(Debug mode)',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: colorScheme.outline,
+                        ),
+                      ),
                   ],
                 ),
               ),

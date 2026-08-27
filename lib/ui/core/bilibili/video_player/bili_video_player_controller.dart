@@ -1,14 +1,18 @@
 import 'dart:async';
 
+import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/quality_panel.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:better_bilibili/utils/media_kit_media_session_adapter.dart';
 import 'package:better_bilibili/utils/result.dart';
+import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:logger/logger.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -23,6 +27,10 @@ class BiliVideoPlayerController {
   final PlayInfo playInfo;
   final GetExtraPlayInfoResponse extraPlayInfo;
 
+  final Duration initPosition;
+  final NoticeController noticeController;
+  final String? initTitle;
+
   late final Player _player;
   late final VideoController _controller;
   Player get player => _player;
@@ -30,12 +38,18 @@ class BiliVideoPlayerController {
   late final BiliVideoPlayerStream stream;
   late BiliVideoPlayerState state;
 
+  final FlutterMediaSession _mediaSession = FlutterMediaSession();
+  late final MediaKitMediaSessionAdapter _sessionAdapter;
+
   BiliVideoPlayerController({
     required AuthRepository authRepository,
     required PlayerConfig playerConfig,
     required DanmakuConfig danmakuConfig,
     required this.playInfo,
     required this.extraPlayInfo,
+    this.initPosition = .zero,
+    required this.noticeController,
+    this.initTitle,
   }) : _authRepository = authRepository,
        _playerConfig = playerConfig,
        _danmakuConfig = danmakuConfig {
@@ -93,6 +107,8 @@ class BiliVideoPlayerController {
     _fullscreenController.close();
     _windowFullscreenController.close();
 
+    _sessionAdapter.unbind();
+
     // 这里与 media_kit 官方 demo 一致，只需销毁 player 即可
     _player.dispose();
   }
@@ -118,7 +134,13 @@ class BiliVideoPlayerController {
       final newTrack = _getTrackByQuality(_videoTracks, newValue.video)!;
       futures.add(
         _player.open(
-          Media(newTrack.url),
+          Media(
+            newTrack.url,
+            extras: {
+              'title': initTitle,
+              'artist': kAppName,
+            },
+          ),
           play: false,
         ),
       );
@@ -151,6 +173,10 @@ class BiliVideoPlayerController {
   Future<Result<void>> _init() async {
     await _playerConfig.ensureInitialized();
     await _danmakuConfig.ensureInitialized();
+
+    await _mediaSession.activate();
+    _sessionAdapter = MediaKitMediaSessionAdapter(player);
+    _mediaSession.bind(_sessionAdapter);
 
     _player.setVolume(_playerConfig.volume);
 
@@ -185,6 +211,9 @@ class BiliVideoPlayerController {
       _player.stream.duration.listen((e) {
         _log.i('onDuration: $e');
 
+        if (initPosition != .zero) {
+          seek(initPosition);
+        }
         if (_playerConfig.autoPlay) {
           play();
         }
@@ -309,6 +338,15 @@ class BiliVideoPlayerController {
   void _onFallbackCodecChange(CodecEnum event) {
     _reloadAvailableVideoTracks();
     _resetQuality();
+  }
+
+  void updateTitle(String newTitle) {
+    state.playlist.medias[state.playlist.index].extras?['title'] = newTitle;
+    _sessionAdapter.updateMetadata();
+  }
+
+  void reBindMediaSession() {
+    _mediaSession.bind(_sessionAdapter);
   }
 }
 

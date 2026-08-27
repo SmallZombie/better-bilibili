@@ -3,6 +3,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_section_title.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/switch_panel_tile.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPanel extends StatelessWidget {
@@ -141,18 +142,56 @@ class SettingsPanel extends StatelessWidget {
                 },
               ),
 
-              PanelSectionTitle(),
-              StreamBuilder(
-                stream: config.stream.historyReporterDebugHud,
-                builder: (context, asyncSnapshot) {
-                  final historyReporterDebugHud = asyncSnapshot.data ?? config.historyReporterDebugHud;
-                  return SwitchPanelTile(
-                    onChanged: (value) => config.setHistoryReporterDebugHud(value),
-                    value: historyReporterDebugHud,
-                    title: const Text('HistoryReporterDebugHUD'),
-                  );
-                },
-              ),
+              // PanelSectionTitle(title: '互动卡片'),
+              // SwitchPanelTile(
+              //   title: const Text('显示互动卡片'),
+              //   subtitle: const Text('展示由UP主添加的快捷关注、投票等卡片'),
+              //   value: false,
+              // ),
+              // SwitchPanelTile(
+              //   title: const Text('显示优化'),
+              //   subtitle: const Text('强制卡片显示在右上角通知区域'),
+              //   value: false,
+              // ),
+              // PanelTile(
+              //   onTap: () {},
+              //   title: const Text('过滤器'),
+              //   subtitle: const Text('已隐藏 0 个卡片'),
+              //   trailing: Icon(
+              //     Icons.keyboard_arrow_right_outlined,
+              //     color: Colors.white.withAlpha(200),
+              //   ),
+              // ),
+
+              // PanelSectionTitle(title: '媒体控制'),
+              // SwitchPanelTile(
+              //   title: const Text('启用媒体控制'),
+              //   subtitle: const Text('允许通过系统媒体控件控制播放，并显示当前播放信息'),
+              //   value: true,
+              // ),
+              // SwitchPanelTile(
+              //   title: const Text('后台播放'),
+              //   value: false,
+              // ),
+              // SwitchPanelTile(
+              //   title: const Text('阻止打断'),
+              //   subtitle: const Text('强制占用音频通道，阻止其他应用打断 (铃声类除外)'),
+              //   value: false,
+              // ),
+              if (kDebugMode) ...[
+                PanelSectionTitle(),
+                StreamBuilder(
+                  stream: config.stream.historyReporterDebugHud,
+                  builder: (context, asyncSnapshot) {
+                    final historyReporterDebugHud = asyncSnapshot.data ?? config.historyReporterDebugHud;
+                    return SwitchPanelTile(
+                      onChanged: (value) => config.setHistoryReporterDebugHud(value),
+                      value: historyReporterDebugHud,
+                      title: const Text('HistoryReporterDebugHUD'),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),

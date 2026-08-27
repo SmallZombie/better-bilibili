@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_videos_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_response.dart';
-import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/routing/app_route_observer.dart';
 import 'package:better_bilibili/routing/routes.dart';
@@ -28,6 +27,7 @@ import 'package:better_bilibili/ui/core/bilibili/video/video_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku_layer/danmaku_layer.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/history_reporter/bili_history_reporter_debug_layer.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_controller.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
@@ -38,9 +38,11 @@ import 'package:better_bilibili/ui/video/view_models/playlist_tab_view_model.dar
 import 'package:better_bilibili/ui/video/view_models/video_detail_view_model.dart';
 import 'package:better_bilibili/ui/video/widgets/playlist_tab.dart';
 import 'package:better_bilibili/utils/base_util.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/web.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollview_observer/scrollview_observer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -73,6 +75,8 @@ class VideoDetailScreen extends StatefulWidget {
 }
 
 class _VideoDetailScreenState extends State<VideoDetailScreen> {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'VideoDetailScreen'));
+
   final List<StreamSubscription> _subscriptions = [];
 
   @override
@@ -388,6 +392,44 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
     }
   }
 
+  void _onTapTime(int episodeIndex, Duration time) {
+    if (episodeIndex < 0 || episodeIndex > widget.viewModel.episodes.length - 1) {
+      _log.i('[onTapTime] Invaild episodeIndex: $episodeIndex');
+      return;
+    }
+
+    final episode = widget.viewModel.episodes[episodeIndex];
+
+    final episodeBak = widget.viewModel.episodes.firstWhere((v) => v.episodeId == widget.viewModel.episodeId);
+    final timeBak = widget.viewModel.videoController?.state.position ?? .zero;
+
+    if (episode.episodeId != widget.viewModel.episodeId) {
+      widget.viewModel.switchEpisode(episode, initPosition: time);
+      widget.viewModel.videoController?.noticeController.show(
+        Notice(
+          content: Text('已转到 ${formatDuration(time)}'),
+          action: '撤销',
+          onTap: (self) {
+            widget.viewModel.switchEpisode(episodeBak, initPosition: timeBak);
+            widget.viewModel.videoController?.noticeController.dismiss(self);
+          },
+        ),
+      );
+    } else {
+      widget.viewModel.videoController?.seek(time);
+      widget.viewModel.videoController?.noticeController.show(
+        Notice(
+          content: Text('已转到 ${formatDuration(time)}'),
+          action: '撤销',
+          onTap: (self) {
+            widget.viewModel.videoController?.seek(timeBak);
+            widget.viewModel.videoController?.noticeController.dismiss(self);
+          },
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScrollConfiguration(
@@ -436,18 +478,10 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                 onShare: _onShare,
                 onDownload: _onDownload,
                 onReport: _onReport,
+                onTapTime: _onTapTime,
               ),
               sidebar: _buildSidebar(),
             ),
-            // child: Center(
-            //   child: ConstrainedBox(
-            //     constraints: const BoxConstraints(maxWidth: _kMaxContentWidth),
-            //     child: Padding(
-            //       padding: _kPagePadding,
-            //       child: _VideoDetailLayout(main: _buildContent(), sidebar: _buildSidebar()),
-            //     ),
-            //   ),
-            // ),
           );
         },
       ),
@@ -620,7 +654,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
       );
     }
 
-    if (widget.viewModel.episodes.isNotEmpty) {
+    if (widget.viewModel.episodes.length > 1) {
       length++;
       tabs.add(const Tab(text: '选集', height: tabHeight));
       children.add(
@@ -678,12 +712,13 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
         create: (context) => CommentPanelViewModel(
           commentRepository: context.read(),
           commonRepository: context.read(),
-          type: BiliContentTypeEnum.video,
+          type: .video,
           id: widget.viewModel.videoId,
-          // id: '40495324',
-          // type: CommentTypeEnum.article,
         ),
-        builder: (context, _) => CommentPanel(viewModel: context.read()),
+        builder: (context, _) => CommentPanel(
+          viewModel: context.read(),
+          onTapTime: _onTapTime,
+        ),
       ),
     );
 
@@ -692,10 +727,10 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
       child: Column(
         children: [
           TabBar(
-            splashBorderRadius: BorderRadius.circular(8.0),
+            splashBorderRadius: .circular(8.0),
             dividerColor: Colors.transparent,
             isScrollable: true,
-            tabAlignment: TabAlignment.center,
+            tabAlignment: .center,
             tabs: tabs,
           ),
           Expanded(child: TabBarView(children: children)),
@@ -712,6 +747,7 @@ class _ContentTab extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onDownload;
   final VoidCallback? onReport;
+  final Function(int episodeIndex, Duration time)? onTapTime;
 
   const _ContentTab({
     required this.viewModel,
@@ -720,6 +756,7 @@ class _ContentTab extends StatelessWidget {
     this.onShare,
     this.onDownload,
     this.onReport,
+    this.onTapTime,
   });
 
   Widget _buildProduction({
@@ -1014,7 +1051,14 @@ class _ContentTab extends StatelessWidget {
               ),
 
               // 简介
-              if (state.detail!.description != null) _VideoDescription(description: state.detail!.description!),
+              if (state.detail!.description != null)
+                _VideoDescription(
+                  description: state.detail!.description!,
+                  onTapLink: (url) => context.openUrl(url),
+                  onTapVideo: (avid) => context.push(Routes.buildVideoDetail(videoId: avid)),
+                  onTapUser: (userId) => context.push(Routes.buildUserDetail(userId)),
+                  onTapTime: onTapTime,
+                ),
 
               // 标签
               if (state.detail!.tags.isNotEmpty || state.detail!.musics.isNotEmpty || state.detail!.isAigc) ...[
@@ -1419,27 +1463,20 @@ class _VideoDetailLayout extends StatelessWidget {
   }
 }
 
-class _VideoDescription extends StatefulWidget {
+class _VideoDescription extends StatelessWidget {
   final VideoDetailDescription description;
+  final ValueChanged<String>? onTapLink;
+  final ValueChanged<String>? onTapVideo;
+  final ValueChanged<String>? onTapUser;
+  final Function(int episodeCount, Duration time)? onTapTime;
 
-  const _VideoDescription({required this.description});
-
-  @override
-  State<_VideoDescription> createState() => _VideoDescriptionState();
-}
-
-class _VideoDescriptionState extends State<_VideoDescription> {
-  void _onTapLink(String url) {
-    context.openUrl(url);
-  }
-
-  void _onTapVideo(String avid) {
-    context.push(Routes.buildVideoDetail(videoId: avid));
-  }
-
-  void _onTapUser(String userId) {
-    context.push(Routes.buildUserDetail(userId));
-  }
+  const _VideoDescription({
+    required this.description,
+    this.onTapLink,
+    this.onTapVideo,
+    this.onTapUser,
+    this.onTapTime,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1458,26 +1495,29 @@ class _VideoDescriptionState extends State<_VideoDescription> {
         children: [
           Text('简介', style: TextStyle(fontSize: 18.0)),
           BiliRichTextWapper(
-            rawText: widget.description.rawText,
+            rawText: description.rawText,
             parserNodes: [
               LinkParseNode(
                 primaryColor: colorScheme.primary,
                 links: const [],
-                onTapVideo: _onTapVideo,
+                onTapVideo: onTapVideo,
               ),
               UserParseNode(
                 primaryColor: colorScheme.primary,
-                users: widget.description.users,
-                onTap: _onTapUser,
+                users: description.users,
+                onTap: onTapUser,
               ),
               UnknownLinkParseNode(
                 primaryColor: colorScheme.primary,
-                onTap: _onTapLink,
-                onTapVideo: _onTapVideo,
-                onTapUser: _onTapUser,
+                onTap: onTapLink,
+                onTapVideo: onTapVideo,
+                onTapUser: onTapUser,
               ),
-              JumpProgressParseNode(primaryColor: colorScheme.primary),
-              ResourceIdParseNode(onTapVideo: _onTapVideo),
+              JumpProgressParseNode(
+                primaryColor: colorScheme.primary,
+                onTap: onTapTime,
+              ),
+              ResourceIdParseNode(onTapVideo: onTapVideo),
             ],
             maxLines: 4,
           ),

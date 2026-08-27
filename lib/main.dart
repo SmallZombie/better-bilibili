@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
+import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/dependencies.dart';
 import 'package:better_bilibili/l10n/generated/app_localizations.dart';
 import 'package:better_bilibili/routing/router.dart';
 import 'package:better_bilibili/routing/scheme_parser.dart';
 import 'package:better_bilibili/ui/core/app_shell/app_title_bar.dart';
-import 'package:better_bilibili/ui/core/app_shell/app_title_bar_controller.dart';
+import 'package:better_bilibili/ui/core/app_shell/app_controller.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
@@ -27,12 +30,20 @@ void main() async {
   // debugRepaintRainbowEnabled = true;
 
   if (Platform.isWindows) {
+    if (kDebugMode) {
+      await FlutterMediaSession().setWindowsAppUserModelId(
+        kAppId,
+        displayName: kAppName,
+      );
+    }
+
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
       size: Size(1635, 920),
       center: true,
       titleBarStyle: TitleBarStyle.hidden,
       windowButtonVisibility: false,
+      title: kDebugMode ? '$kAppName (Debug mode)' : kAppName,
     );
     await windowManager.waitUntilReadyToShow(windowOptions);
     await windowManager.show();
@@ -76,7 +87,7 @@ class _AppState extends State<App> {
         final darkColorScheme = darkDynamic?.harmonized() ?? .fromSeed(seedColor: Colors.pinkAccent, brightness: .dark);
 
         return MaterialApp.router(
-          title: 'Better Bilibili',
+          title: kAppName,
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           theme: ThemeData(
@@ -112,7 +123,7 @@ class _AppState extends State<App> {
               return child ?? const SizedBox.shrink();
             }
 
-            final showTitleBar = context.select<AppTitleBarController, bool>(
+            final showTitleBar = context.select<AppController, bool>(
               (state) => state.showTitleBar,
             );
 

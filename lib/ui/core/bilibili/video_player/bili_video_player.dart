@@ -6,6 +6,7 @@ import 'package:better_bilibili/data/services/bilibili/bili_video_api_service.da
 import 'package:better_bilibili/routing/app_route_observer.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/ambient_light_layer.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player_controller.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_layer.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/quality_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/video_player_panel.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
@@ -51,6 +52,8 @@ class BiliVideoPlayer extends StatefulWidget {
 }
 
 class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'BiliVideoPlayer'));
+
   BiliVideoPlayerController get controller => widget.controller;
 
   final List<StreamSubscription> _subscriptions = [];
@@ -84,7 +87,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       if (name == null) return;
 
       _depth++;
-      debugPrint('_depth++: $_depth');
+      _log.i('onRouteChanged depth++: $_depth');
 
       if (_depth > 0) {
         controller.pause();
@@ -94,7 +97,11 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       if (name == null) return;
 
       _depth--;
-      debugPrint('_depth--: $_depth');
+      _log.i('onRouteChanged depth--: $_depth');
+
+      if (_depth == 0) {
+        controller.reBindMediaSession();
+      }
     }
 
     /// dispose 会慢半拍, 正好这里 pop 不会慢半拍
@@ -446,6 +453,7 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                           ),
                         ),
                       ),
+
                       // 底部阴影
                       Container(
                         decoration: const BoxDecoration(
@@ -458,6 +466,7 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                         ),
                       ),
 
+                      // 控件
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -635,6 +644,12 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                       ),
                     ],
                   ),
+                ),
+                // notice
+                Positioned(
+                  left: 8.0,
+                  bottom: 100.0,
+                  child: NoticeLayer(controller: controller.noticeController),
                 ),
                 IgnorePointer(
                   child: Center(
