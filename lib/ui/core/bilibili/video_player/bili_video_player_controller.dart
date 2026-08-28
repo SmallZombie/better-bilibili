@@ -4,15 +4,14 @@ import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
+import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/quality_panel.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/media_kit_media_session_adapter.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:logger/logger.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -25,11 +24,11 @@ class BiliVideoPlayerController {
   final DanmakuConfig _danmakuConfig;
 
   final PlayInfo playInfo;
-  final GetExtraPlayInfoResponse extraPlayInfo;
 
   final Duration initPosition;
   final NoticeController noticeController;
   String? title;
+  final MediaSessionController mediaSessionController;
 
   late final Player _player;
   late final VideoController _controller;
@@ -38,18 +37,15 @@ class BiliVideoPlayerController {
   late final BiliVideoPlayerStream stream;
   late BiliVideoPlayerState state;
 
-  final FlutterMediaSession _mediaSession = FlutterMediaSession();
-  late final MediaKitMediaSessionAdapter _sessionAdapter;
-
   BiliVideoPlayerController({
     required AuthRepository authRepository,
     required PlayerConfig playerConfig,
     required DanmakuConfig danmakuConfig,
     required this.playInfo,
-    required this.extraPlayInfo,
     this.initPosition = .zero,
     required this.noticeController,
     String? initTitle,
+    required this.mediaSessionController,
   }) : _authRepository = authRepository,
        _playerConfig = playerConfig,
        _danmakuConfig = danmakuConfig,
@@ -57,7 +53,7 @@ class BiliVideoPlayerController {
     init = Command0(_init)..execute();
 
     _player = Player(configuration: PlayerConfiguration(bufferSize: 64 * 1024 * 1024));
-    _controller = VideoController(_player);
+    _controller = VideoController(_player, configuration: VideoControllerConfiguration());
     stream = BiliVideoPlayerStream(
       rawStream: _player.stream,
       seekStart: _seekStartController.stream,
@@ -72,6 +68,7 @@ class BiliVideoPlayerController {
     _subscriptions.addAll([
       playerConfig.stream.preferredCodec.listen(_onPreferredCodecChange),
       playerConfig.stream.fallbackCodec.listen(_onFallbackCodecChange),
+      playerConfig.stream.mediaControl.listen(_onMediaControlChange),
     ]);
   }
 
@@ -108,7 +105,7 @@ class BiliVideoPlayerController {
     _fullscreenController.close();
     _windowFullscreenController.close();
 
-    _sessionAdapter.unbind();
+    _mediaSession?.deactivate();
 
     // 这里与 media_kit 官方 demo 一致，只需销毁 player 即可
     _player.dispose();
@@ -171,13 +168,16 @@ class BiliVideoPlayerController {
     if (restorePlaying) _player.play();
   }
 
+  MediaSession? _mediaSession;
+
   Future<Result<void>> _init() async {
     await _playerConfig.ensureInitialized();
     await _danmakuConfig.ensureInitialized();
 
-    await _mediaSession.activate();
-    _sessionAdapter = MediaKitMediaSessionAdapter(player);
-    _mediaSession.bind(_sessionAdapter);
+    if (_playerConfig.mediaControl) {
+      _mediaSession = mediaSessionController.createSession(MediaKitMediaSessionAdapter(player));
+      _mediaSession!.activate();
+    }
 
     _player.setVolume(_playerConfig.volume);
 
@@ -185,14 +185,25 @@ class BiliVideoPlayerController {
 
     if (_player.platform is NativePlayer) {
       final p = _player.platform as NativePlayer;
-      p.setProperty('referrer', 'https://www.bilibili.com/video/${playInfo.bvid}/');
-      p.setProperty('user-agent', (await _authRepository.getAccount()).userAgent!);
+
+      // await p.setProperty('msg-level', 'all=trace');
+      // await p.setProperty('log-file', 'd:/mpv.log');
+      // await p.setProperty('af', 'equalizer=f=1000:g=20:w=1');
+      // await p.setProperty('af', 'lavfi=[equalizer=f=1000:g=20:w=1]');
+      // await p.setProperty('af', 'lavfi=[volume=-100dB]');
+
+      await p.setProperty('referrer', 'https://www.bilibili.com/video/${playInfo.bvid}/');
+      await p.setProperty('user-agent', (await _authRepository.getAccount()).userAgent!);
+      // await p.setProperty(
+      //   'af-add',
+      //   'lavfi="pan=stereo|c0=FC+LFE+FL+BL+SL|c1=FC+LFE+FR+BR+SR,loudnorm=I=-14:LRA=1:tp=-1:linear=false:dual_mono=true"',
+      // );
     }
 
     _resetQuality();
 
-    if (extraPlayInfo.subtitles.isNotEmpty) {
-      final subtitle = extraPlayInfo.subtitles.first;
+    if (playInfo.subtitles.isNotEmpty) {
+      final subtitle = playInfo.subtitles.first;
       _log.i('selected subtitle track: ${subtitle.url} | ${subtitle.id} | ${subtitle.code}');
       loadSubtitle(subtitle.url);
     }
@@ -343,12 +354,41 @@ class BiliVideoPlayerController {
 
   void updateTitle(String newTitle) {
     title = newTitle;
-    state.playlist.medias[state.playlist.index].extras?['title'] = newTitle;
-    _sessionAdapter.updateMetadata();
+    try {
+      state.playlist.medias[state.playlist.index].extras?['title'] = newTitle;
+
+      final adapter = _mediaSession?.adapter;
+      if (adapter is MediaKitMediaSessionAdapter) {
+        adapter.updateMetadata();
+      }
+    } catch (_) {}
   }
 
-  void reBindMediaSession() {
-    _mediaSession.bind(_sessionAdapter);
+  void _onMediaControlChange(bool event) {
+    if (event) {
+      _mediaSession ??= mediaSessionController.createSession(MediaKitMediaSessionAdapter(player));
+      _mediaSession!.activate();
+    } else {
+      _mediaSession?.deactivate();
+    }
+  }
+
+  void onDispose() {
+    _log.i('onDispose');
+    pause();
+    _mediaSession?.deactivate();
+  }
+
+  void onFrontend() {
+    _log.i('onFrontend');
+    if (_playerConfig.mediaControl) {
+      _mediaSession?.activate();
+    }
+  }
+
+  void onBackend() {
+    _log.i('onBackend');
+    pause();
   }
 }
 

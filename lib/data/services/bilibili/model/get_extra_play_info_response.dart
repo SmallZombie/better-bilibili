@@ -1,28 +1,13 @@
+import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
+
 class GetExtraPlayInfoResponse {
-  final List<ExtraPlayInfoSubtitle> subtitles;
+  final List<Subtitle> subtitles;
+  final Duration lastPosition;
+  final String? lastEpisodeId;
 
-  const GetExtraPlayInfoResponse({required this.subtitles});
-}
-
-class ExtraPlayInfoSubtitle {
-  final String id;
-  final String code;
-  final bool isAigc;
-  final String url;
-
-  const ExtraPlayInfoSubtitle({
-    required this.id,
-    required this.code,
-    required this.isAigc,
-    required this.url,
+  const GetExtraPlayInfoResponse({
+    required this.subtitles,
+    required this.lastPosition,
+    required this.lastEpisodeId,
   });
-
-  factory ExtraPlayInfoSubtitle.fromJson(Map<String, dynamic> json) {
-    return ExtraPlayInfoSubtitle(
-      id: json['id_str'],
-      code: json['lan'],
-      isAigc: json['ai_type'] == 1,
-      url: 'https:${json['subtitle_url']}',
-    );
-  }
 }

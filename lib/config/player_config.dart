@@ -4,6 +4,23 @@ import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum LoudnessNormalizationModeEnum {
+  off(0),
+  normal(1),
+  highDynamic(2);
+
+  final int value;
+
+  const LoudnessNormalizationModeEnum(this.value);
+
+  factory LoudnessNormalizationModeEnum.fromInt(int num) {
+    return switch (num) {
+      2 => .highDynamic,
+      _ => .normal,
+    };
+  }
+}
+
 const _volumeKey = 'player.volume';
 const _preferredCodecKey = 'player.preferred_codec';
 const _fallbackCodecKey = 'player.fallback_codec';
@@ -16,8 +33,9 @@ const _autoPlayNextPlaylistKey = 'player.auto_play_next_playlist';
 const _autoPlayNextCollectionKey = 'player.auto_play_next_collection';
 const _autoPlayNextRecommendKey = 'player.auto_play_next_recommend';
 const _ambientLightKey = 'player.ambient_light';
-
 const _historyReporterDebugHudKey = 'player.history_reporter_debug_hud';
+const _mediaControlKey = 'player.media_control';
+const _loudnessNormalizationKey = 'player.loudness_normalization';
 
 class PlayerConfigStreams {
   final _volumeController = StreamController<double>.broadcast();
@@ -33,6 +51,8 @@ class PlayerConfigStreams {
   final _autoPlayNextRecommendController = StreamController<bool>.broadcast();
   final _ambientLightController = StreamController<bool>.broadcast();
   final _historyReporterDebugHudController = StreamController<bool>.broadcast();
+  final _mediaControlController = StreamController<bool>.broadcast();
+  final _loudnessNormalizationController = StreamController<LoudnessNormalizationModeEnum>.broadcast();
 
   Stream<double> get volume => _volumeController.stream;
   Stream<CodecEnum> get preferredCodec => _preferredCodecController.stream;
@@ -47,6 +67,8 @@ class PlayerConfigStreams {
   Stream<bool> get autoPlayNextRecommend => _autoPlayNextRecommendController.stream;
   Stream<bool> get ambientLight => _ambientLightController.stream;
   Stream<bool> get historyReporterDebugHud => _historyReporterDebugHudController.stream;
+  Stream<bool> get mediaControl => _mediaControlController.stream;
+  Stream<LoudnessNormalizationModeEnum> get loudnessNormalization => _loudnessNormalizationController.stream;
 
   void dispose() {
     _volumeController.close();
@@ -62,6 +84,8 @@ class PlayerConfigStreams {
     _autoPlayNextRecommendController.close();
     _ambientLightController.close();
     _historyReporterDebugHudController.close();
+    _mediaControlController.close();
+    _loudnessNormalizationController.close();
   }
 }
 
@@ -85,8 +109,9 @@ class PlayerConfig {
   late bool autoPlayNextCollection;
   late bool autoPlayNextRecommend;
   late bool ambientLight;
-
   late bool historyReporterDebugHud;
+  late bool mediaControl;
+  late LoudnessNormalizationModeEnum loudnessNormalization;
 
   Future<void> ensureInitialized() async {
     _initialized ??= _init();
@@ -99,10 +124,10 @@ class PlayerConfig {
     // 观感目前测试下来是 264(7) > 265(12) > av1(13)
     // 但因为264不给8k流，所以这里首选265
     String? preferredCodecStr = await prefs.getString(_preferredCodecKey);
-    preferredCodec = preferredCodecStr == null ? CodecEnum.h265 : CodecEnum.fromString(preferredCodecStr);
+    preferredCodec = preferredCodecStr != null ? CodecEnum.fromString(preferredCodecStr) : CodecEnum.h265;
 
     String? fallbackCodecStr = await prefs.getString(_fallbackCodecKey);
-    fallbackCodec = fallbackCodecStr == null ? CodecEnum.h264 : CodecEnum.fromString(fallbackCodecStr);
+    fallbackCodec = fallbackCodecStr != null ? CodecEnum.fromString(fallbackCodecStr) : CodecEnum.h264;
 
     audioQuality = await prefs.getInt(_audioQualityKey) ?? 40251;
     videoQuality = await prefs.getInt(_videoQualityKey) ?? 129;
@@ -117,6 +142,11 @@ class PlayerConfig {
 
     historyReporterDebugHud = await prefs.getBool(_historyReporterDebugHudKey) ?? false;
 
+    mediaControl = await prefs.getBool(_mediaControlKey) ?? true;
+
+    int? loudnessNormalizationInt = await prefs.getInt(_loudnessNormalizationKey);
+    loudnessNormalization = loudnessNormalizationInt != null ? LoudnessNormalizationModeEnum.fromInt(loudnessNormalizationInt) : .normal;
+
     stream._volumeController.add(volume);
     stream._preferredCodecController.add(preferredCodec);
     stream._fallbackCodecController.add(fallbackCodec);
@@ -130,6 +160,8 @@ class PlayerConfig {
     stream._autoPlayNextRecommendController.add(autoPlayNextRecommend);
     stream._ambientLightController.add(ambientLight);
     stream._historyReporterDebugHudController.add(historyReporterDebugHud);
+    stream._mediaControlController.add(mediaControl);
+    stream._loudnessNormalizationController.add(loudnessNormalization);
   }
 
   void dispose() {
@@ -328,6 +360,36 @@ class PlayerConfig {
     } catch (e, s) {
       _log.e(
         'Config save failed: key=$_historyReporterDebugHudKey, newValue=$newValue',
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  Future<void> setMediaControl(bool newValue) async {
+    mediaControl = newValue;
+    stream._mediaControlController.add(newValue);
+
+    try {
+      await prefs.setBool(_mediaControlKey, newValue);
+    } catch (e, s) {
+      _log.e(
+        'Config save failed: key=$_mediaControlKey, newValue=$newValue',
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  Future<void> setLoudnessNormalization(LoudnessNormalizationModeEnum newValue) async {
+    loudnessNormalization = newValue;
+    stream._loudnessNormalizationController.add(newValue);
+
+    try {
+      await prefs.setInt(_loudnessNormalizationKey, newValue.value);
+    } catch (e, s) {
+      _log.e(
+        'Config save failed: key=$_loudnessNormalizationKey, newValue=$newValue',
         error: e,
         stackTrace: s,
       );

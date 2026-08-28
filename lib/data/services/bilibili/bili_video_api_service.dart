@@ -6,6 +6,7 @@ import 'package:better_bilibili/data/model/bilibili/bilibili.pb.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_collections_and_playlists_with_user_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
+import 'package:better_bilibili/data/services/bilibili/model/get_play_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_keyword_suggestions_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_videos_response.dart';
@@ -225,48 +226,50 @@ class BiliVideoApiService {
       useClickLog: false,
       useTargetList: [VideoDetailPageElementList],
     );
-    final session = generateSession(account.buvid3!);
-    final params = {
-      'avid': videoId,
-      'bvid': av2bv(videoId),
-      'cid': episodeId,
-      'qn': _qn,
-      'fnver': 0,
-      'fnval': 4048,
-      'fourk': 1,
-      'gaia_source': '',
-      'from_client': 'BROWSER',
-      'is_main_page': true,
-      'need_fragment': false,
-      'isGaiaAvoided': false,
-      'client_attr': 0,
-      'version_name': '4.9.86',
-      'app_id': 100,
-      'session': session,
-      'voice_balance': 1,
-      'web_location': WebLocation.videoDetail,
-      'dm_img_list': dmImgList,
-      'dm_img_str': getDmImgStr(),
-      'dm_cover_img_str': getDmCoverImgStr(),
-      'dm_img_inter': getDmImgInter(
-        log: logs.last,
-        windowWidth: sometingOrElse(0.01, account.windowWidth! ~/ 2, account.windowWidth!),
-        windowHeight: sometingOrElse(0.01, account.windowHeight! ~/ 2, account.windowHeight!),
-      ),
-    };
-    final (String wts, String wbiSign) = encWbi(params, account.wbiImgKey!, account.wbiSubKey!);
-    final resp = await client.get(
-      'https://api.bilibili.com/x/player/wbi/playurl',
-      queryParameters: {...params, 'w_rid': wbiSign, 'wts': wts},
-      cancelToken: cancelToken,
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    GetPlayInfoResponse playInfoResp;
+    {
+      final session = generateSession(account.buvid3!);
+      final params = {
+        'avid': videoId,
+        'bvid': av2bv(videoId),
+        'cid': episodeId,
+        'qn': _qn,
+        'fnver': 0,
+        'fnval': 4048,
+        'fourk': 1,
+        'gaia_source': '',
+        'from_client': 'BROWSER',
+        'is_main_page': true,
+        'need_fragment': false,
+        'isGaiaAvoided': false,
+        'client_attr': 0,
+        'version_name': '4.9.86',
+        'app_id': 100,
+        'session': session,
+        'voice_balance': 1,
+        'web_location': WebLocation.videoDetail,
+        'dm_img_list': dmImgList,
+        'dm_img_str': getDmImgStr(),
+        'dm_cover_img_str': getDmCoverImgStr(),
+        'dm_img_inter': getDmImgInter(
+          log: logs.last,
+          windowWidth: sometingOrElse(0.01, account.windowWidth! ~/ 2, account.windowWidth!),
+          windowHeight: sometingOrElse(0.01, account.windowHeight! ~/ 2, account.windowHeight!),
+        ),
+      };
+      final (String wts, String wbiSign) = encWbi(params, account.wbiImgKey!, account.wbiSubKey!);
+      final resp = await client.get(
+        'https://api.bilibili.com/x/player/wbi/playurl',
+        queryParameters: {...params, 'w_rid': wbiSign, 'wts': wts},
+        cancelToken: cancelToken,
+      );
 
-    return Result.ok(
-      PlayInfo(
+      if (resp.data['code'] != 0) {
+        return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      }
+
+      playInfoResp = GetPlayInfoResponse(
         id: resp.data['data']['auto_qn_resp']['dyeid'],
         session: session,
         videoId: videoId,
@@ -281,8 +284,48 @@ class BiliVideoApiService {
           if (resp.data['data']['dash']['dolby']['type'] != 0) ...resp.data['data']['dash']['dolby']['audio'] as List,
           ...((resp.data['data']['dash']['audio'] as List?) ?? []),
         ].map((value) => MediaTrack.fromJson(value)).toList(),
-      ),
-    );
+      );
+    }
+
+    GetExtraPlayInfoResponse? extraPlayInfoResp;
+    {
+      final params = {
+        'aid': videoId,
+        'cid': episodeId,
+        'isGaiaAvoided': false,
+        'web_location': WebLocation.videoDetail,
+        'dm_img_list': dmImgList,
+        'dm_img_str': getDmImgStr(),
+        'dm_cover_img_str': getDmCoverImgStr(),
+        'dm_img_inter': getDmImgInter(
+          log: logs.last,
+          windowWidth: sometingOrElse(0.01, account.windowWidth! ~/ 2, account.windowWidth!),
+          windowHeight: sometingOrElse(0.01, account.windowHeight! ~/ 2, account.windowHeight!),
+        ),
+      };
+
+      final (String wts, String wbiSign) = encWbi(params, account.wbiImgKey!, account.wbiSubKey!);
+      final resp = await client.get(
+        'https://api.bilibili.com/x/player/wbi/v2',
+        queryParameters: {
+          ...params,
+          'w_rid': wbiSign,
+          'wts': wts,
+        },
+      );
+
+      if (resp.data['code'] != 0) {
+        return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      }
+
+      extraPlayInfoResp = GetExtraPlayInfoResponse(
+        subtitles: (resp.data['data']['subtitle']['subtitles'] as List).map((v) => Subtitle.fromJson(v)).toList(),
+        lastPosition: Duration(milliseconds: resp.data['data']['last_play_time']),
+        lastEpisodeId: resp.data['data']['last_play_cid'] != 0 ? resp.data['data']['last_play_cid'].toString() : null,
+      );
+    }
+
+    return Result.ok(PlayInfo.assembly(playInfoResp, extraPlayInfoResp));
   }
 
   /// 点赞视频
@@ -751,68 +794,6 @@ class BiliVideoApiService {
 
       return Result.ok(null);
     }
-  }
-
-  /// 获取扩展播放信息，包括字幕
-  Future<Result<GetExtraPlayInfoResponse>> getExtraPlayInfo({
-    required String videoId,
-    required String episodeId,
-  }) async {
-    assert(videoId.isNotEmpty);
-    assert(episodeId.isNotEmpty);
-
-    final account = await _authRepository.getAccount();
-    final client = await _authRepository.getClient();
-
-    final (String dmImgList, List<FingerprintLog> logs) = getDmImgList(
-      // 这里原计划是0~1的，改成1~2的原因见 `getDmImgInter` 函数注释
-      minLogCount: 1,
-      maxLogCount: 2,
-      windowWidth: sometingOrElse(0.01, account.windowWidth! ~/ 2, account.windowWidth!),
-      windowHeight: sometingOrElse(0.01, account.windowHeight! ~/ 2, account.windowHeight!),
-      maxTimestamp: getRandomInt(
-        RECOMMENDED_FINGERORINT_EVENT_TS_MINIMUM,
-        RECOMMENDED_FINGERORINT_EVENT_TS_MINIMUM + 2000,
-      ),
-      mouseRangeX: 0.8,
-      mouseRangeY: 0.5,
-      useClickLog: false,
-      useTargetList: [VideoDetailPageElementList],
-    );
-    final params = {
-      'aid': videoId,
-      'cid': episodeId,
-      'isGaiaAvoided': false,
-      'web_location': WebLocation.videoDetail,
-      'dm_img_list': dmImgList,
-      'dm_img_str': getDmImgStr(),
-      'dm_cover_img_str': getDmCoverImgStr(),
-      'dm_img_inter': getDmImgInter(
-        log: logs.last,
-        windowWidth: sometingOrElse(0.01, account.windowWidth! ~/ 2, account.windowWidth!),
-        windowHeight: sometingOrElse(0.01, account.windowHeight! ~/ 2, account.windowHeight!),
-      ),
-    };
-
-    final (String wts, String wbiSign) = encWbi(params, account.wbiImgKey!, account.wbiSubKey!);
-    final resp = await client.get(
-      'https://api.bilibili.com/x/player/wbi/v2',
-      queryParameters: {
-        ...params,
-        'w_rid': wbiSign,
-        'wts': wts,
-      },
-    );
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    return Result.ok(
-      GetExtraPlayInfoResponse(
-        subtitles: (resp.data['data']['subtitle']['subtitles'] as List).map((v) => ExtraPlayInfoSubtitle.fromJson(v)).toList(),
-      ),
-    );
   }
 
   /// 上报历史记录，推荐的 timer 间隔为 15 秒

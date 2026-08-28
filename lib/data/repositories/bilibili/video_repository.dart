@@ -1,6 +1,5 @@
 import 'package:better_bilibili/data/services/bilibili/bili_video_api_service.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_collections_and_playlists_with_user_response.dart';
-import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_keyword_suggestions_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_videos_response.dart';
@@ -119,13 +118,6 @@ class VideoRepository {
     required bool subscription,
   }) async {
     return _videoApiService.subscriptionCollection(collectionId: collectionId, subscription: subscription);
-  }
-
-  Future<Result<GetExtraPlayInfoResponse>> getExtraPlayInfo({
-    required String videoId,
-    required String episodeId,
-  }) async {
-    return _videoApiService.getExtraPlayInfo(videoId: videoId, episodeId: episodeId);
   }
 
   Future<Result<void>> reportHistory({

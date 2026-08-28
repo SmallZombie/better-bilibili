@@ -1,3 +1,6 @@
+import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
+import 'package:better_bilibili/data/services/bilibili/model/get_play_info_response.dart';
+
 class PlayInfo {
   final String id;
   final String session;
@@ -7,8 +10,11 @@ class PlayInfo {
   final Duration duration;
   final List<MediaTrack> videoTracks;
   final List<MediaTrack> audioTracks;
+  final List<Subtitle> subtitles;
+  final Duration lastPosition;
+  final String? lastEpisodeId;
 
-  PlayInfo({
+  const PlayInfo({
     required this.id,
     required this.session,
     required this.videoId,
@@ -17,7 +23,26 @@ class PlayInfo {
     required this.duration,
     required this.videoTracks,
     required this.audioTracks,
+    this.subtitles = const [],
+    required this.lastPosition,
+    required this.lastEpisodeId,
   });
+
+  factory PlayInfo.assembly(GetPlayInfoResponse playInfoResp, GetExtraPlayInfoResponse extraPlayInfoResp) {
+    return PlayInfo(
+      id: playInfoResp.id,
+      session: playInfoResp.session,
+      videoId: playInfoResp.videoId,
+      bvid: playInfoResp.bvid,
+      episodeId: playInfoResp.episodeId,
+      duration: playInfoResp.duration,
+      videoTracks: playInfoResp.videoTracks,
+      audioTracks: playInfoResp.audioTracks,
+      subtitles: extraPlayInfoResp.subtitles,
+      lastPosition: extraPlayInfoResp.lastPosition,
+      lastEpisodeId: extraPlayInfoResp.lastEpisodeId,
+    );
+  }
 }
 
 class MediaTrack {
@@ -77,4 +102,27 @@ enum CodecEnum {
 
   @override
   String toString() => value;
+}
+
+class Subtitle {
+  final String id;
+  final String code;
+  final bool isAigc;
+  final String url;
+
+  const Subtitle({
+    required this.id,
+    required this.code,
+    required this.isAigc,
+    required this.url,
+  });
+
+  factory Subtitle.fromJson(Map<String, dynamic> json) {
+    return Subtitle(
+      id: json['id_str'],
+      code: json['lan'],
+      isAigc: json['ai_type'] == 1,
+      url: 'https:${json['subtitle_url']}',
+    );
+  }
 }

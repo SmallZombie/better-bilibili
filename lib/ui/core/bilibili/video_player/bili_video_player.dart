@@ -89,8 +89,8 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       _depth++;
       _log.i('onRouteChanged depth++: $_depth');
 
-      if (_depth > 0) {
-        controller.pause();
+      if (_depth == 1) {
+        controller.onBackend();
       }
     } else if (event is AppRoutePopEvent) {
       final name = event.route.settings.name;
@@ -100,13 +100,15 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       _log.i('onRouteChanged depth--: $_depth');
 
       if (_depth == 0) {
-        controller.reBindMediaSession();
+        controller.onFrontend();
       }
     }
 
     /// dispose 会慢半拍, 正好这里 pop 不会慢半拍
     /// 在这里解决离开页面时仍然会播放一点点的问题
-    if (_depth == -1) controller.pause();
+    if (_depth == -1) {
+      controller.onDispose();
+    }
   }
 
   void _putVideoToNewRoute({bool forWindowFullscreenUse = false}) {

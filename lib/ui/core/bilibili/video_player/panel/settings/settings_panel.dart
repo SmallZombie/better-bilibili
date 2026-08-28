@@ -9,15 +9,17 @@ import 'package:flutter/material.dart';
 class SettingsPanel extends StatelessWidget {
   final PlayerConfig config;
   final VoidCallback? onBack;
-  final VoidCallback? onSelectPreferredCodec;
-  final VoidCallback? onSelectFallbackCodec;
+  final VoidCallback? onTapPreferredCodec;
+  final VoidCallback? onTapFallbackCodec;
+  final VoidCallback? onTapLoudnessNormalization;
 
   const SettingsPanel({
     super.key,
     required this.config,
     this.onBack,
-    this.onSelectPreferredCodec,
-    this.onSelectFallbackCodec,
+    this.onTapPreferredCodec,
+    this.onTapFallbackCodec,
+    this.onTapLoudnessNormalization,
   });
 
   @override
@@ -64,6 +66,27 @@ class SettingsPanel extends StatelessWidget {
                 },
               ),
 
+              // 响度均衡之死见 README.md
+              // StreamBuilder(
+              //   stream: config.stream.loudnessNormalization,
+              //   initialData: config.loudnessNormalization,
+              //   builder: (context, asyncSnapshot) {
+              //     final value = asyncSnapshot.data!;
+              //     return PanelTile(
+              //       title: const Text('响度均衡'),
+              //       subtitle: Text(switch (value) {
+              //         .off => '关闭',
+              //         .normal => '普通',
+              //         .highDynamic => '高动态',
+              //       }),
+              //       trailing: Icon(
+              //         Icons.keyboard_arrow_right_outlined,
+              //         color: Colors.white.withAlpha(200),
+              //       ),
+              //       onTap: onTapLoudnessNormalization,
+              //     );
+              //   },
+              // ),
               PanelSectionTitle(title: '连续播放'),
               StreamBuilder(
                 stream: config.stream.autoPlayNextEpisode,
@@ -116,7 +139,7 @@ class SettingsPanel extends StatelessWidget {
                 builder: (context, asyncSnapshot) {
                   final value = (asyncSnapshot.data ?? config.preferredCodec).toString();
                   return PanelTile(
-                    onTap: onSelectPreferredCodec,
+                    onTap: onTapPreferredCodec,
                     title: const Text('首选编码格式'),
                     subtitle: Text(value),
                     trailing: Icon(
@@ -131,7 +154,7 @@ class SettingsPanel extends StatelessWidget {
                 builder: (context, asyncSnapshot) {
                   final value = (asyncSnapshot.data ?? config.fallbackCodec).toString();
                   return PanelTile(
-                    onTap: onSelectFallbackCodec,
+                    onTap: onTapFallbackCodec,
                     title: const Text('备选编码格式'),
                     subtitle: Text(value),
                     trailing: Icon(
@@ -162,13 +185,21 @@ class SettingsPanel extends StatelessWidget {
               //     color: Colors.white.withAlpha(200),
               //   ),
               // ),
+              PanelSectionTitle(title: '媒体控制'),
+              StreamBuilder(
+                stream: config.stream.mediaControl,
+                initialData: config.mediaControl,
+                builder: (context, asyncSnapshot) {
+                  final mediaControl = asyncSnapshot.data!;
+                  return SwitchPanelTile(
+                    title: const Text('启用媒体控制'),
+                    subtitle: const Text('允许通过系统媒体控件控制播放，并显示当前播放信息'),
+                    value: mediaControl,
+                    onChanged: config.setMediaControl,
+                  );
+                },
+              ),
 
-              // PanelSectionTitle(title: '媒体控制'),
-              // SwitchPanelTile(
-              //   title: const Text('启用媒体控制'),
-              //   subtitle: const Text('允许通过系统媒体控件控制播放，并显示当前播放信息'),
-              //   value: true,
-              // ),
               // SwitchPanelTile(
               //   title: const Text('后台播放'),
               //   value: false,

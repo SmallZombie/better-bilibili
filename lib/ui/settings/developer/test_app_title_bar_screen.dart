@@ -1,4 +1,4 @@
-import 'package:better_bilibili/ui/core/app_shell/app_controller.dart';
+import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

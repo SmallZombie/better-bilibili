@@ -50,7 +50,7 @@ class _NoticeWidget extends StatelessWidget {
       child: Container(
         padding: .fromLTRB(16.0, 8.0, hasAction ? 8.0 : 16.0, 8.0),
         decoration: BoxDecoration(
-          color: Colors.black87,
+          color: Colors.black54,
           borderRadius: .circular(8.0),
         ),
         child: DefaultTextStyle.merge(

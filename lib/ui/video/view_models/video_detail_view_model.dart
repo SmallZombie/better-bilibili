@@ -5,35 +5,42 @@ import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
-import 'package:better_bilibili/data/services/bilibili/model/get_extra_play_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_videos_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/ui/core/app_shell/app_controller.dart';
+import 'package:better_bilibili/ui/core/app/app_controller.dart';
+import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/history_reporter/bili_history_reporter.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku_layer/bili_danmaku_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice_layer/notice_controller.dart';
+import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/utils/command.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
-import 'package:logging/logging.dart';
+import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 class VideoDetailViewModel extends SafeChangeNotifier {
-  final Logger _log = Logger('VideoDetailViewModel');
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'VideoDetailViewModel'));
+
   final VideoRepository videoRepository;
   final UserRepository userRepository;
   final AuthRepository authRepository;
   final PlayerConfig playerConfig;
   final DanmakuConfig danmakuConfig;
   final AppController appController;
+  final MediaSessionController mediaSessionController;
 
   String videoId;
   String? episodeId;
   String? cover;
   String? playlistId;
 
+  /// 额外传入 episodeId 以触发加载加速，
+  /// 使用了加载加速并且启用媒体控制时会导致媒体控制在初期短暂显示为 "Unknown Title"
   VideoDetailViewModel({
     required this.videoRepository,
     required this.userRepository,
@@ -41,6 +48,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     required this.playerConfig,
     required this.danmakuConfig,
     required this.appController,
+    required this.mediaSessionController,
     required this.videoId,
     this.episodeId,
     String? initCover,
@@ -141,17 +149,15 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   void _getVideoInteractionSuccess(GetVideoInteractionResult result) {
     _interaction = result.interaction;
     _isInWatchLater = result.isInWatchLater;
-    _log.info('new interaction: ${result.interaction.isSubscribedCollection}');
+    _log.i('new interaction: ${result.interaction.isSubscribedCollection}');
 
     notifyListeners();
   }
 
-  late final CancellableCommand0<GetPlayInfoResult> getPlayInfo;
+  late final CancellableCommand0<PlayInfo> getPlayInfo;
 
   PlayInfo? _playInfo;
   PlayInfo? get playInfo => _playInfo;
-  GetExtraPlayInfoResponse? _extraPlayInfo;
-  GetExtraPlayInfoResponse? get extraPlayInfo => _extraPlayInfo;
   BiliVideoPlayerController? _videoController;
   BiliVideoPlayerController? get videoController => _videoController;
   BiliDanmakuController? _danmakuController;
@@ -160,45 +166,29 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   BiliHistoryReporter? get biliHistoryReporter => _biliHistoryReporter;
   final NoticeController _noticeController = NoticeController();
 
-  Future<Result<GetPlayInfoResult>> _getPlayInfo() async {
-    final [
-      playInfoResult as Result<PlayInfo>,
-      extraPlayInfoResult as Result<GetExtraPlayInfoResponse>,
-    ] = await Future.wait([
-      videoRepository.getPlayInfo(videoId: videoId, episodeId: episodeId!),
-      videoRepository.getExtraPlayInfo(videoId: videoId, episodeId: episodeId!),
-    ]);
-
-    switch (playInfoResult) {
+  Future<Result<PlayInfo>> _getPlayInfo() async {
+    final result = await videoRepository.getPlayInfo(videoId: videoId, episodeId: episodeId!);
+    switch (result) {
       case Ok():
-        break;
+        await playerConfig.ensureInitialized();
+        await danmakuConfig.ensureInitialized();
+        return result;
       case Error(:final error):
-        Result.error(error);
+        return Result.error(error);
     }
-    switch (extraPlayInfoResult) {
-      case Ok():
-        break;
-      case Error(:final error):
-        Result.error(error);
-    }
-
-    playInfoResult as Ok<PlayInfo>;
-    extraPlayInfoResult as Ok<GetExtraPlayInfoResponse>;
-
-    await playerConfig.ensureInitialized();
-    await danmakuConfig.ensureInitialized();
-
-    return Result.ok(
-      GetPlayInfoResult(
-        playInfo: playInfoResult.value,
-        extraPlayInfo: extraPlayInfoResult.value,
-      ),
-    );
   }
 
-  void _getPlayInfoSuccess(GetPlayInfoResult result) {
-    _playInfo = result.playInfo;
-    _extraPlayInfo = result.extraPlayInfo;
+  bool _isFirstPlayInfoLoad = true;
+
+  void _getPlayInfoSuccess(PlayInfo result) {
+    _playInfo = result;
+    if (_isFirstPlayInfoLoad && _detail != null) {
+      _isFirstPlayInfoLoad = false;
+
+      if (_switchToLastEpisodeIfNeeded()) {
+        return;
+      }
+    }
 
     _biliHistoryReporter?.dispose();
     _danmakuController?.dispose();
@@ -208,17 +198,30 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       authRepository: authRepository,
       playerConfig: playerConfig,
       danmakuConfig: danmakuConfig,
-      playInfo: result.playInfo,
-      extraPlayInfo: result.extraPlayInfo,
-      initPosition: _initPosition,
+      playInfo: result,
+      initPosition: _initPosition ?? result.lastPosition,
       noticeController: _noticeController,
       initTitle: detail?.title,
+      mediaSessionController: mediaSessionController,
     );
+    if (result.lastPosition != .zero) {
+      _noticeController.show(
+        Notice(
+          content: Text('上次观看到 ${formatDuration(result.lastPosition)}'),
+          action: '撤销',
+          duration: const Duration(seconds: 6),
+          onTap: (self) {
+            _videoController?.seek(.zero);
+            _noticeController.dismiss(self);
+          },
+        ),
+      );
+    }
 
     _danmakuController = BiliDanmakuController(
       contentType: .video,
-      contentId: result.playInfo.videoId,
-      episodeId: result.playInfo.episodeId,
+      contentId: result.videoId,
+      episodeId: result.episodeId,
       config: danmakuConfig,
       controller: _videoController!,
       videoRepository: videoRepository,
@@ -231,7 +234,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  Duration _initPosition = .zero;
+  Duration? _initPosition;
 
   Future<void> reload() async {
     getDetail.cancel();
@@ -258,13 +261,21 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       if (_videoController?.title == null) {
         _videoController?.updateTitle(_detail!.title);
       }
+
+      if (_isFirstPlayInfoLoad) {
+        _isFirstPlayInfoLoad = false;
+
+        if (_switchToLastEpisodeIfNeeded()) {
+          return;
+        }
+      }
     }
 
     getVideoInteraction.execute();
   }
 
   Future<void> switchVideo(String nextVideoId, String? nextEpisodeId, String? nextCover) async {
-    _log.info('switchVideo: videoId = $nextVideoId, episodeId = $nextEpisodeId, cover = $nextCover');
+    _log.i('switchVideo: videoId = $nextVideoId, episodeId = $nextEpisodeId, cover = $nextCover');
 
     videoId = nextVideoId;
     episodeId = nextEpisodeId;
@@ -280,7 +291,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   }
 
   Future<void> switchEpisode(VideoDetailEpisode episode, {Duration initPosition = .zero}) async {
-    _log.info('switchEpisode: episodeId = ${episode.episodeId}, cover = ${episode.cover}');
+    _log.i('switchEpisode: episodeId = ${episode.episodeId}, cover = ${episode.cover}');
 
     episodeId = episode.episodeId;
     cover = episode.cover;
@@ -435,7 +446,6 @@ class VideoDetailViewModel extends SafeChangeNotifier {
 
   void disposePlayer() {
     _playInfo = null;
-    _extraPlayInfo = null;
     _danmakuController?.dispose();
     _danmakuController = null;
     notifyListeners();
@@ -468,6 +478,40 @@ class VideoDetailViewModel extends SafeChangeNotifier {
 
     notifyListeners();
   }
+
+  /// 如果上次观看的位置不是当前ep，则跳转至对应ep并返回true
+  bool _switchToLastEpisodeIfNeeded() {
+    if (_playInfo == null || _detail == null) {
+      return false;
+    }
+
+    final currentEpisode = _detail!.episodes.firstWhere((v) => v.episodeId == episodeId!);
+    final lastEpisodeId = _playInfo!.lastEpisodeId;
+
+    if (lastEpisodeId != null && lastEpisodeId != episodeId) {
+      final index = _detail!.episodes.indexWhere((v) => v.episodeId == episodeId);
+      final lastEpisode = _detail!.episodes[index];
+
+      _log.i('[switchToLastEpisodeIfNeeded] switch to ${lastEpisode.episodeId}($index)');
+      switchEpisode(lastEpisode, initPosition: _playInfo!.lastPosition);
+
+      _noticeController.show(
+        Notice(
+          content: Text('上次观看到 P${index + 1} ${formatDuration(_playInfo!.lastPosition)}'),
+          action: '撤销',
+          duration: const Duration(seconds: 6),
+          onTap: (self) {
+            switchEpisode(currentEpisode);
+            _noticeController.dismiss(self);
+          },
+        ),
+      );
+
+      return true;
+    }
+
+    return false;
+  }
 }
 
 class UpdateVideoFavoritesRequest {
@@ -491,11 +535,4 @@ class GetVideoInteractionResult {
     required this.interaction,
     required this.isInWatchLater,
   });
-}
-
-class GetPlayInfoResult {
-  final PlayInfo playInfo;
-  final GetExtraPlayInfoResponse extraPlayInfo;
-
-  const GetPlayInfoResult({required this.playInfo, required this.extraPlayInfo});
 }

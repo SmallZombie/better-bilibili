@@ -85,3 +85,6 @@ protoc --dart_out=lib/data/model/bilibili -I assets assets/bilibili.proto --plug
 - ~~Cover to ico: https://redketchup.io/icon-converter~~ (现在由 flutter_launcher_icon s自动生成)
 - https://pub.dev/packages/flutter_launcher_icons
 - `dart run flutter_launcher_icons`
+
+## 响度均衡之死
+折腾了一天最后发现 media_kit 自带的 mpv 不支持 AudioFilter，自己编译和替换时间成本太高了，已经写好的部分就先注释掉留着了，以后再说吧

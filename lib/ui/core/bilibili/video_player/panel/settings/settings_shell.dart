@@ -9,6 +9,7 @@ enum SettingsRoute {
   home,
   preferredCodec,
   fallbackCodec,
+  loudnessNormalization,
 }
 
 class SettingsShell extends StatefulWidget {
@@ -48,8 +49,9 @@ class _SettingsShellState extends State<SettingsShell> {
         key: const ValueKey(SettingsRoute.home),
         config: widget.playerConfig,
         onBack: widget.onBack,
-        onSelectPreferredCodec: () => _go(SettingsRoute.preferredCodec),
-        onSelectFallbackCodec: () => _go(SettingsRoute.fallbackCodec),
+        onTapPreferredCodec: () => _go(SettingsRoute.preferredCodec),
+        onTapFallbackCodec: () => _go(SettingsRoute.fallbackCodec),
+        onTapLoudnessNormalization: () => _go(SettingsRoute.loudnessNormalization),
       ),
       SettingsRoute.preferredCodec => StreamBuilder(
         stream: widget.playerConfig.stream.preferredCodec,
@@ -76,6 +78,29 @@ class _SettingsShellState extends State<SettingsShell> {
             items: CodecEnum.values.map((v) => SelectionPanelItem(label: v.value, value: v)).toList(),
             value: fallbackCodec,
             onChange: widget.playerConfig.setFallbackCodec,
+          );
+        },
+      ),
+      SettingsRoute.loudnessNormalization => StreamBuilder(
+        stream: widget.playerConfig.stream.loudnessNormalization,
+        initialData: widget.playerConfig.loudnessNormalization,
+        builder: (context, asyncSnapshot) {
+          final value = asyncSnapshot.data!;
+          return SelectionPanel(
+            key: const ValueKey(SettingsRoute.loudnessNormalization),
+            header: PanelHeader(title: const Text('响度均衡'), onBack: _backToHome),
+            items: LoudnessNormalizationModeEnum.values.map((v) {
+              return SelectionPanelItem(
+                label: switch (v) {
+                  .off => '关闭',
+                  .normal => '普通',
+                  .highDynamic => '高动态',
+                },
+                value: v,
+              );
+            }).toList(),
+            value: value,
+            onChange: widget.playerConfig.setLoudnessNormalization,
           );
         },
       ),

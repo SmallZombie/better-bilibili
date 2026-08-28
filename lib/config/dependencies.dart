@@ -23,7 +23,8 @@ import 'package:better_bilibili/data/services/bilibili/bili_search_api_service.d
 import 'package:better_bilibili/data/services/bilibili/bili_user_api_service.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_video_api_service.dart';
 import 'package:better_bilibili/data/services/cache_service.dart';
-import 'package:better_bilibili/ui/core/app_shell/app_controller.dart';
+import 'package:better_bilibili/ui/core/app/app_controller.dart';
+import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_report_sheet/comment_report_sheet_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/favorite_folder/edit_video_in_favorite_folder_sheet/edit_video_in_favorite_folder_sheet_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/user/user_dialog/user_dialog_view_model.dart';
@@ -120,6 +121,7 @@ List<SingleChildWidget> get providersOnline => [
     dispose: (_, value) => value.dispose(),
   ),
   ChangeNotifierProvider<AppController>(create: (context) => AppController()),
+  Provider<MediaSessionController>.value(value: MediaSessionController()),
   ChangeNotifierProvider<CommentReportSheetViewModel>(
     create: (context) => CommentReportSheetViewModel(commentRepository: context.read()),
   ),
