@@ -1,6 +1,6 @@
+import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/webview/web_view_view_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -23,17 +23,19 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, child) => AppBar(title: Text(_viewModel.title)),
-        ),
+      appBar: AppBar(
+        title: ListenableBuilder(listenable: _viewModel, builder: (context, _) => Text(_viewModel.title)),
+        actions: [
+          IconButton(
+            onPressed: () => context.openUrl(_viewModel.url, mode: .external),
+            icon: const Icon(Icons.open_in_browser),
+          ),
+        ],
       ),
-      body: InAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri(_viewModel.url)),
-        onTitleChanged: (controller, title) => _viewModel.setTitle(title ?? ''),
-      ),
+      // body: InAppWebView(
+      //   initialUrlRequest: URLRequest(url: WebUri(_viewModel.url)),
+      //   onTitleChanged: (controller, title) => _viewModel.setTitle(title ?? ''),
+      // ),
     );
   }
 }

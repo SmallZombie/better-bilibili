@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:better_bilibili/data/repositories/bilibili/chat_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart';
 import 'package:better_bilibili/ui/chat/view_models/conversation_list_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';

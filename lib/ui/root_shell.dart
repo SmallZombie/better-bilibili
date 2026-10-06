@@ -52,16 +52,16 @@ class _RootShellState extends State<RootShell> {
               NavigationRailDestination(
                 icon: Selector<BiliBackgroundService, int>(
                   selector: (context, vm) => vm.unreadPostCount,
-                  builder: (context, count, _) => Badge.count(
-                    count: count,
+                  builder: (context, count, _) => Badge(
+                    label: Text(count > 99 ? '99+' : count.toString()),
                     isLabelVisible: count > 0,
                     child: Icon(Icons.motion_photos_on_outlined),
                   ),
                 ),
                 selectedIcon: Selector<BiliBackgroundService, int>(
                   selector: (context, vm) => vm.unreadPostCount,
-                  builder: (context, count, _) => Badge.count(
-                    count: count,
+                  builder: (context, count, _) => Badge(
+                    label: Text(count > 99 ? '99+' : count.toString()),
                     isLabelVisible: count > 0,
                     child: Icon(Icons.motion_photos_on),
                   ),
@@ -71,16 +71,16 @@ class _RootShellState extends State<RootShell> {
               NavigationRailDestination(
                 icon: Selector<BiliBackgroundService, int>(
                   selector: (context, vm) => vm.unreadChatCount,
-                  builder: (context, count, _) => Badge.count(
-                    count: count,
+                  builder: (context, count, _) => Badge(
+                    label: count > 99 ? const Text('99+') : Text(count.toString()),
                     isLabelVisible: count > 0,
                     child: Icon(Icons.forum_outlined),
                   ),
                 ),
                 selectedIcon: Selector<BiliBackgroundService, int>(
                   selector: (context, vm) => vm.unreadChatCount,
-                  builder: (context, count, _) => Badge.count(
-                    count: count,
+                  builder: (context, count, _) => Badge(
+                    label: count > 99 ? const Text('99+') : Text(count.toString()),
                     isLabelVisible: count > 0,
                     child: Icon(Icons.forum),
                   ),

@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:better_bilibili/config/account_config.dart';
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_login_qr_code_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_qr_code_status_response.dart';
+import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
@@ -79,19 +79,20 @@ class LoginViewModel extends SafeChangeNotifier {
         }
         if (value.status == QrCodeStatus.success) {
           final resp = value as ConfirmedQrCodeStatusResponse;
-          await _authRepository.updateAccount(
-            AccountData(
-              uid: resp.dedeUserId,
-              accessToken: resp.accessToken,
-              tokenExpiredAt: resp.tokenExpiredAt,
-              refreshToken: resp.refreshToken,
-              dedeUserID: resp.dedeUserId,
-              dedeUserIdCkMd5: resp.dedeUserIdCkMd5,
-              sid: resp.sid,
-              biliJct: resp.biliJct,
-            ),
-          );
-          await _authRepository.switchAccount(resp.dedeUserId);
+          final userId = resp.dedeUserId;
+
+          final builder = AccountBuilder();
+          builder.userId = userId;
+          builder.accessToken = resp.accessToken;
+          builder.tokenExpiredAt = resp.tokenExpiredAt;
+          builder.refreshToken = resp.refreshToken;
+          builder.dedeUserID = resp.dedeUserId;
+          builder.dedeUserIdCkMd5 = resp.dedeUserIdCkMd5;
+          builder.sid = resp.sid;
+          builder.biliJct = resp.biliJct;
+
+          await _authRepository.createAccount(builder);
+          await _authRepository.switchAccount(userId);
         }
         notifyListeners();
         return Result.ok(value);

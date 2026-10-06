@@ -1,275 +1,156 @@
-import 'base_config.dart';
+import 'package:better_bilibili/config/adapter/config_prefs_storage.dart';
+import 'package:better_bilibili/config/adapter/config_secure_storage.dart';
+import 'package:better_bilibili/domain/models/bilibili/account.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AccountConfig extends BaseConfig<AccountConfigData> {
-  bool _initialized = false;
+const kGuestUserId = '#guest';
 
-  AccountConfig()
-    : super(
-        fileName: 'account.json',
-        data: AccountConfigData(
-          // 默认需要有一个空白账户，因为即使在未登录情况下，仍然需要存储 wbi 和 buvid 等信息
-          accounts: [AccountData(uid: '0')],
-          currentAccountId: '0',
-        ),
-      );
+class AccountConfig {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'AccountConfig'));
 
-  @override
-  AccountConfigData fromJson(Map<String, dynamic> json) {
-    return AccountConfigData.fromJson(json);
-  }
+  final ConfigPrefsStorage prefs = ConfigPrefsStorage(prefs: SharedPreferencesAsync());
+  final ConfigSecureStorage secure = ConfigSecureStorage(secure: FlutterSecureStorage());
 
-  @override
-  Map<String, dynamic> toJson(AccountConfigData data) {
-    return data.toJson();
-  }
+  Future<void> saveAccount(Account account) async {
+    final userId = account.userId;
 
-  /// 读取或创建默认配置到内存
-  Future<void> ensureInitialized() async {
-    if (_initialized) return;
+    _log.i('saveAccount userId=$userId');
 
-    await load();
-    _initialized = true;
-  }
+    await _addToAccountListIfNeeded(userId);
 
-  /// 获取当前账号
-  AccountData getCurrentAccount() {
-    try {
-      return findAccountByUid(data.currentAccountId);
-    } catch (_) {}
+    await prefs.setString('account.$userId.wbiImgKey', account.wbiImgKey);
+    await prefs.setString('account.$userId.wbiSubKey', account.wbiSubKey);
+    await prefs.setString('account.$userId.buvid3', account.buvid3);
+    await prefs.setString('account.$userId.buvid4', account.buvid4);
+    await prefs.setString('account.$userId.biliTicket', account.biliTicket);
+    await prefs.setInt('account.$userId.biliTicketExpiredAt', account.biliTicketExpiredAt);
+    await prefs.setString('account.$userId.uuid', account.uuid);
+    await prefs.setString('account.$userId.buvidFp', account.buvidFp);
+    await prefs.setString('account.$userId.userAgent', account.userAgent);
+    await prefs.setInt('account.$userId.windowWidth', account.windowWidth);
+    await prefs.setInt('account.$userId.windowHeight', account.windowHeight);
+    await prefs.setString('account.$userId.brand', account.brand);
+    await prefs.setString('account.$userId.model', account.model);
 
-    // 如果找不到账号就返回空账号，这里还要额外确保空账号存在
-    try {
-      return findAccountByUid('0');
-    } catch (e) {
-      final account = addAccount(AccountData(uid: '0'));
-
-      // 这里故意不等保存完
-      save();
-
-      return account;
+    if (account is LoginedAccount) {
+      await secure.setString('account.$userId.accessToken', account.accessToken);
+      await secure.setString('account.$userId.refreshToken', account.refreshToken);
+      await prefs.setInt('account.$userId.tokenExpiredAt', account.tokenExpiredAt);
+      await prefs.setString('account.$userId.dedeUserID', account.dedeUserID);
+      await prefs.setString('account.$userId.dedeUserIdCkMd5', account.dedeUserIdCkMd5);
+      await prefs.setString('account.$userId.sid', account.sid);
+      await prefs.setString('account.$userId.biliJct', account.biliJct);
     }
   }
 
-  /// 添加账号
-  AccountData addAccount(AccountData account) {
-    // 检查是否已存在
-    if (data.accounts.any((a) => a.uid == account.uid)) {
-      throw ArgumentError('账号 ID 已存在: ${account.uid}');
+  Future<void> saveAccountWithBuilder(AccountBuilder builder) async {
+    final userId = builder.userId;
+    assert(userId != null);
+
+    _log.i('saveAccountWithBuilder userId=$userId');
+
+    await _addToAccountListIfNeeded(userId!);
+
+    if (builder.wbiImgKey != null) await prefs.setString('account.$userId.wbiImgKey', builder.wbiImgKey!);
+    if (builder.wbiSubKey != null) await prefs.setString('account.$userId.wbiSubKey', builder.wbiSubKey!);
+    if (builder.buvid3 != null) await prefs.setString('account.$userId.buvid3', builder.buvid3!);
+    if (builder.buvid4 != null) await prefs.setString('account.$userId.buvid4', builder.buvid4!);
+    if (builder.biliTicket != null) await prefs.setString('account.$userId.biliTicket', builder.biliTicket!);
+    if (builder.biliTicketExpiredAt != null) await prefs.setInt('account.$userId.biliTicketExpiredAt', builder.biliTicketExpiredAt!);
+    if (builder.uuid != null) await prefs.setString('account.$userId.uuid', builder.uuid!);
+    if (builder.buvidFp != null) await prefs.setString('account.$userId.buvidFp', builder.buvidFp!);
+    if (builder.userAgent != null) await prefs.setString('account.$userId.userAgent', builder.userAgent!);
+    if (builder.windowWidth != null) await prefs.setInt('account.$userId.windowWidth', builder.windowWidth!);
+    if (builder.windowHeight != null) await prefs.setInt('account.$userId.windowHeight', builder.windowHeight!);
+    if (builder.brand != null) await prefs.setString('account.$userId.brand', builder.brand!);
+    if (builder.model != null) await prefs.setString('account.$userId.model', builder.model!);
+
+    if (builder.accessToken != null) await secure.setString('account.$userId.accessToken', builder.accessToken!);
+    if (builder.refreshToken != null) await secure.setString('account.$userId.refreshToken', builder.refreshToken!);
+    if (builder.tokenExpiredAt != null) await prefs.setInt('account.$userId.tokenExpiredAt', builder.tokenExpiredAt!);
+    if (builder.dedeUserID != null) await prefs.setString('account.$userId.dedeUserID', builder.dedeUserID!);
+    if (builder.dedeUserIdCkMd5 != null) await prefs.setString('account.$userId.dedeUserIdCkMd5', builder.dedeUserIdCkMd5!);
+    if (builder.sid != null) await prefs.setString('account.$userId.sid', builder.sid!);
+    if (builder.biliJct != null) await prefs.setString('account.$userId.biliJct', builder.biliJct!);
+  }
+
+  Future<void> removeAccount(String userId) async {
+    assert(userId != kGuestUserId);
+
+    _log.i('removeAccount userId=$userId');
+
+    final prefix = 'account.$userId.';
+    await prefs.clearWithPrefix(prefix);
+    await secure.clearWithPrefix(prefix);
+
+    await _removeFromAccountList(userId);
+  }
+
+  Future<String> getCurrentAccountId() async {
+    return (await prefs.getString('account.current')) ?? kGuestUserId;
+  }
+
+  Future<AccountBuilder> getAccount(String userId) async {
+    _log.i('getAccount userId=$userId');
+
+    final builder = AccountBuilder();
+
+    builder.userId = userId;
+    builder.accessToken = await secure.getString('account.$userId.accessToken');
+    builder.refreshToken = await secure.getString('account.$userId.refreshToken');
+    builder.tokenExpiredAt = await prefs.getInt('account.$userId.tokenExpiredAt');
+    builder.dedeUserID = await prefs.getString('account.$userId.dedeUserID');
+    builder.dedeUserIdCkMd5 = await prefs.getString('account.$userId.dedeUserIdCkMd5');
+    builder.sid = await prefs.getString('account.$userId.sid');
+    builder.biliJct = await prefs.getString('account.$userId.biliJct');
+    builder.wbiImgKey = await prefs.getString('account.$userId.wbiImgKey');
+    builder.wbiSubKey = await prefs.getString('account.$userId.wbiSubKey');
+    builder.buvid3 = await prefs.getString('account.$userId.buvid3');
+    builder.buvid4 = await prefs.getString('account.$userId.buvid4');
+    builder.biliTicket = await prefs.getString('account.$userId.biliTicket');
+    builder.biliTicketExpiredAt = await prefs.getInt('account.$userId.biliTicketExpiredAt');
+    builder.uuid = await prefs.getString('account.$userId.uuid');
+    builder.buvidFp = await prefs.getString('account.$userId.buvidFp');
+    builder.userAgent = await prefs.getString('account.$userId.userAgent');
+    builder.windowWidth = await prefs.getInt('account.$userId.windowWidth');
+    builder.windowHeight = await prefs.getInt('account.$userId.windowHeight');
+    builder.brand = await prefs.getString('account.$userId.brand');
+    builder.model = await prefs.getString('account.$userId.model');
+
+    return builder;
+  }
+
+  Future<void> setCurrentAccount(String nextAccountId) {
+    _log.i('setCurrentAccount nextAccountId=$nextAccountId');
+
+    return prefs.setString('account.current', nextAccountId);
+  }
+
+  Future<List<String>> getAccountList() async {
+    final accountListStr = await prefs.getString('account.list');
+    if (accountListStr == null) return [kGuestUserId];
+
+    final list = accountListStr.split(',');
+    if (!list.contains(kGuestUserId)) {
+      list.add(kGuestUserId);
     }
-
-    data.accounts.add(account);
-
-    return account;
+    return list;
   }
 
-  /// 更新账号
-  void updateAccount(AccountData account) {
-    final index = data.accounts.indexWhere((a) => a.uid == account.uid);
-    if (index == -1) {
-      throw ArgumentError('账号不存在: ${account.uid}');
+  Future<void> _addToAccountListIfNeeded(String accountId) async {
+    final list = await getAccountList();
+    if (!list.contains(accountId)) {
+      list.add(accountId);
     }
-
-    data.accounts[index] = account;
+    prefs.setString('account.list', list.join(','));
   }
 
-  /// 删除账号
-  void removeAccount(String accountId) {
-    data.accounts.removeWhere((a) => a.uid == accountId);
-
-    // 如果删除的是当前账号，清空当前账号
-    if (data.currentAccountId == accountId) {
-      data.currentAccountId = '0';
-    }
-  }
-
-  /// 设置当前账号
-  void setCurrentAccount(String accountId) {
-    if (!data.accounts.any((a) => a.uid == accountId)) {
-      throw ArgumentError('账号不存在: $accountId');
-    }
-
-    data.currentAccountId = accountId;
-  }
-
-  /// 尝试通过 UID 查找账号
-  AccountData findAccountByUid(String uid) {
-    return data.accounts.firstWhere((a) => a.uid == uid);
-  }
-}
-
-class AccountConfigData {
-  List<AccountData> accounts;
-  String currentAccountId;
-
-  AccountConfigData({required this.accounts, required this.currentAccountId});
-
-  factory AccountConfigData.fromJson(Map<String, dynamic> json) {
-    return AccountConfigData(
-      accounts: (json['accounts'] as List<dynamic>?)?.map((e) => AccountData.fromJson(e as Map<String, dynamic>)).toList() ?? [],
-      currentAccountId: json['currentAccountId'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'accounts': accounts.map((e) => e.toJson()).toList(), 'currentAccountId': currentAccountId};
-  }
-}
-
-class AccountData {
-  String uid;
-  String? nickname;
-  String? avatar;
-  String? accessToken;
-  String? refreshToken;
-  int? tokenExpiredAt;
-  String? wbiImgKey;
-  String? wbiSubKey;
-  String? dedeUserID;
-  String? dedeUserIdCkMd5;
-  String? sid;
-  String? biliJct;
-  String? buvid3;
-  String? buvid4;
-  String? biliTicket;
-  int? biliTicketExpiredAt;
-  String? uuid;
-  String? buvidFp;
-  // int? level;
-  // String? vipIcon;
-  // double? coin;
-  // double? bcoin;
-  // int? dynamicCount;
-  // int? followCount;
-  // int? fansCount;
-  String? userAgent;
-  int? windowWidth;
-  int? windowHeight;
-
-  AccountData({
-    required this.uid,
-    this.nickname,
-    this.avatar,
-    this.accessToken,
-    this.tokenExpiredAt,
-    this.refreshToken,
-    this.dedeUserID,
-    this.dedeUserIdCkMd5,
-    this.sid,
-    this.wbiImgKey,
-    this.wbiSubKey,
-    this.biliJct,
-    this.buvid3,
-    this.buvid4,
-    this.biliTicket,
-    this.biliTicketExpiredAt,
-    this.uuid,
-    this.buvidFp,
-    // this.level,
-    // this.vipIcon,
-    // this.coin,
-    // this.bcoin,
-    // this.dynamicCount,
-    // this.followCount,
-    // this.fansCount,
-    this.userAgent,
-    this.windowWidth,
-    this.windowHeight,
-  });
-
-  factory AccountData.fromJson(Map<String, dynamic> json) {
-    return AccountData(
-      uid: json['uid'] as String,
-      nickname: json['nickname'] as String?,
-      avatar: json['avatar'] as String?,
-      accessToken: json['accessToken'] as String?,
-      tokenExpiredAt: json['tokenExpiredAt'] as int?,
-      refreshToken: json['refreshToken'] as String?,
-      dedeUserID: json['dedeUserID'] as String?,
-      dedeUserIdCkMd5: json['dedeUserIdCkMd5'] as String?,
-      sid: json['sid'] as String?,
-      wbiImgKey: json['wbiImgKey'] as String?,
-      wbiSubKey: json['wbiSubKey'] as String?,
-      biliJct: json['biliJct'] as String?,
-      buvid3: json['buvid3'] as String?,
-      buvid4: json['buvid4'] as String?,
-      biliTicket: json['biliTicket'] as String?,
-      biliTicketExpiredAt: json['biliTicketExpiredAt'] as int?,
-      uuid: json['uuid'] as String?,
-      buvidFp: json['buvidFp'] as String?,
-      // level: json['level'] as int?,
-      // vipIcon: json['vipIcon'] as String?,
-      // coin: json['coin'] as double?,
-      // bcoin: json['bcoin'] as double?,
-      // dynamicCount: json['dynamicCount'] as int?,
-      // followCount: json['followCount'] as int?,
-      // fansCount: json['fansCount'] as int?,
-      userAgent: json['userAgent'] as String?,
-      windowWidth: json['windowWidth'] as int?,
-      windowHeight: json['windowHeight'] as int?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'uid': uid,
-      'nickname': nickname,
-      'avatar': avatar,
-      'accessToken': accessToken,
-      'tokenExpiredAt': tokenExpiredAt,
-      'refreshToken': refreshToken,
-      'dedeUserID': dedeUserID,
-      'dedeUserIdCkMd5': dedeUserIdCkMd5,
-      'sid': sid,
-      'wbiImgKey': wbiImgKey,
-      'wbiSubKey': wbiSubKey,
-      'biliJct': biliJct,
-      'buvid3': buvid3,
-      'buvid4': buvid4,
-      'biliTicket': biliTicket,
-      'biliTicketExpiredAt': biliTicketExpiredAt,
-      'uuid': uuid,
-      'buvidFp': buvidFp,
-      // 'level': level,
-      // 'vipIcon': vipIcon,
-      // 'coin': coin,
-      // 'bcoin': bcoin,
-      // 'dynamicCount': dynamicCount,
-      // 'followCount': followCount,
-      // 'fansCount': fansCount,
-      'userAgent': userAgent,
-      'windowWidth': windowWidth,
-      'windowHeight': windowHeight,
-    };
-  }
-
-  /// 合并另一个 AccountData 对象，新值会覆盖旧值（null 值不会覆盖）
-  void mergeWith(AccountData other) {
-    if (other.nickname != null) nickname = other.nickname;
-    if (other.avatar != null) avatar = other.avatar;
-    if (other.accessToken != null) accessToken = other.accessToken;
-    if (other.tokenExpiredAt != null) tokenExpiredAt = other.tokenExpiredAt;
-    if (other.refreshToken != null) refreshToken = other.refreshToken;
-    if (other.wbiImgKey != null) wbiImgKey = other.wbiImgKey;
-    if (other.wbiSubKey != null) wbiSubKey = other.wbiSubKey;
-    if (other.dedeUserID != null) dedeUserID = other.dedeUserID;
-    if (other.dedeUserIdCkMd5 != null) dedeUserIdCkMd5 = other.dedeUserIdCkMd5;
-    if (other.sid != null) sid = other.sid;
-    if (other.biliJct != null) biliJct = other.biliJct;
-    if (other.buvid3 != null) buvid3 = other.buvid3;
-    if (other.buvid4 != null) buvid4 = other.buvid4;
-    if (other.biliTicket != null) biliTicket = other.biliTicket;
-    if (other.biliTicketExpiredAt != null) biliTicketExpiredAt = other.biliTicketExpiredAt;
-    if (other.uuid != null) uuid = other.uuid;
-    if (other.buvidFp != null) buvidFp = other.buvidFp;
-    // if (other.level != null) level = other.level;
-    // if (other.vipIcon != null) vipIcon = other.vipIcon;
-    // if (other.coin != null) coin = other.coin;
-    // if (other.bcoin != null) bcoin = other.bcoin;
-    // if (other.dynamicCount != null) dynamicCount = other.dynamicCount;
-    // if (other.followCount != null) followCount = other.followCount;
-    // if (other.fansCount != null) fansCount = other.fansCount;
-    if (other.userAgent != null) userAgent = other.userAgent;
-    if (other.windowWidth != null) windowWidth = other.windowWidth;
-    if (other.windowHeight != null) windowHeight = other.windowHeight;
+  Future<void> _removeFromAccountList(String accountId) async {
+    final list = await getAccountList();
+    list.removeWhere((v) => v == accountId);
+    prefs.setString('account.list', list.join(','));
   }
 }

@@ -6,7 +6,6 @@ import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
 import 'package:better_bilibili/ui/home/view_models/post_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +47,7 @@ class _PostViewState extends State<PostView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final vm = context.watch<PostViewModel>();
 
     if (vm.getPosts.error) {
@@ -155,10 +155,10 @@ class _PostViewState extends State<PostView> {
                         itemBuilder: (context, index) {
                           return DecoratedBox(
                             decoration: BoxDecoration(
-                              border: const Border(
-                                left: BorderSide(color: kDefaultDividerColor),
-                                right: BorderSide(color: kDefaultDividerColor),
-                                bottom: BorderSide(color: kDefaultDividerColor),
+                              border: Border(
+                                left: BorderSide(color: colorScheme.outline),
+                                right: BorderSide(color: colorScheme.outline),
+                                bottom: BorderSide(color: colorScheme.outline),
                               ),
                             ),
                             child: ChangeNotifierProvider(

@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_following_users.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_stats_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
@@ -110,7 +110,7 @@ class UserFollowingsViewModel extends SafeChangeNotifier {
         case Ok(:final value):
           _users.addAll(value.list);
           _total = value.total;
-          _isCurrentUser = userId == (await _authRepository.getAccount()).uid;
+          _isCurrentUser = userId == (await _authRepository.getAccount()).userId;
         case Error():
           return result;
       }
@@ -136,7 +136,7 @@ class UserFollowingsViewModel extends SafeChangeNotifier {
   List<UserGroup> get groups => List.unmodifiable(List.from(_groups));
 
   Future<Result<void>> _loadGroups() async {
-    if (userId != (await _authRepository.getAccount()).uid) {
+    if (userId != (await _authRepository.getAccount()).userId) {
       return Result.ok(null);
     }
 

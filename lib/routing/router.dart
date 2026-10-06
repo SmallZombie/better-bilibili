@@ -4,7 +4,10 @@ import 'package:better_bilibili/ui/article_detail/article_detail_screen.dart';
 import 'package:better_bilibili/ui/article_detail/article_detail_view_model.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/ui/auth/login/widgets/login_screen.dart';
+import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_screen.dart';
+import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_view_model.dart';
 import 'package:better_bilibili/ui/chat/chat_shell.dart';
+import 'package:better_bilibili/ui/eagle/settings/eagle_settings_screen.dart';
 import 'package:better_bilibili/ui/echo_cave/echo_cave_screen.dart';
 import 'package:better_bilibili/ui/favorites/widgets/favorites_screen.dart';
 import 'package:better_bilibili/ui/favorites/view_models/favorites_tab_view_model.dart';
@@ -39,21 +42,19 @@ import 'package:better_bilibili/ui/search_favorites/search_favorites_screen.dart
 import 'package:better_bilibili/ui/search_favorites/search_favorites_view_model.dart';
 import 'package:better_bilibili/ui/settings/account_manager/account_manager_screen.dart';
 import 'package:better_bilibili/ui/settings/account_manager/account_manager_view_model.dart';
-import 'package:better_bilibili/ui/settings/setting_screen.dart';
+import 'package:better_bilibili/ui/settings/settings_screen.dart';
 import 'package:better_bilibili/ui/user/detail/widgets/user_detail_screen.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_view_model.dart';
 import 'package:better_bilibili/ui/user/fans/user_fans_screen.dart';
 import 'package:better_bilibili/ui/user/fans/user_fans_view_model.dart';
 import 'package:better_bilibili/ui/user/followings/user_followings_screen.dart';
 import 'package:better_bilibili/ui/user/followings/user_followings_view_model.dart';
-import 'package:better_bilibili/ui/video/widgets/video_detail_screen.dart';
-import 'package:better_bilibili/ui/video/view_models/video_detail_view_model.dart';
+import 'package:better_bilibili/ui/video/video_detail_screen.dart';
+import 'package:better_bilibili/ui/video/video_detail_view_model.dart';
 import 'package:better_bilibili/ui/watch_history/watch_history_screen.dart';
 import 'package:better_bilibili/ui/watch_history/watch_history_view_model.dart';
 import 'package:better_bilibili/ui/watch_later/watch_later_screen.dart';
 import 'package:better_bilibili/ui/watch_later/watch_later_view_model.dart';
-import 'package:better_bilibili/ui/webview/web_view_screen.dart';
-import 'package:better_bilibili/ui/webview/web_view_view_model.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -318,6 +319,8 @@ final GoRouter router = GoRouter(
           playlistId: state.uri.queryParameters['playlistId'],
           appController: context.read(),
           mediaSessionController: context.read(),
+          bsbsbRepository: context.read(),
+          bsbsbConfig: context.read(),
         ),
         builder: (context, child) => VideoDetailScreen(viewModel: context.read()),
       ),
@@ -379,22 +382,25 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: Routes.setting,
-      builder: (context, state) => const SettingScreen(),
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       path: Routes.settingAccountManager,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => AccountManagerViewModel(authRepository: context.read()),
-        builder: (context, child) => const AccountManagerScreen(),
+        create: (_) => AccountManagerViewModel(
+          authRepository: context.read(),
+          userRepository: context.read(),
+        ),
+        builder: (context, _) => AccountManagerScreen(viewModel: context.read()),
       ),
     ),
-    GoRoute(
-      path: Routes.webView,
-      builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => WebViewViewModel(url: state.uri.queryParameters['url']!),
-        builder: (context, child) => const WebViewScreen(),
-      ),
-    ),
+    // GoRoute(
+    //   path: Routes.webView,
+    //   builder: (context, state) => ChangeNotifierProvider(
+    //     create: (_) => WebViewViewModel(url: state.uri.queryParameters['url']!),
+    //     builder: (context, child) => const WebViewScreen(),
+    //   ),
+    // ),
     GoRoute(
       path: Routes.articleDetail,
       builder: (context, state) => ChangeNotifierProvider(
@@ -496,6 +502,22 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.echoCave,
       builder: (context, state) => const EchoCaveScreen(),
+    ),
+    GoRoute(
+      path: Routes.bsbsbSettings,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => BsbsbSettingsViewModel(
+          config: context.read(),
+          bsbsbRepository: context.read(),
+        ),
+        builder: (context, _) => BsbsbSettingsScreen(
+          viewModel: context.read(),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: Routes.eagleSettings,
+      builder: (context, state) => const EagleSettingsScreen(),
     ),
   ],
 );

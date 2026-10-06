@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/chat_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -20,7 +20,7 @@ class ConversationListViewModel extends ChangeNotifier {
 
   Future<Result<void>> _init() async {
     final account = await authRepository.getAccount();
-    currentUserId = account.uid;
+    currentUserId = account.userId;
 
     await loadMore.execute();
     return Result.ok(null);

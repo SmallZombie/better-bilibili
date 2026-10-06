@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:better_bilibili/data/services/bilibili/model/get_video_cards.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
@@ -127,7 +125,6 @@ class _ConversationDetailViewState extends State<ConversationDetailView> {
             ],
           ),
         ),
-        actionsPadding: .only(right: 16.0),
         actions: [
           IconButton(
             onPressed: () => viewModel.reload(),

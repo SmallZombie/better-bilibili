@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/audio_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/audio_repository/audio_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_audios_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';

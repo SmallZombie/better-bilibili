@@ -1,4 +1,7 @@
 import 'package:better_bilibili/routing/routes.dart';
+import 'package:better_bilibili/ui/core/share/color_picker.dart';
+import 'package:better_bilibili/ui/core/share/settings/setting_group.dart';
+import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +17,7 @@ class DeveloperSettingScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Column(
+          spacing: 12.0,
           children: [
             ListTile(
               leading: const Icon(Icons.question_mark),
@@ -49,6 +53,28 @@ class DeveloperSettingScreen extends StatelessWidget {
               onTap: () {
                 context.push(Routes.settingDevTestAppTitleBar);
               },
+            ),
+            SettingGroup(
+              children: [
+                SettingTile(
+                  title: Text('颜色选择器'),
+                  onTap: () {
+                    context.showColorPicker();
+                  },
+                ),
+                SettingTile(
+                  title: Text('Info snackBar'),
+                  onTap: () {
+                    context.showInfo('Info snackBar');
+                  },
+                ),
+                SettingTile(
+                  title: Text('Warring snackBar'),
+                  onTap: () {
+                    context.showError('Warring snackBar');
+                  },
+                ),
+              ],
             ),
           ],
         ),

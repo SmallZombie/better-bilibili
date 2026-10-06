@@ -5,7 +5,7 @@ import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_
 import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_text_button_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_anthology_view_model.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_article_view_model.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_audio_view_model.dart';
@@ -140,7 +140,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
                     icon: Icon(Icons.settings_outlined),
                     tooltip: '设置',
                   ),
-                  const SizedBox(width: 16.0),
                 ],
               ),
               SliverPersistentHeader(

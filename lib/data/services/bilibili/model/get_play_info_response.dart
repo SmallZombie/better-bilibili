@@ -7,8 +7,8 @@ class GetPlayInfoResponse {
   final String bvid;
   final String episodeId;
   final Duration duration;
-  final List<MediaTrack> videoTracks;
-  final List<MediaTrack> audioTracks;
+  final List<MediaStream> videoTracks;
+  final List<MediaStream> audioTracks;
 
   GetPlayInfoResponse({
     required this.id,

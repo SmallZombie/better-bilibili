@@ -9,7 +9,7 @@ import 'package:better_bilibili/ui/core/bilibili/comment/comment_tile/comment_ti
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -126,7 +126,7 @@ class _CommentPanelState extends State<CommentPanel> with AutomaticKeepAliveClie
                     final comment = widget.viewModel.comments[index];
                     return ChangeNotifierProvider(
                       key: ValueKey('${comment.id}-${comment.replyCount}'),
-                      create: (context) => CommentTileViewModel(commentApiService: context.read(), comment: comment),
+                      create: (context) => CommentTileViewModel(commentRepository: context.read(), comment: comment),
                       child: CommentTile(
                         onReply: (target) => _onReply(target),
                         onDelete: _onDelete,
@@ -359,19 +359,16 @@ class _CommentInputState extends State<_CommentInput> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    final result = await FilePicker.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
-    if (!mounted || result == null) return;
+    final result = await FilePicker.pickFiles(type: .image);
+    if (!mounted || result.isEmpty) return;
 
-    final maxCount = 9 - result.files.length;
+    final maxCount = 9 - result.length;
     if (maxCount <= 0) {
       context.showInfo('最多选择9张图片');
       return;
     }
 
-    for (final file in result.files) {
+    for (final file in result) {
       if (file.path == null) continue;
 
       widget.viewModel.addAndUploadImage(

@@ -13,7 +13,7 @@ import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/section_tile.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/home/view_models/me_view_model.dart';
 import 'package:better_bilibili/utils/bili_util.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +62,6 @@ class _MeViewState extends State<MeView> {
             },
             icon: Icon(Icons.settings_outlined, color: Colors.white),
           ),
-          SizedBox(width: 8.0),
         ],
       ),
       floatingActionButton: FloatingActionButton(

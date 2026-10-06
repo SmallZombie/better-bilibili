@@ -4,6 +4,8 @@ const String kAppName = 'Better Bilibili';
 /// 应用英文名
 const String kAppId = 'better_bilibili';
 
+const String kAppVersion = '0.2.alpha4';
+
 /// B站请求需要的 Referer
 const String kBiliHttpReferer = 'https://www.bilibili.com/';
 

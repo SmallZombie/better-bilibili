@@ -7,14 +7,15 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audio_service_win
   dynamic_color
   file_selector_windows
-  flutter_inappwebview_windows
   flutter_media_session
+  flutter_secure_storage_windows
   gal
   media_kit_libs_windows_video
   media_kit_video
   screen_retriever_windows
   url_launcher_windows
   window_manager
+  windows_taskbar
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

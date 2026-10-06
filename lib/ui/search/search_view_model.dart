@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/search_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/search_repository/search_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_trending_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/search_response.dart';
 import 'package:better_bilibili/utils/command.dart';

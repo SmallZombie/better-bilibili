@@ -1,5 +1,4 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
-import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_embed.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';

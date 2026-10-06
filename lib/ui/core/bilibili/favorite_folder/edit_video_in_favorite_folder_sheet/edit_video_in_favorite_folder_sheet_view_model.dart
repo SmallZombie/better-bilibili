@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_simple_list_response.dart';
 import 'package:better_bilibili/utils/command.dart';

@@ -1,18 +1,18 @@
-import 'package:better_bilibili/data/services/bilibili/bili_comment_api_service.dart';
+import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class CommentTileViewModel extends SafeChangeNotifier {
-  final BiliCommentApiService _commentApiService;
+  final CommentRepository _commentRepository;
 
   Comment comment;
 
   CommentTileViewModel({
-    required BiliCommentApiService commentApiService,
+    required CommentRepository commentRepository,
     required this.comment,
-  }) : _commentApiService = commentApiService {
+  }) : _commentRepository = commentRepository {
     getReplies = Command0(_getReplies);
     like = Command0(_like);
     dislike = Command0(_dislike);
@@ -24,7 +24,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
   int get pn => _pn;
 
   Future<Result<List<Comment>>> _getReplies() async {
-    final result = await _commentApiService.getReplies(
+    final result = await _commentRepository.getReplies(
       pn: _pn,
       contextId: comment.contextId,
       type: comment.type,
@@ -45,7 +45,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _like() async {
     final action = !comment.isLiked;
-    final result = await _commentApiService.like(
+    final result = await _commentRepository.like(
       contextId: comment.contextId,
       type: comment.type,
       commentId: comment.id,
@@ -69,7 +69,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _dislike() async {
     final action = !comment.isDisliked;
-    final result = await _commentApiService.dislike(
+    final result = await _commentRepository.dislike(
       contextId: comment.contextId,
       type: comment.type,
       commentId: comment.id,

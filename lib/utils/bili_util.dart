@@ -145,6 +145,15 @@ String _getMixinKey(String orig) {
   return (currTime.toString(), wbiSign);
 }
 
+Map<String, dynamic> buildWbiParams(Map<String, dynamic> params, String wbiImgKey, String wbiSubKey) {
+  final (String wts, String wbiSign) = encWbi(params, wbiImgKey, wbiSubKey);
+  return {
+    ...params,
+    'w_rid': wbiSign,
+    'wts': wts,
+  };
+}
+
 /// 生成指定长度的随机十六进制字符串
 /// 例如传入 8，返回 6BC98EDF
 String generateRandomHex(int length) {
@@ -186,7 +195,7 @@ const List<String> UserAgentList = [
 
 /// 随机获取一个 UserAgent
 /// 只有 firefox 的，因为本项目所有网络请求只使用 firefox ua，有关这点详见项目文档 user_agent.md
-String getRandomUserAgent() {
+String randomUserAgent() {
   return UserAgentList[Random().nextInt(UserAgentList.length)];
 }
 
@@ -429,7 +438,7 @@ const List<(int width, int height)> WindowSizeList = [
 ];
 
 /// 随机获取一个窗口大小
-(int width, int height) getRandomWindowSize() {
+(int width, int height) randomWindowSize() {
   return WindowSizeList[Random().nextInt(WindowSizeList.length)];
 }
 
@@ -1529,4 +1538,59 @@ int countStrToInt(String text) {
   }
 
   return value.floor();
+}
+
+/// https://github.com/KHwang9883/MobileModels
+const List<(String, String)> phoneInfos = [
+  ('Xiaomi', 'M2001J2E'), // Xiaomi 10 国行版
+  ('Xiaomi', 'M2001J2C'), // Xiaomi 10 国行版
+  ('Xiaomi', 'M2007J1SC'), // Xiaomi 10 至尊纪念版
+  ('Xiaomi', 'M2011K2C'), // Xiaomi 11 国行版
+  ('Xiaomi', 'M2011K2G'), // Xiaomi 11 国际版
+  ('Xiaomi', 'M2102K1AC'), // Xiaomi 11 Pro
+  ('Xiaomi', 'M2102K1C'), // Xiaomi 11 Ultra 国行版
+  ('Xiaomi', 'M2102K1G'), // Xiaomi 11 Ultra 国际版
+  ('Xiaomi', '2201123C'), // Xiaomi 12 国行版
+  ('Xiaomi', '2201123G'), // Xiaomi 12 国际版
+  ('Xiaomi', '2112123AC'), // Xiaomi 12X 国行版
+  ('Xiaomi', '2112123AG'), // Xiaomi 12X 国际版
+  ('Xiaomi', '2201122C'), // Xiaomi 12 Pro 国行版
+  ('Xiaomi', '2201122G'), // Xiaomi 12 Pro 国际版
+  ('Xiaomi', '2206123SC'), // Xiaomi 12S
+  ('Xiaomi', '2206122SC'), // Xiaomi 12S Pro
+  ('Xiaomi', '2203121C'), // Xiaomi 12S Ultra
+  ('Xiaomi', '2211133C'), // Xiaomi 13 国行版
+  ('Xiaomi', '2211133G'), // Xiaomi 13 国际版
+  ('Xiaomi', '2210132C'), // Xiaomi 13 Pro 国行版
+  ('Xiaomi', '2210132G'), // Xiaomi 13 Pro 国际版
+  ('Xiaomi', '2304FPN6DC'), // Xiaomi 13 Ultra 国行版
+  ('Xiaomi', '2304FPN6DG'), // Xiaomi 13 Ultra 国际版
+  ('Xiaomi', '23127PN0CC'), // Xiaomi 14 国行版
+  ('Xiaomi', '23127PN0CG'), // Xiaomi 14 国际版
+  ('Xiaomi', '23116PN5BC'), // Xiaomi 14 Pro
+  ('Xiaomi', '24031PN0DC'), // Xiaomi 14 Ultra 国行版
+  ('Xiaomi', '24030PN60G'), // Xiaomi 14 Ultra 国际版
+  ('Xiaomi', '24129PN74C'), // Xiaomi 15 国行版
+  ('Xiaomi', '24129PN74G'), // Xiaomi 15 国际版
+  ('Xiaomi', '2410DPN6CC'), // Xiaomi 15 Pro
+  ('Xiaomi', '25019PNF3C'), // Xiaomi 15 Ultra 国行版
+  ('Xiaomi', '25010PN30G'), // Xiaomi 15 Ultra 国际版
+  ('Xiaomi', '25042PN24C'), // Xiaomi 15S Pro
+  ('Xiaomi', '25069PTEBG'), // Xiaomi 15T 国际版
+  ('Xiaomi', '2506BPN68G'), // Xiaomi 15T Pro 国际版
+  ('Xiaomi', '25113PN0EC'), // Xiaomi 17 国行版
+  ('Xiaomi', '25113PN0EG'), // Xiaomi 17 国际版
+  ('Xiaomi', '25098PN5AC'), // Xiaomi 17 Pro
+  ('Xiaomi', '2509FPN0BC'), // Xiaomi 17 Pro Max
+  ('Xiaomi', '2512BPNDAC'), // Xiaomi 17 Ultra 国行版
+  ('Xiaomi', '2512BPNDAG'), // Xiaomi 17 Ultra 国际版
+  ('Xiaomi', '2605EPN8EC'), // Xiaomi 17 Max
+  ('Xiaomi', 'M531DA'), // Xiaomi 17T 国行版
+  ('Xiaomi', '2602DPT53G'), // Xiaomi 17T 国际版
+  ('Xiaomi', 'M025EC'), // Xiaomi 17T Pro 国行版
+  ('Xiaomi', '2602EPTC0G'), // Xiaomi 17T Pro 国际版
+];
+
+(String, String) randomPhoneInfo() {
+  return phoneInfos[Random().nextInt(phoneInfos.length)];
 }

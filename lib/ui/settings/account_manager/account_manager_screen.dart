@@ -2,25 +2,19 @@ import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:better_bilibili/ui/settings/account_manager/account_manager_view_model.dart';
 
 class AccountManagerScreen extends StatefulWidget {
-  const AccountManagerScreen({super.key});
+  final AccountManagerViewModel viewModel;
+
+  const AccountManagerScreen({super.key, required this.viewModel});
 
   @override
   State<AccountManagerScreen> createState() => _AccountManagerScreenState();
 }
 
 class _AccountManagerScreenState extends State<AccountManagerScreen> {
-  late final AccountManagerViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _viewModel = context.read();
-  }
+  AccountManagerViewModel get viewModel => widget.viewModel;
 
   Future<void> _removeAccount(String accountId, String? nickname) async {
     final confirmed = await showDialog<bool>(
@@ -44,7 +38,7 @@ class _AccountManagerScreenState extends State<AccountManagerScreen> {
 
     if (confirmed != true) return;
 
-    _viewModel.removeAccount(accountId);
+    viewModel.removeAccount(accountId);
   }
 
   @override
@@ -59,37 +53,33 @@ class _AccountManagerScreenState extends State<AccountManagerScreen> {
         elevation: 1,
       ),
       body: ListenableBuilder(
-        listenable: _viewModel.loadAccounts,
+        listenable: viewModel.getData,
         builder: (context, child) {
-          if (_viewModel.loadAccounts.running) {
+          if (viewModel.getData.running) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (_viewModel.loadAccounts.error) {
-            return CenterErrorMessage(errorMessage: (_viewModel.loadAccounts.result as Error).toString());
+          if (viewModel.getData.error) {
+            return CenterErrorMessage(errorMessage: (viewModel.getData.result as Error).toString());
           }
 
-          if (_viewModel.accounts.isEmpty) {
+          if (viewModel.accounts.isEmpty) {
             return _buildEmptyState();
           }
 
           return ListView(
             padding: const EdgeInsets.only(top: 16, bottom: 24),
             children: [
-              ..._viewModel.accounts.map((account) {
-                final isSelected = _viewModel.currentAccount!.uid == account.uid;
+              ...viewModel.accounts.map((account) {
+                final isSelected = viewModel.currentAccount!.userId == account.userId;
+                final userId = account.userId;
+
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
+                  margin: const .symmetric(horizontal: 16, vertical: 4),
                   color: isSelected ? colorScheme.secondaryContainer : null,
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: account.avatar != null ? NetworkImage(account.avatar!) : null,
-                      child: account.avatar == null ? const Icon(Icons.person) : null,
-                    ),
-                    title: Text(account.nickname ?? account.uid),
-                    subtitle: Text('UID: ${account.uid}'),
+                    leading: CircleAvatar(backgroundImage: NetworkImage(viewModel.avatars[userId] ?? '')),
+                    title: Text(viewModel.nicknames[userId] ?? ''),
+                    subtitle: Text('UID: ${account.userId}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -116,12 +106,12 @@ class _AccountManagerScreenState extends State<AccountManagerScreen> {
                           IconButton(
                             icon: const Icon(Icons.switch_account),
                             tooltip: '切换到此账号',
-                            onPressed: () => _viewModel.switchAccount(account.uid),
+                            onPressed: () => viewModel.switchAccount(account.userId),
                           ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
                           tooltip: '移除此账号',
-                          onPressed: () => _removeAccount(account.uid, account.nickname),
+                          onPressed: () => _removeAccount(account.userId, viewModel.nicknames[userId]),
                         ),
                       ],
                     ),

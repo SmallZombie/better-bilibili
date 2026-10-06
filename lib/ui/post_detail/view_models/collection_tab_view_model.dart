@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/article_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_article_colllection_detail_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';

@@ -181,7 +181,7 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
         title: const Text('稍后观看'),
         searchHintText: '在稍后观看中搜索',
         onSearch: (value) {
-          widget.viewModel.setKeyword(value ?? '');
+          widget.viewModel.setKeyword(value);
         },
         onToggleFilter: () {
           widget.viewModel.rememberFiltersState();

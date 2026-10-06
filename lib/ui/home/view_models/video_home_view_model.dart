@@ -1,13 +1,15 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_videos_response.dart';
 import 'package:better_bilibili/utils/command.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
-import 'package:logging/logging.dart';
+import 'package:logger/logger.dart';
 
 class VideoHomeViewModel extends SafeChangeNotifier {
-  final Logger _log = Logger('VideoHomeViewModel');
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'VideoHomeViewModel'));
+
   final VideoRepository _videoRepository;
   final AuthRepository _authRepository;
 
@@ -110,7 +112,7 @@ class VideoHomeViewModel extends SafeChangeNotifier {
   }
 
   void _onAuthRepositoryChanged() {
-    _log.info('AuthRepository changed');
+    _log.i('AuthRepository changed');
     _videos.clear();
     _pn = 1;
     loadData.cancel();

@@ -8,11 +8,13 @@ class PlayInfo {
   final String bvid;
   final String episodeId;
   final Duration duration;
-  final List<MediaTrack> videoTracks;
-  final List<MediaTrack> audioTracks;
+  final List<MediaStream> videoStreams;
+  final List<MediaStream> audioStreams;
   final List<Subtitle> subtitles;
-  final Duration lastPosition;
+  // lastPosition 总是与 lastEpisodeId 一起出现
   final String? lastEpisodeId;
+  final Duration lastPosition;
+  final List<Chapter> chapters;
 
   const PlayInfo({
     required this.id,
@@ -21,11 +23,12 @@ class PlayInfo {
     required this.bvid,
     required this.episodeId,
     required this.duration,
-    required this.videoTracks,
-    required this.audioTracks,
+    required this.videoStreams,
+    required this.audioStreams,
     this.subtitles = const [],
-    required this.lastPosition,
     required this.lastEpisodeId,
+    required this.lastPosition,
+    this.chapters = const [],
   });
 
   factory PlayInfo.assembly(GetPlayInfoResponse playInfoResp, GetExtraPlayInfoResponse extraPlayInfoResp) {
@@ -36,39 +39,43 @@ class PlayInfo {
       bvid: playInfoResp.bvid,
       episodeId: playInfoResp.episodeId,
       duration: playInfoResp.duration,
-      videoTracks: playInfoResp.videoTracks,
-      audioTracks: playInfoResp.audioTracks,
+      videoStreams: playInfoResp.videoTracks,
+      audioStreams: playInfoResp.audioTracks,
       subtitles: extraPlayInfoResp.subtitles,
-      lastPosition: extraPlayInfoResp.lastPosition,
       lastEpisodeId: extraPlayInfoResp.lastEpisodeId,
+      lastPosition: extraPlayInfoResp.lastPosition,
+      chapters: extraPlayInfoResp.chapters,
     );
   }
 }
 
-class MediaTrack {
+class MediaStream {
   final int id;
-  final String url;
+  final List<String> urls;
   final CodecEnum codec;
   final String codecProfile;
   final String mimeType;
 
-  MediaTrack({
+  MediaStream({
     required this.id,
-    required this.url,
+    required this.urls,
     required this.codec,
     required this.codecProfile,
     required this.mimeType,
   });
 
-  factory MediaTrack.fromJson(Map<String, dynamic> json) {
-    return MediaTrack(
+  factory MediaStream.fromJson(Map<String, dynamic> json) {
+    final List<String> urls = [json['baseUrl'] as String];
+    urls.addAll((json['backupUrl'] as List).cast<String>());
+
+    return MediaStream(
       id: switch (json['id']) {
         // 给Hi-Res 和 DolbyAtmos 提一下 id, 方面后面对质量进行排序
         30251 => 40251,
         30250 => 40250,
         _ => json['id'],
       },
-      url: json['baseUrl'],
+      urls: urls,
       // h.264(7), h.265(12), av1(13)
       codec: switch (json['codecid']) {
         7 => .h264,
@@ -80,6 +87,11 @@ class MediaTrack {
       codecProfile: json['codecs'],
       mimeType: json['mimeType'],
     );
+  }
+
+  @override
+  String toString() {
+    return 'MediaStream(id: $id, urls: ${urls.join(',')}, codec: $codec, codecProfile: $codecProfile, mimeType: $mimeType)';
   }
 }
 
@@ -123,6 +135,29 @@ class Subtitle {
       code: json['lan'],
       isAigc: json['ai_type'] == 1,
       url: 'https:${json['subtitle_url']}',
+    );
+  }
+}
+
+class Chapter {
+  final String name;
+  final String cover;
+  final Duration start;
+  final Duration end;
+
+  const Chapter({
+    required this.name,
+    required this.cover,
+    required this.start,
+    required this.end,
+  });
+
+  factory Chapter.fromJson(Map<String, dynamic> obj) {
+    return Chapter(
+      name: obj['content'],
+      cover: obj['imgUrl'],
+      start: Duration(seconds: obj['from']),
+      end: Duration(seconds: obj['to']) - Duration(milliseconds: 1),
     );
   }
 }

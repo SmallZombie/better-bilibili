@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/l10n/l10n_util.dart';

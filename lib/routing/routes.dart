@@ -34,7 +34,7 @@ abstract final class Routes {
   static const searchFavorites = '/search_favorites';
   static const favoritesDetail = '/favorites/:favoritesId';
   static const playlistDetail = '/playlist/:playlistId';
-  static const webView = '/web_view';
+  // static const webView = '/web_view';
   static const articleDetail = '/article/:articleId';
   static const postDetail = '/post/:postId';
 
@@ -49,6 +49,10 @@ abstract final class Routes {
   static const settingDevTestAppTitleBar = '/setting/developer/test_app_title_bar';
 
   static const echoCave = '/echo_cave';
+
+  static const bsbsbSettings = '/extension/bsbsb/settings';
+
+  static const eagleSettings = '/extension/eagle/settings';
 
   static String buildUserDetail(String userId, {int? initTabIndex}) {
     final Map<String, dynamic> params = {};
@@ -99,13 +103,13 @@ abstract final class Routes {
     return uri.toString();
   }
 
-  static String buildWebView(String url) {
-    final uri = Uri(
-      path: webView,
-      queryParameters: {'url': url},
-    );
-    return uri.toString();
-  }
+  // static String buildWebView(String url) {
+  //   final uri = Uri(
+  //     path: webView,
+  //     queryParameters: {'url': url},
+  //   );
+  //   return uri.toString();
+  // }
 
   static String buildSearch(String keyword) {
     final uri = Uri(

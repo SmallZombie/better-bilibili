@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/chat_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:flutter/material.dart';
 

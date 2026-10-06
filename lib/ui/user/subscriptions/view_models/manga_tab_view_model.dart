@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_manga.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -40,7 +40,7 @@ class MangaTabViewModel extends SafeChangeNotifier {
   }
 
   Future<Result<void>> _loadData() async {
-    if (userId != (await _authRepository.getAccount()).uid) {
+    if (userId != (await _authRepository.getAccount()).userId) {
       return Result.ok(null);
     }
 

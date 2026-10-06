@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_counters_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_relation_response.dart';
@@ -41,7 +41,7 @@ class UserDetailViewModel extends SafeChangeNotifier {
   bool get isCurrentAccount => _isCurrentAccount;
 
   Future<Result<void>> _loadData() async {
-    _isCurrentAccount = (await _authRepository.getAccount()).uid == userId;
+    _isCurrentAccount = (await _authRepository.getAccount()).userId == userId;
 
     final [
       userInfoResult,

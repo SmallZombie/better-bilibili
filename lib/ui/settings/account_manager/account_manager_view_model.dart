@@ -1,16 +1,21 @@
+import 'package:better_bilibili/config/account_config.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
-import 'package:better_bilibili/config/account_config.dart';
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
 import 'package:better_bilibili/utils/command.dart';
 
 class AccountManagerViewModel extends SafeChangeNotifier {
   final AuthRepository _authRepository;
+  final UserRepository _userRepository;
 
   AccountManagerViewModel({
     required AuthRepository authRepository,
-  }) : _authRepository = authRepository {
-    loadAccounts = Command0(_loadAccounts)..execute();
+    required UserRepository userRepository,
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository {
+    getData = Command0(_getData)..execute();
     _authRepository.addListener(_onAuthRepositoryChanged);
   }
 
@@ -22,16 +27,22 @@ class AccountManagerViewModel extends SafeChangeNotifier {
   }
 
   void _onAuthRepositoryChanged() {
-    loadAccounts.execute();
+    getData.execute();
   }
 
-  final List<AccountData> _accounts = [];
-  AccountData? _currentAccount;
-  AccountData? get currentAccount => _currentAccount;
-  List<AccountData> get accounts => List.unmodifiable(_accounts);
+  final List<Account> _accounts = [];
+  List<Account> get accounts => List.unmodifiable(_accounts);
 
-  late final Command0<List<AccountData>> loadAccounts;
-  Future<Result<List<AccountData>>> _loadAccounts() async {
+  final Map<String, String> _nicknames = {};
+  final Map<String, String> _avatars = {};
+  Map<String, String> get nicknames => Map.unmodifiable(_nicknames);
+  Map<String, String> get avatars => Map.unmodifiable(_avatars);
+
+  Account? _currentAccount;
+  Account? get currentAccount => _currentAccount;
+
+  late final Command0<List<Account>> getData;
+  Future<Result<List<Account>>> _getData() async {
     final result = await _authRepository.getAccounts();
     result.removeAt(0);
 
@@ -40,16 +51,34 @@ class AccountManagerViewModel extends SafeChangeNotifier {
 
     _currentAccount = await _authRepository.getAccount();
 
+    for (final i in _accounts) {
+      String userId = i.userId;
+
+      if (userId == kGuestUserId) {
+        continue;
+      }
+
+      final nickname = await _userRepository.getLocalUserData(userId, 'nickname');
+      final avatar = await _userRepository.getLocalUserData(userId, 'avatar');
+
+      if (nickname != null) {
+        _nicknames[userId] = nickname;
+      }
+      if (avatar != null) {
+        _avatars[userId] = avatar;
+      }
+    }
+
     return Result.ok(result);
   }
 
   Future<void> switchAccount(String accountId) async {
     await _authRepository.switchAccount(accountId);
-    loadAccounts.execute();
+    getData.execute();
   }
 
   Future<void> removeAccount(String accountId) async {
     await _authRepository.removeAccount(accountId);
-    loadAccounts.execute();
+    getData.execute();
   }
 }

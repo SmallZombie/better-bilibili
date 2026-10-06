@@ -8,7 +8,7 @@ void main() {
   group('getDmImgList', () {
     const minLogCount = 10;
     const maxLogCount = 30;
-    final (int windowWidth, int windowHeight) = getRandomWindowSize();
+    final (int windowWidth, int windowHeight) = randomWindowSize();
     const maxTimestamp = 10000;
     const mouseRangeX = 0.5;
     const mouseRangeY = 0.5;

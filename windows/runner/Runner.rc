@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "Better Bilibili" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "better_bilibili" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Better Bilibili. All rights reserved." "\0"
             VALUE "OriginalFilename", "better_bilibili.exe" "\0"
             VALUE "ProductName", "better_bilibili" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

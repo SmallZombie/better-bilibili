@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_videos_with_user_id_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';

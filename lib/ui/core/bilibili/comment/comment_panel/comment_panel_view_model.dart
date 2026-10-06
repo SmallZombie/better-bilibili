@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/comment_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/common_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/common_repository/common_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_comment_list.dart';
 import 'package:better_bilibili/data/services/bilibili/model/uploaded_image.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';

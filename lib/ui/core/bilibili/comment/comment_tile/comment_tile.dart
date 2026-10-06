@@ -455,7 +455,7 @@ class _CommentTileState extends State<CommentTile> {
             ...comment.replies.map(
               (reply) => ChangeNotifierProvider(
                 key: ValueKey('reply-${comment.id}-${reply.id}'),
-                create: (context) => CommentTileViewModel(commentApiService: context.read(), comment: reply),
+                create: (context) => CommentTileViewModel(commentRepository: context.read(), comment: reply),
                 child: CommentTile(
                   onReply: widget.onReply,
                   onDelete: widget.onDelete,

@@ -38,7 +38,7 @@ class MyAudioHandler extends BaseAudioHandler {
 
     player.stream.duration.listen((duration) {
       _broadcastState();
-      if (mediaItem.value != null && duration != null) {
+      if (mediaItem.value != null) {
         mediaItem.add(mediaItem.value!.copyWith(duration: duration));
       }
     });

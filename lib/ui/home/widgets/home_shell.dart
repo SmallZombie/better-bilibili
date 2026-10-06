@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:better_bilibili/routing/routes.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

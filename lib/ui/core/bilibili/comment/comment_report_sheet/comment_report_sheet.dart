@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/comment_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_comment_report_reasons_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_report_sheet/comment_report_sheet_view_model.dart';

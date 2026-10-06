@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline waveform Comparison Demo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      background: #f5f5f5;
+      color: #222;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Microsoft YaHei", sans-serif;
+    }
+
+    .container {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+      color: #222;
+      font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    }
+
+    textarea:focus {
+      border-color: #888;
+    }
+
+    .status {
+      min-height: 22px;
+      margin: 10px 0;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .status.error {
+      color: #c62828;
+    }
+
+    .preview-group {
+      margin-top: 18px;
+    }
+
+    .preview-title {
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .preview {
+      width: 100%;
+      min-width: 120px;
+      min-height: 30px;
+      height: 50px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #000;
+      resize: both;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>Timeline waveform Comparison Demo</h1>
+
+    <!-- BV13e7PztEGd -->
+    <textarea id="input" spellcheck="false">[0.0,0.0,6942.5,5732.0,4628.5,4203.5,3971.0,3457.0,3278.5,3126.5,3675.0,4008.0,3627.5,3634.0,3895.5,4110.0,3920.5,3246.5,2778.5,2607.0,2573.0,2435.5,8846.0,6820.5,4271.0,2042.5,2109.5,2105.5,2133.0,2054.0,1974.0,1813.5,1668.0,1697.0,1713.0,1832.0,1864.0,2032.0,2433.5,2296.5,2074.0,2181.0,2206.5,2181.0,2008.5,1777.0,1696.5,1644.5,1550.5,1419.5,1482.5,1596.5,1487.5,1356.5,1400.5,1531.5,1632.5,1654.5,1687.0,1675.0,1855.5,2310.0,5196.0,4539.0,4234.0,4539.0,2088.0,2275.0,2633.0,2845.5,2807.5,2810.0,2710.5,2553.0,2715.5,2277.0,1712.0,2134.0,2486.0,2056.5,2036.5,2478.0,2393.0,2111.0,2102.5,2167.0,2261.5,2390.0,2785.5,3140.0,3405.5,3792.0,10162.5,9509.0,4018.0]</textarea>
+
+    <div id="status" class="status"></div>
+
+    <!-- ========================================================= -->
+    <!-- Linear -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">1. Linear</div>
+
+      <div class="preview">
+        <svg id="linearWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="linearFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="linearFillPath" d="" fill="url(#linearFill)" stroke="none" />
+
+          <path id="linearPath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- Catmull-Rom -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">2. Catmull-Rom</div>
+
+      <div class="preview">
+        <svg id="catmullWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="catmullFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="catmullFillPath" d="" fill="url(#catmullFill)" stroke="none" />
+
+          <path id="catmullPath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- Monotone Cubic -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">3. Monotone Cubic</div>
+
+      <div class="preview">
+        <svg id="monotoneWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="monotoneFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="monotoneFillPath" d="" fill="url(#monotoneFill)" stroke="none" />
+
+          <path id="monotonePath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- Cubic Hermite -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">4. Cubic Hermite</div>
+
+      <div class="preview">
+        <svg id="hermiteWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="hermiteFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="hermiteFillPath" d="" fill="url(#hermiteFill)" stroke="none" />
+
+          <path id="hermitePath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- Quadratic Bézier -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">5. Quadratic Bézier</div>
+
+      <div class="preview">
+        <svg id="quadraticWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="quadraticFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="quadraticFillPath" d="" fill="url(#quadraticFill)" stroke="none" />
+
+          <path id="quadraticPath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- Chaikin -->
+    <!-- ========================================================= -->
+
+    <div class="preview-group">
+      <div class="preview-title">6. Chaikin Smoothing</div>
+
+      <div class="preview">
+        <svg id="chaikinWaveform" viewBox="0 0 2000 50" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="chaikinFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.45" />
+              <stop offset="50%" stop-color="white" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <path id="chaikinFillPath" d="" fill="url(#chaikinFill)" stroke="none" />
+
+          <path id="chaikinPath" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    const input = document.getElementById("input");
+    const status = document.getElementById("status");
+
+    const WIDTH = 2000;
+    const HEIGHT = 50;
+    const PADDING_X = 4;
+    const PADDING_Y = 0;
+
+    const EXPONENT = 1;
+
+    // ============================================================
+    // SVG helpers
+    // ============================================================
+
+    function setPath(id, d) {
+      document.getElementById(id).setAttribute("d", d);
+    }
+
+    function buildFillPath(d) {
+      return (
+        `${d}` +
+        ` L ${WIDTH - PADDING_X} ${HEIGHT}` +
+        ` L ${PADDING_X} ${HEIGHT}` +
+        ` Z`
+      );
+    }
+
+    // ============================================================
+    // Parse
+    // ============================================================
+
+    function parseData(value) {
+      const data = JSON.parse(value);
+
+      if (!Array.isArray(data)) {
+        throw new Error("输入内容必须是 JSON 数组");
+      }
+
+      if (data.length === 0) {
+        throw new Error("数组不能为空");
+      }
+
+      return data.map((item, index) => {
+        const number = Number(item);
+
+        if (!Number.isFinite(number)) {
+          throw new Error(`第 ${index + 1} 项不是有效数字`);
+        }
+
+        return number;
+      });
+    }
+
+    // ============================================================
+    // Normalize
+    // ============================================================
+
+    function buildPoints(data) {
+
+      if (data.length === 1) {
+        const y = HEIGHT / 2;
+
+        return [
+          { x: PADDING_X, y },
+          { x: WIDTH - PADDING_X, y },
+        ];
+      }
+
+      let min = Math.min(...data);
+      let max = Math.max(...data);
+
+      if (min === max) {
+        min -= 1;
+        max += 1;
+      }
+
+      const usableWidth = WIDTH - PADDING_X * 2;
+      const usableHeight = HEIGHT - PADDING_Y * 2;
+
+      return data.map((value, index) => {
+
+        const x =
+          PADDING_X +
+          (index / (data.length - 1)) *
+          usableWidth;
+
+        const normalized = Math.pow(
+          (value - min) / (max - min),
+          EXPONENT
+        );
+
+        const y =
+          HEIGHT -
+          PADDING_Y -
+          normalized * usableHeight;
+
+        return { x, y };
+      });
+    }
+
+    // ============================================================
+    // 1. Linear
+    // ============================================================
+
+    function buildLinearPath(points) {
+
+      let d =
+        `M ${points[0].x.toFixed(2)} ` +
+        `${points[0].y.toFixed(2)}`;
+
+      for (let i = 1; i < points.length; i++) {
+
+        d +=
+          ` L ${points[i].x.toFixed(2)}` +
+          ` ${points[i].y.toFixed(2)}`;
+      }
+
+      return d;
+    }
+
+    // ============================================================
+    // 2. Catmull-Rom
+    // ============================================================
+
+    function buildCatmullRomPath(points) {
+
+      if (points.length === 2) {
+        return (
+          `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}` +
+          ` L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`
+        );
+      }
+
+      let d =
+        `M ${points[0].x.toFixed(2)} ` +
+        `${points[0].y.toFixed(2)}`;
+
+      for (let i = 0; i < points.length - 1; i++) {
+
+        const p0 = points[Math.max(0, i - 1)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 =
+          points[Math.min(points.length - 1, i + 2)];
+
+        const cp1 = {
+          x: p1.x + (p2.x - p0.x) / 6,
+          y: p1.y + (p2.y - p0.y) / 6,
+        };
+
+        const cp2 = {
+          x: p2.x - (p3.x - p1.x) / 6,
+          y: p2.y - (p3.y - p1.y) / 6,
+        };
+
+        d +=
+          ` C ${cp1.x.toFixed(2)} ${cp1.y.toFixed(2)}` +
+          `, ${cp2.x.toFixed(2)} ${cp2.y.toFixed(2)}` +
+          `, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      }
+
+      return d;
+    }
+
+    // ============================================================
+    // 3. Monotone Cubic
+    // ============================================================
+
+    function buildMonotoneCubicPath(points) {
+
+      if (points.length === 2) {
+        return (
+          `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}` +
+          ` L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`
+        );
+      }
+
+      const n = points.length;
+
+      const delta = new Array(n - 1);
+
+      for (let i = 0; i < n - 1; i++) {
+
+        const dx =
+          points[i + 1].x -
+          points[i].x;
+
+        const dy =
+          points[i + 1].y -
+          points[i].y;
+
+        delta[i] = dy / dx;
+      }
+
+      const tangent = new Array(n).fill(0);
+
+      tangent[0] = delta[0];
+      tangent[n - 1] = delta[n - 2];
+
+      for (let i = 1; i < n - 1; i++) {
+
+        const d1 = delta[i - 1];
+        const d2 = delta[i];
+
+        if (d1 * d2 <= 0) {
+          tangent[i] = 0;
+        } else {
+
+          const h1 =
+            points[i].x -
+            points[i - 1].x;
+
+          const h2 =
+            points[i + 1].x -
+            points[i].x;
+
+          const w1 = 2 * h2 + h1;
+          const w2 = h2 + 2 * h1;
+
+          tangent[i] =
+            (w1 + w2) /
+            (w1 / d1 + w2 / d2);
+        }
+      }
+
+      for (let i = 0; i < n - 1; i++) {
+
+        const d = delta[i];
+
+        if (d === 0) {
+          tangent[i] = 0;
+          tangent[i + 1] = 0;
+          continue;
+        }
+
+        const alpha = tangent[i] / d;
+        const beta = tangent[i + 1] / d;
+
+        const sum =
+          alpha * alpha +
+          beta * beta;
+
+        if (sum > 9) {
+
+          const tau =
+            3 / Math.sqrt(sum);
+
+          tangent[i] =
+            tau * alpha * d;
+
+          tangent[i + 1] =
+            tau * beta * d;
+        }
+      }
+
+      let path =
+        `M ${points[0].x.toFixed(2)} ` +
+        `${points[0].y.toFixed(2)}`;
+
+      for (let i = 0; i < n - 1; i++) {
+
+        const p1 = points[i];
+        const p2 = points[i + 1];
+
+        const dx =
+          (p2.x - p1.x) / 3;
+
+        const cp1 = {
+          x: p1.x + dx,
+          y: p1.y + tangent[i] * dx,
+        };
+
+        const cp2 = {
+          x: p2.x - dx,
+          y: p2.y - tangent[i + 1] * dx,
+        };
+
+        path +=
+          ` C ${cp1.x.toFixed(2)} ${cp1.y.toFixed(2)}` +
+          `, ${cp2.x.toFixed(2)} ${cp2.y.toFixed(2)}` +
+          `, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      }
+
+      return path;
+    }
+
+    // ============================================================
+    // 4. Cubic Hermite
+    // ============================================================
+
+    function buildHermitePath(points) {
+
+      if (points.length === 2) {
+        return (
+          `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}` +
+          ` L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`
+        );
+      }
+
+      const n = points.length;
+
+      const tangent = new Array(n);
+
+      tangent[0] = {
+        x: points[1].x - points[0].x,
+        y: points[1].y - points[0].y,
+      };
+
+      tangent[n - 1] = {
+        x: points[n - 1].x - points[n - 2].x,
+        y: points[n - 1].y - points[n - 2].y,
+      };
+
+      for (let i = 1; i < n - 1; i++) {
+
+        tangent[i] = {
+          x:
+            (points[i + 1].x -
+              points[i - 1].x) /
+            2,
+
+          y:
+            (points[i + 1].y -
+              points[i - 1].y) /
+            2,
+        };
+      }
+
+      let d =
+        `M ${points[0].x.toFixed(2)} ` +
+        `${points[0].y.toFixed(2)}`;
+
+      for (let i = 0; i < n - 1; i++) {
+
+        const p1 = points[i];
+        const p2 = points[i + 1];
+
+        const cp1 = {
+          x:
+            p1.x +
+            tangent[i].x / 3,
+
+          y:
+            p1.y +
+            tangent[i].y / 3,
+        };
+
+        const cp2 = {
+          x:
+            p2.x -
+            tangent[i + 1].x / 3,
+
+          y:
+            p2.y -
+            tangent[i + 1].y / 3,
+        };
+
+        d +=
+          ` C ${cp1.x.toFixed(2)} ${cp1.y.toFixed(2)}` +
+          `, ${cp2.x.toFixed(2)} ${cp2.y.toFixed(2)}` +
+          `, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      }
+
+      return d;
+    }
+
+    // ============================================================
+    // 5. Quadratic Bézier
+    // ============================================================
+
+    function buildQuadraticPath(points) {
+
+      if (points.length === 2) {
+        return (
+          `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}` +
+          ` L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`
+        );
+      }
+
+      let d =
+        `M ${points[0].x.toFixed(2)} ` +
+        `${points[0].y.toFixed(2)}`;
+
+      for (let i = 0; i < points.length - 1; i++) {
+
+        const p1 = points[i];
+        const p2 = points[i + 1];
+
+        let control;
+
+        if (i === 0) {
+
+          control = {
+            x: p1.x,
+            y: p1.y,
+          };
+
+        } else if (i === points.length - 2) {
+
+          control = {
+            x: p2.x,
+            y: p2.y,
+          };
+
+        } else {
+
+          control = {
+            x:
+              (p1.x + p2.x) / 2,
+
+            y:
+              (p1.y + p2.y) / 2,
+          };
+        }
+
+        d +=
+          ` Q ${control.x.toFixed(2)} ${control.y.toFixed(2)}` +
+          ` ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      }
+
+      return d;
+    }
+
+    // ============================================================
+    // 6. Chaikin
+    // ============================================================
+
+    function chaikin(points, iterations = 2) {
+
+      let result = points;
+
+      for (let iteration = 0; iteration < iterations; iteration++) {
+
+        if (result.length < 3) {
+          break;
+        }
+
+        const next = [];
+
+        next.push(result[0]);
+
+        for (let i = 0; i < result.length - 1; i++) {
+
+          const p1 = result[i];
+          const p2 = result[i + 1];
+
+          const q = {
+            x:
+              0.75 * p1.x +
+              0.25 * p2.x,
+
+            y:
+              0.75 * p1.y +
+              0.25 * p2.y,
+          };
+
+          const r = {
+            x:
+              0.25 * p1.x +
+              0.75 * p2.x,
+
+            y:
+              0.25 * p1.y +
+              0.75 * p2.y,
+          };
+
+          next.push(q);
+          next.push(r);
+        }
+
+        next.push(
+          result[result.length - 1]
+        );
+
+        result = next;
+      }
+
+      return result;
+    }
+
+    function buildChaikinPath(points) {
+
+      const smoothed =
+        chaikin(points, 2);
+
+      let d =
+        `M ${smoothed[0].x.toFixed(2)} ` +
+        `${smoothed[0].y.toFixed(2)}`;
+
+      for (let i = 1; i < smoothed.length; i++) {
+
+        d +=
+          ` L ${smoothed[i].x.toFixed(2)}` +
+          ` ${smoothed[i].y.toFixed(2)}`;
+      }
+
+      return d;
+    }
+
+    // ============================================================
+    // Render
+    // ============================================================
+
+    function render() {
+
+      try {
+
+        const data =
+          parseData(input.value.trim());
+
+        const points =
+          buildPoints(data);
+
+        const algorithms = [
+          {
+            path: buildLinearPath(points),
+            pathId: "linearPath",
+            fillId: "linearFillPath",
+          },
+          {
+            path: buildCatmullRomPath(points),
+            pathId: "catmullPath",
+            fillId: "catmullFillPath",
+          },
+          {
+            path: buildMonotoneCubicPath(points),
+            pathId: "monotonePath",
+            fillId: "monotoneFillPath",
+          },
+          {
+            path: buildHermitePath(points),
+            pathId: "hermitePath",
+            fillId: "hermiteFillPath",
+          },
+          {
+            path: buildQuadraticPath(points),
+            pathId: "quadraticPath",
+            fillId: "quadraticFillPath",
+          },
+          {
+            path: buildChaikinPath(points),
+            pathId: "chaikinPath",
+            fillId: "chaikinFillPath",
+          },
+        ];
+
+        for (const algorithm of algorithms) {
+
+          const fillD =
+            buildFillPath(
+              algorithm.path
+            );
+
+          setPath(
+            algorithm.pathId,
+            algorithm.path
+          );
+
+          setPath(
+            algorithm.fillId,
+            fillD
+          );
+        }
+
+        const min =
+          Math.min(...data);
+
+        const max =
+          Math.max(...data);
+
+        status.textContent =
+          `共 ${data.length} 个数据点，数值范围 ${min} ~ ${max}`;
+
+        status.className = "status";
+
+      } catch (error) {
+
+        status.textContent =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
+        status.className =
+          "status error";
+
+        const ids = [
+          "linear",
+          "catmull",
+          "monotone",
+          "hermite",
+          "quadratic",
+          "chaikin",
+        ];
+
+        for (const id of ids) {
+
+          setPath(
+            `${id}Path`,
+            ""
+          );
+
+          setPath(
+            `${id}FillPath`,
+            ""
+          );
+        }
+      }
+    }
+
+    input.addEventListener(
+      "input",
+      render
+    );
+
+    render();
+
+  </script>
+
+</body>
+
+</html>

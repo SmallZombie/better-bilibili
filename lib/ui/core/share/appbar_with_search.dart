@@ -140,7 +140,6 @@ class _AppBarWithSearchState extends State<AppBarWithSearch> {
         ],
         if (widget.actions.isNotEmpty) SizedBox(width: widget.spacing),
         ...widget.actions,
-        const SizedBox(width: 12),
       ],
     );
   }

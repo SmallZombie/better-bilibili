@@ -1,14 +1,16 @@
-import 'package:better_bilibili/data/repositories/bilibili/post_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/utils/command.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
-import 'package:logging/logging.dart';
+import 'package:logger/logger.dart';
 
 class PostDetailViewModel extends SafeChangeNotifier {
-  final Logger _log = Logger('PostDetailViewModel');
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'PostDetailViewModel'));
+
   final PostRepository _postRepository;
   final UserRepository _userRepository;
 
@@ -56,7 +58,7 @@ class PostDetailViewModel extends SafeChangeNotifier {
 
   void switchPost(String newPostId, String newCover) {
     if (postId == newPostId) return;
-    _log.info('switchPost newPostId: $newPostId, cover: $newCover');
+    _log.i('switchPost newPostId: $newPostId, cover: $newCover');
 
     postId = newPostId;
     cover = newCover;
@@ -125,7 +127,7 @@ class PostDetailViewModel extends SafeChangeNotifier {
 
   void _reportHistory() {
     if (_postDetail?.commentId == null) {
-      _log.warning('postDetail.commentId is null, skip report history');
+      _log.w('postDetail.commentId is null, skip report history');
       return;
     }
     if (_postDetail!.commentType != BiliContentTypeEnum.article) {

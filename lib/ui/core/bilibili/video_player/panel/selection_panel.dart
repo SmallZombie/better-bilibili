@@ -1,5 +1,5 @@
-import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_header.dart';
-import 'package:better_bilibili/ui/core/bilibili/video_player/panel/share/panel_tile.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_header.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_tile.dart';
 import 'package:flutter/material.dart';
 
 class SelectionPanelItem<T> {
@@ -34,7 +34,7 @@ class SelectionPanel<T> extends StatelessWidget {
             children: items.map(
               (v) {
                 return PanelTile(
-                  onTap: () => onChange(v.value),
+                  onTap: v.value == value ? () {} : () => onChange(v.value),
                   selected: v.value == value,
                   title: Text(v.label),
                 );

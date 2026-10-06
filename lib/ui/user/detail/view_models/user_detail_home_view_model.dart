@@ -1,6 +1,6 @@
-import 'package:better_bilibili/data/repositories/bilibili/article_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_articles_with_user_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_series_response.dart';

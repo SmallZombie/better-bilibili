@@ -4,11 +4,11 @@ import 'package:better_bilibili/domain/models/bilibili/user.dart';
 
 class GetVideoDetailResponse {
   final VideoDetail video;
-  final List<RecommendVideo> recommandVideos;
+  final List<RecommendVideo> recommendVideos;
 
   GetVideoDetailResponse({
     required this.video,
-    required this.recommandVideos,
+    required this.recommendVideos,
   });
 }
 
@@ -310,14 +310,14 @@ class VideoDetailMusic {
 }
 
 class VideoDetailEpisode {
-  final String episodeId;
+  final String id;
   final String title;
   final String cover;
   final double duration;
   final int creationTime;
 
   VideoDetailEpisode({
-    required this.episodeId,
+    required this.id,
     required this.title,
     required this.cover,
     required this.duration,
@@ -326,7 +326,7 @@ class VideoDetailEpisode {
 
   factory VideoDetailEpisode.fromJson(Map<String, dynamic> json, String coverFallback) {
     return VideoDetailEpisode(
-      episodeId: json['cid'].toString(),
+      id: json['cid'].toString(),
       title: json['part'],
       cover: json['first_frame'] ?? coverFallback,
       duration: json['duration'].toDouble(),

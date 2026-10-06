@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_detail_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -74,6 +74,7 @@ class FavoritesDetailViewModel extends SafeChangeNotifier {
 
   void reload() {
     loadFavoritesDetail.execute(_favorites!.favoritesId);
+    notifyListeners();
   }
 
   final Set<String> _selectedItemIds = {};

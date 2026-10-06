@@ -81,7 +81,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                   icon: Icon(Icons.add),
                   tooltip: '创建收藏夹',
                 ),
-                SizedBox(width: 16.0),
               ]
             : null,
       ),

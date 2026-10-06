@@ -1,27 +1,31 @@
 import 'package:better_bilibili/config/account_config.dart';
+import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
-import 'package:better_bilibili/data/repositories/bilibili/article_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/audio_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/chat_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/comment_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/common_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/post_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/search_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/audio_repository/audio_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/audio_repository/audio_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository_remote.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/common_repository/common_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/common_repository/common_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/search_repository/search_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/search_repository/search_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository_login.dart';
+import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
+import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository_remote.dart';
 import 'package:better_bilibili/data/services/storage_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_article_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_audio_api_service.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_chat_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_comment_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_common_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_post_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_search_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_user_api_service.dart';
-import 'package:better_bilibili/data/services/bilibili/bili_video_api_service.dart';
 import 'package:better_bilibili/data/services/cache_service.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
@@ -32,97 +36,83 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 List<SingleChildWidget> get providersOnline => [
-  Provider<AccountConfig>.value(value: AccountConfig()),
-  Provider<StorageService>.value(value: StorageService()),
-  Provider<CacheService>.value(value: CacheService()),
-  ChangeNotifierProvider<AuthRepository>(
-    create: (context) => AuthRepository(accountConfig: context.read()),
+  Provider.value(value: AccountConfig()),
+  Provider.value(value: BsbsbConfig()),
+  Provider.value(value: StorageService()),
+  Provider.value(value: CacheService()),
+
+  ListenableProvider(
+    create: (context) => AuthRepositoryRemote(config: context.read()) as AuthRepository,
+    dispose: (context, value) {
+      if (value is AuthRepositoryRemote) {
+        value.dispose();
+      }
+    },
   ),
-  Provider<BiliUserApiService>(
-    create: (context) => BiliUserApiService(authRepository: context.read()),
+  Provider(
+    create: (context) => VideoRepositoryLogin(authRepository: context.read()) as VideoRepository,
   ),
-  Provider<BiliVideoApiService>(
-    create: (context) => BiliVideoApiService(authRepository: context.read()),
+  Provider(
+    // dart format off
+    create: (context) => UserRepositoryLogin(
+      authRepository: context.read()
+    ) as UserRepository,
+    // dart format on
   ),
-  Provider<BiliSearchApiService>(
-    create: (context) => BiliSearchApiService(authRepository: context.read()),
+  Provider(
+    create: (context) => SearchRepositoryLogin(authRepository: context.read()) as SearchRepository,
   ),
-  Provider<VideoRepository>(
-    create: (context) => VideoRepository(videoApiClient: context.read()),
+  Provider(
+    create: (context) => CommonRepositoryLogin(authRepository: context.read()) as CommonRepository,
   ),
-  Provider<UserRepository>(
-    create: (context) => UserRepository(
-      biliUserApiService: context.read(),
-      cacheService: context.read(),
+  Provider(
+    create: (context) => CommentRepositoryLogin(authRepository: context.read()) as CommentRepository,
+  ),
+  Provider(
+    create: (context) => ArticleRepositoryLogin(authRepository: context.read()) as ArticleRepository,
+  ),
+  Provider(
+    create: (context) => PostRepositoryLogin(authRepository: context.read()) as PostRepository,
+  ),
+  Provider(
+    create: (context) => AudioRepositoryLogin(authRepository: context.read()) as AudioRepository,
+  ),
+  Provider(
+    // dart format off
+    create: (context) => ChatRepositoryLogin(
       authRepository: context.read(),
-    ),
-  ),
-  Provider<SearchRepository>(
-    create: (context) => SearchRepository(biliSearchApiService: context.read()),
-  ),
-  Provider<BiliCommonApiService>(
-    create: (context) => BiliCommonApiService(authRepository: context.read()),
-  ),
-  Provider<CommonRepository>(
-    create: (context) => CommonRepository(biliCommonApiService: context.read()),
-  ),
-  Provider<BiliCommentApiService>(
-    create: (context) => BiliCommentApiService(authRepository: context.read()),
-  ),
-  Provider<CommentRepository>(
-    create: (context) => CommentRepository(commentApiService: context.read()),
-  ),
-  Provider<BiliArticleApiService>(
-    create: (context) => BiliArticleApiService(authRepository: context.read()),
-  ),
-  Provider<ArticleRepository>(
-    create: (context) => ArticleRepository(articleApiService: context.read()),
-  ),
-  Provider<BiliPostApiService>(
-    create: (context) => BiliPostApiService(authRepository: context.read()),
-  ),
-  Provider<PostRepository>(
-    create: (context) => PostRepository(postApiService: context.read()),
-  ),
-  Provider<BiliAudioApiService>(
-    create: (context) => BiliAudioApiService(authRepository: context.read()),
-  ),
-  Provider<AudioRepository>(
-    create: (context) => AudioRepository(audioApiService: context.read()),
-  ),
-  Provider<BiliChatApiService>(
-    create: (context) => BiliChatApiService(authRepository: context.read()),
-  ),
-  Provider<ChatRepository>(
-    create: (context) => ChatRepository(
-      chatRepository: context.read(),
       userRepository: context.read(),
-    ),
+    ) as ChatRepository,
+    // dart format on
   ),
-  ChangeNotifierProvider<EditVideoInFavoriteFolderSheetViewModel>(
+  Provider(
+    create: (context) => BsbsbRepositoryRemote(config: context.read()) as BsbsbRepository,
+  ),
+
+  ChangeNotifierProvider(
     create: (context) => EditVideoInFavoriteFolderSheetViewModel(userRepository: context.read()),
   ),
-  ChangeNotifierProvider<BiliBackgroundService>(
+  ChangeNotifierProvider(
     create: (context) => BiliBackgroundService(
       userRepository: context.read(),
       authRepository: context.read(),
       chatRepository: context.read(),
     ),
   ),
-  ChangeNotifierProvider<UserDialogViewModel>(
+  ChangeNotifierProvider(
     create: (context) => UserDialogViewModel(userRepository: context.read()),
   ),
-  Provider<PlayerConfig>(
+  Provider(
     create: (_) => PlayerConfig(),
     dispose: (_, value) => value.dispose(),
   ),
-  Provider<DanmakuConfig>(
+  Provider(
     create: (_) => DanmakuConfig(),
     dispose: (_, value) => value.dispose(),
   ),
-  ChangeNotifierProvider<AppController>(create: (context) => AppController()),
-  Provider<MediaSessionController>.value(value: MediaSessionController()),
-  ChangeNotifierProvider<CommentReportSheetViewModel>(
+  ChangeNotifierProvider(create: (context) => AppController()),
+  Provider.value(value: MediaSessionController()),
+  ChangeNotifierProvider(
     create: (context) => CommentReportSheetViewModel(commentRepository: context.read()),
   ),
 ];

@@ -1,4 +1,4 @@
-import 'package:better_bilibili/data/repositories/bilibili/post_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
 import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/utils/result.dart';

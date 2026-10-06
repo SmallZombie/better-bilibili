@@ -1,6 +1,6 @@
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/utils/list_util.dart';
 import 'package:flutter/material.dart';

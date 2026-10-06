@@ -47,6 +47,8 @@ abstract class Command<T> extends ChangeNotifier {
 
   int _execSeq = 0;
 
+  Future<void>? _executionFuture;
+
   /// Clear last action result
   void clearResult() {
     _result = null;
@@ -54,32 +56,49 @@ abstract class Command<T> extends ChangeNotifier {
   }
 
   /// Internal execute implementation
-  Future<void> _execute(CommandAction0<T> action, {CommandSuccess<T>? onSuccess}) async {
-    // Ensure the action can't launch multiple times.
-    // e.g. avoid multiple taps on button
-    if (_running) return;
+  Future<void> _execute(
+    CommandAction0<T> action, {
+    CommandSuccess<T>? onSuccess,
+  }) {
+    final existing = _executionFuture;
+    if (existing != null) {
+      return existing;
+    }
 
     final seq = ++_execSeq;
 
-    // Notify listeners.
-    // e.g. button shows loading state
-    _running = true;
-    _result = null;
-    notifyListeners();
+    final future = () async {
+      _running = true;
+      _result = null;
+      notifyListeners();
 
-    Result<T>? r;
-    try {
-      r = await action();
-    } finally {
-      if (seq == _execSeq) {
-        _result = r;
-        _running = false;
-        if (r case Ok(:final value)) {
-          onSuccess?.call(value);
+      Result<T>? r;
+
+      try {
+        r = await action();
+      } finally {
+        if (seq == _execSeq) {
+          _result = r;
+          _running = false;
+
+          if (r case Ok(:final value)) {
+            onSuccess?.call(value);
+          }
+
+          notifyListeners();
         }
-        notifyListeners();
       }
-    }
+    }();
+
+    _executionFuture = future;
+
+    future.whenComplete(() {
+      if (identical(_executionFuture, future)) {
+        _executionFuture = null;
+      }
+    });
+
+    return future;
   }
 }
 

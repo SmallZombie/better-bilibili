@@ -237,7 +237,6 @@ class _EnhancedAppBarState extends State<EnhancedAppBar> {
         ],
         if (widget.actions.isNotEmpty) SizedBox(width: widget.spacing),
         ...widget.actions,
-        const SizedBox(width: 12),
       ],
       bottom: widget.bottom,
     );

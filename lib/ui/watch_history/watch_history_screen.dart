@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/bilibili/dynamic_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/enhanced_appbar.dart';
 import 'package:better_bilibili/ui/core/share/selectable_item_wrapper.dart';
-import 'package:better_bilibili/ui/core/themes/theme.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/watch_history/watch_history_view_model.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';

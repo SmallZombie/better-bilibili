@@ -1,7 +1,7 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/chat_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/video_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_video_cards.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
@@ -49,9 +49,9 @@ class ConversationDetailViewModel extends ChangeNotifier {
   Future<Result<void>> _init() async {
     final account = await _authRepository.getAccount();
     _currentUser = User(
-      id: account.uid,
-      nickname: account.nickname!,
-      avatar: account.avatar!,
+      id: account.userId,
+      nickname: '',
+      avatar: '',
     );
 
     final result = await _userRepository.getUserCard(conversationId);

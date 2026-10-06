@@ -1,5 +1,5 @@
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_fans_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -49,7 +49,7 @@ class UserFansViewModel extends SafeChangeNotifier {
         _fans.addAll(value.list);
         _fansVersion++;
         _total = value.total;
-        _isCurrentUser = userId == (await _authRepository.getAccount()).uid;
+        _isCurrentUser = userId == (await _authRepository.getAccount()).userId;
       case Error():
     }
     return result;

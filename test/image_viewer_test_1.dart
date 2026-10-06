@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/scheduler.dart' show timeDilation;
 
 void main() {
   // timeDilation = 15.0;

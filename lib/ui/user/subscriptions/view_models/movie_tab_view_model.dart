@@ -1,6 +1,6 @@
 import 'package:better_bilibili/data/model/bilibili/movie_model.dart';
-import 'package:better_bilibili/data/repositories/bilibili/auth_repository.dart';
-import 'package:better_bilibili/data/repositories/bilibili/user_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
+import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_movie_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_series_response.dart';
 import 'package:better_bilibili/utils/command.dart';
@@ -73,7 +73,7 @@ class MovieTabViewModel extends SafeChangeNotifier {
       ps: ps,
       watchStatus: _watchStatusValues[_selectedWatchStatusIndex],
     );
-    _isCurrentUser ??= userId == (await _authRepository.getAccount()).uid;
+    _isCurrentUser ??= userId == (await _authRepository.getAccount()).userId;
     return result;
   }
 

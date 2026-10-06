@@ -8,13 +8,12 @@ import 'package:better_bilibili/routing/router.dart';
 import 'package:better_bilibili/routing/scheme_parser.dart';
 import 'package:better_bilibili/ui/core/app/app_title_bar.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
-import 'package:dynamic_color/dynamic_color.dart';
+import 'package:better_bilibili/ui/core/appearance/appearance_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -24,7 +23,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  Logger.root.level = Level.ALL;
   new_logger.Logger.level = new_logger.Level.all;
 
   // debugRepaintRainbowEnabled = true;
@@ -51,9 +49,15 @@ void main() async {
     await windowManager.focus();
   }
 
+  final appearanceManager = AppearanceManager();
+  await appearanceManager.tryUpdateThemeWithDynamicColor();
+
   runApp(
     MultiProvider(
-      providers: providersOnline,
+      providers: [
+        ...providersOnline,
+        ChangeNotifierProvider(create: (_) => appearanceManager),
+      ],
       child: const App(),
     ),
   );
@@ -82,59 +86,36 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        final lightColorScheme = lightDynamic?.harmonized() ?? .fromSeed(seedColor: Colors.pinkAccent);
-        final darkColorScheme = darkDynamic?.harmonized() ?? .fromSeed(seedColor: Colors.pinkAccent, brightness: .dark);
+    final appearanceManager = context.watch<AppearanceManager>();
+    return MaterialApp.router(
+      title: kAppName,
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
+      theme: appearanceManager.lightTheme,
+      darkTheme: appearanceManager.darkTheme,
+      themeMode: appearanceManager.themeMode,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) {
+        if (!Platform.isWindows) {
+          return child ?? const SizedBox.shrink();
+        }
 
-        return MaterialApp.router(
-          title: kAppName,
-          debugShowCheckedModeBanner: false,
-          routerConfig: router,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: lightColorScheme,
-            fontFamily: Platform.isWindows ? 'HarmonyOS_Sans' : null,
-            chipTheme: ChipThemeData(
-              backgroundColor: lightColorScheme.surfaceContainerHigh,
-              side: BorderSide.none,
-              shadowColor: Colors.black.withAlpha(150),
-            ),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            colorScheme: darkColorScheme,
-            fontFamily: Platform.isWindows ? 'HarmonyOS_Sans' : null,
-            chipTheme: ChipThemeData(
-              backgroundColor: darkColorScheme.surfaceContainerHigh,
-              side: BorderSide.none,
-              shadowColor: Colors.black.withAlpha(150),
-            ),
-          ),
-          localizationsDelegates: [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            FlutterQuillLocalizations.delegate,
+        final showTitleBar = context.select<AppController, bool>(
+          (state) => state.showTitleBar,
+        );
+
+        return Column(
+          children: [
+            if (showTitleBar) const AppTitleBar(),
+            Expanded(child: child ?? const SizedBox.shrink()),
           ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) {
-            if (!Platform.isWindows) {
-              return child ?? const SizedBox.shrink();
-            }
-
-            final showTitleBar = context.select<AppController, bool>(
-              (state) => state.showTitleBar,
-            );
-
-            return Column(
-              children: [
-                if (showTitleBar) const AppTitleBar(),
-                Expanded(child: child ?? const SizedBox.shrink()),
-              ],
-            );
-          },
         );
       },
     );
