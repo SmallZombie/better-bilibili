@@ -8,7 +8,6 @@ import 'package:better_bilibili/data/services/bilibili/model/get_self_status_res
 import 'package:better_bilibili/data/services/bilibili/model/get_user_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_history.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_later.dart';
-import 'package:better_bilibili/data/services/cache_service.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
@@ -25,7 +24,6 @@ class MeViewModel extends SafeChangeNotifier {
   MeViewModel({
     required AuthRepository authRepository,
     required UserRepository userRepository,
-    required CacheService cacheService,
   }) : _authRepository = authRepository,
        _userRepository = userRepository {
     getHeaderData = Command0(_getHeaderData);
@@ -48,7 +46,7 @@ class MeViewModel extends SafeChangeNotifier {
 
   bool get hasLogin => _authRepository.hasLogin;
 
-  String getRandomNotLoggedInText() {
+  String getRandomLogoutText() {
     final texts = [
       '未登录',
       '角色未解锁',

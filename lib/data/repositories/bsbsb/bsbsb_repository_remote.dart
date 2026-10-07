@@ -22,8 +22,8 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
   BsbsbRepositoryRemote({required this.config});
 
   @override
-  Future<Dio> getClient() async {
-    final baseUrlsStr = await config.baseUrls.get();
+  Dio getClient() {
+    final baseUrlsStr = config.baseUrls.value;
     final baseUrls = baseUrlsStr.split(',');
 
     final dio = Dio(

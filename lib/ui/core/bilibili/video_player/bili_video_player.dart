@@ -40,7 +40,6 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/preview/b
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/bili_timeline_waveform_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/windows_taskbar/windows_taskbar_adapter.dart';
-import 'package:better_bilibili/ui/core/share/config_builder.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/router_helper.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
@@ -97,6 +96,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
   ExtraVideoController get controller => widget.controller;
   NoticeController get noticeController => widget.noticeController;
+  PlayerConfig get config => widget.playerConfig;
 
   final PanelController panelController = PanelController();
   late TitlebarHandler titlebarHandler;
@@ -123,45 +123,29 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     );
     _createWithPlayInfo();
 
-    widget.playerConfig.mediaControl.get().then((value) {
-      if (!value) return;
-      if (!mounted) return;
-
+    if (config.mediaControl.value) {
       _mediaSession = widget.mediaSessionController.createSession(
         ExtraVideoPlayerMediaSessionAdapter(controller.player, widget.mediaSessionData),
       );
       _mediaSession!.activate();
-    });
+    }
 
-    widget.bsbsbConfig.enable.get().then((value) {
-      if (!value) return;
-      if (!mounted) return;
+    if (widget.bsbsbConfig.enable.value) {
+      bsbsbController = BsbsbController(
+        config: widget.bsbsbConfig,
+        bsbsbRepository: widget.bsbsbRepository,
+        videoId: widget.playInfo.videoId,
+      );
+    }
 
-      setState(() {
-        bsbsbController = BsbsbController(
-          config: widget.bsbsbConfig,
-          bsbsbRepository: widget.bsbsbRepository,
-          videoId: widget.playInfo.videoId,
-        );
-      });
-    });
-
-    widget.playerConfig.volume.get().then((value) {
-      if (!mounted) return;
-
-      controller.setVolume(value);
-    });
-
-    widget.playerConfig.muted.get().then((value) {
-      if (!value) return;
-      if (!mounted) return;
-
-      controller.setMuted(value);
-    });
+    controller.setVolume(config.volume.value);
+    if (config.muted.value) {
+      controller.setMuted(config.muted.value);
+    }
 
     _subscriptions.addAll([
-      widget.playerConfig.mediaControl.stream.listen(_onMediaControl),
-      widget.playerConfig.hideMediaControlInfo.stream.listen(_onHideMediaControlInfo),
+      config.mediaControl.stream.listen(_onMediaControl),
+      config.hideMediaControlInfo.stream.listen(_onHideMediaControlInfo),
       controller.stream.error.listen((e) => _log.e('onPlayerError', error: e)),
       controller.stream.duration.listen(_onDuration),
       controller.stream.volume.listen(_onVolume),
@@ -224,7 +208,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   void _createWithPlayInfo() {
     qualityController = BiliQualityController(
       controller: controller,
-      config: widget.playerConfig,
+      config: config,
       playInfo: widget.playInfo,
       authRepository: widget.authRepository,
     );
@@ -284,7 +268,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   }
 
   void onFrontend() {
-    if (widget.playerConfig.mediaControl.value) {
+    if (config.mediaControl.value) {
       _mediaSession?.activate();
     }
   }
@@ -300,28 +284,29 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
   bool _isFirstPlay = true;
 
-  Future<void> _onDuration(Duration event) async {
-    final shouldAutoPlay = _isFirstPlay && await widget.playerConfig.autoPlay.get();
-    if (!mounted) return;
-
-    if (shouldAutoPlay) controller.play();
+  void _onDuration(Duration event) {
+    if (_isFirstPlay && config.autoPlay.value) controller.play();
     _isFirstPlay = false;
   }
 
   void _onVolume(double event) {
     if (!controller.state.muted) {
-      widget.playerConfig.volume.set(event);
+      config.volume.set(event);
     }
   }
 
   void _onMuted(bool event) {
-    widget.playerConfig.muted.set(event);
+    config.muted.set(event);
   }
 
   void _onCompleted(bool event) {
     if (!event) return;
 
-    widget.playlistController?.next();
+    if (config.loopPlayback.value) {
+      controller.play();
+    } else {
+      widget.playlistController?.next();
+    }
   }
 
   void _onBsbsbEnable(bool event) {
@@ -341,7 +326,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   Widget build(BuildContext context) {
     return ExtraVideoPlayer(
       controller: controller,
-      playerConfig: widget.playerConfig,
+      playerConfig: config,
       danmakuConfig: widget.danmakuConfig,
       videoRepository: widget.videoRepository,
       aspectRatio: widget.aspectRatio,
@@ -432,7 +417,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
           onPressed: () => panelController.push(
             SettingsPanel(
               controller: panelController,
-              config: widget.playerConfig,
+              config: config,
             ),
           ),
           icon: const Icon(Icons.settings_sharp, color: Colors.white),
@@ -533,21 +518,31 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
         // danmaku
         ExtraVideoPlayerLayer(
           inForeground: false,
-          child: DanmakuLayer(
-            controller: danmakuController,
-            videoController: controller,
-            positionStream: controller.stream.position,
-            playingStream: controller.stream.playing,
+          child: StreamBuilder(
+            stream: widget.danmakuConfig.enabled.stream,
+            initialData: widget.danmakuConfig.enabled.value,
+            builder: (context, asyncSnapshot) {
+              if (!asyncSnapshot.data!) {
+                return SizedBox.shrink();
+              }
+
+              return DanmakuLayer(
+                key: ObjectKey(danmakuController),
+                controller: danmakuController,
+                videoController: controller,
+              );
+            },
           ),
         ),
 
         // history reporter debug hud
         ExtraVideoPlayerLayer(
           inForeground: false,
-          child: ConfigBuilder(
-            configItem: widget.playerConfig.historyReporterDebugHud,
-            builder: (context, value) {
-              if (!value) {
+          child: StreamBuilder(
+            stream: config.historyReporterDebugHud.stream,
+            initialData: config.historyReporterDebugHud.value,
+            builder: (context, asyncSnapshot) {
+              if (!asyncSnapshot.data!) {
                 return SizedBox.shrink();
               }
 
@@ -576,15 +571,16 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
             ),
           ),
       ],
-      background: ConfigBuilder(
-        configItem: widget.playerConfig.ambientLight,
-        builder: (context, value) {
+      background: StreamBuilder(
+        stream: config.ambientLight.stream,
+        initialData: config.ambientLight.value,
+        builder: (context, asyncSnapshot) {
           final isDarkMode = Theme.brightnessOf(context) == .dark;
 
           return AnimatedOpacity(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeInOut,
-            opacity: isDarkMode && value ? 1.0 : 0.0,
+            opacity: isDarkMode && asyncSnapshot.data! ? 1.0 : 0.0,
             child: AmbientLightLayer(controller: controller),
           );
         },

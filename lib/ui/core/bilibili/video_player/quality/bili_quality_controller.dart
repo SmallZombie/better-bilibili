@@ -44,6 +44,7 @@ class BiliQualityController extends ChangeNotifier {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
@@ -67,11 +68,8 @@ class BiliQualityController extends ChangeNotifier {
   bool get useFallbackCodec => _useFallbackCodec;
 
   Future<void> init() async {
-    await config.preferredCodec.get();
-    await config.fallbackCodec.get();
-    final videoQuality = await config.videoQuality.get();
-    final audioQuality = await config.audioQuality.get();
-    if (_disposed) return;
+    final videoQuality = config.videoQuality.value;
+    final audioQuality = config.audioQuality.value;
 
     if (player.platform is NativePlayer) {
       final p = player.platform as NativePlayer;
@@ -86,7 +84,7 @@ class BiliQualityController extends ChangeNotifier {
 
     final videoStream = _findClosestQuality(_availableVideoStreamsByCodec, videoQuality);
     final audioStream = _findClosestQuality(_availableAudioStreamsByCodec, audioQuality);
-    switchQuality(video: videoStream, audio: audioStream);
+    unawaited(switchQuality(video: videoStream, audio: audioStream));
   }
 
   /// 返回目标质量的流，否则返回仅次于目标质量的流，否则返回首个流，否则返回 Null

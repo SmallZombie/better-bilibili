@@ -25,7 +25,19 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
     this.collectionController,
     this.recommendController,
   }) {
-    _init();
+    _update();
+
+    _subscriptions.addAll([
+      config.autoPlayNextEpisode.stream.listen((_) => _update()),
+      config.autoPlayNextPlaylist.stream.listen((_) => _update()),
+      config.autoPlayNextCollection.stream.listen((_) => _update()),
+      config.autoPlayNextRecommend.stream.listen((_) => _update()),
+    ]);
+
+    episodeController?.addListener(_update);
+    playlistController?.addListener(_update);
+    collectionController?.addListener(_update);
+    recommendController?.addListener(_update);
   }
 
   @override
@@ -41,28 +53,6 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
     recommendController?.removeListener(_update);
 
     super.dispose();
-  }
-
-  Future<void> _init() async {
-    await Future.wait([
-      config.autoPlayNextEpisode.get(),
-      config.autoPlayNextPlaylist.get(),
-      config.autoPlayNextCollection.get(),
-      config.autoPlayNextRecommend.get(),
-    ]);
-    _update();
-
-    _subscriptions.addAll([
-      config.autoPlayNextEpisode.stream.listen((_) => _update()),
-      config.autoPlayNextPlaylist.stream.listen((_) => _update()),
-      config.autoPlayNextCollection.stream.listen((_) => _update()),
-      config.autoPlayNextRecommend.stream.listen((_) => _update()),
-    ]);
-
-    episodeController?.addListener(_update);
-    playlistController?.addListener(_update);
-    collectionController?.addListener(_update);
-    recommendController?.addListener(_update);
   }
 
   bool _hasNext = false;

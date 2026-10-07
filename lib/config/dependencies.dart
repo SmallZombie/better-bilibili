@@ -1,7 +1,3 @@
-import 'package:better_bilibili/config/account_config.dart';
-import 'package:better_bilibili/config/bsbsb_config.dart';
-import 'package:better_bilibili/config/danmaku_config.dart';
-import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/article_repository/article_repository_login.dart';
 import 'package:better_bilibili/data/repositories/bilibili/audio_repository/audio_repository.dart';
@@ -26,7 +22,6 @@ import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository_remote.dart';
 import 'package:better_bilibili/data/services/storage_service.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
-import 'package:better_bilibili/data/services/cache_service.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_report_sheet/comment_report_sheet_view_model.dart';
@@ -36,11 +31,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 List<SingleChildWidget> get providersOnline => [
-  Provider.value(value: AccountConfig()),
-  Provider.value(value: BsbsbConfig()),
   Provider.value(value: StorageService()),
-  Provider.value(value: CacheService()),
-
   ListenableProvider(
     create: (context) => AuthRepositoryRemote(config: context.read()) as AuthRepository,
     dispose: (context, value) {
@@ -55,7 +46,8 @@ List<SingleChildWidget> get providersOnline => [
   Provider(
     // dart format off
     create: (context) => UserRepositoryLogin(
-      authRepository: context.read()
+      authRepository: context.read(),
+      accountConfig: context.read(),
     ) as UserRepository,
     // dart format on
   ),
@@ -101,14 +93,6 @@ List<SingleChildWidget> get providersOnline => [
   ),
   ChangeNotifierProvider(
     create: (context) => UserDialogViewModel(userRepository: context.read()),
-  ),
-  Provider(
-    create: (_) => PlayerConfig(),
-    dispose: (_, value) => value.dispose(),
-  ),
-  Provider(
-    create: (_) => DanmakuConfig(),
-    dispose: (_, value) => value.dispose(),
   ),
   ChangeNotifierProvider(create: (context) => AppController()),
   Provider.value(value: MediaSessionController()),

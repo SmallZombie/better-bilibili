@@ -232,7 +232,6 @@ final GoRouter router = GoRouter(
                 create: (context) => MeViewModel(
                   authRepository: context.read(),
                   userRepository: context.read(),
-                  cacheService: context.read(),
                 ),
                 builder: (context, _) => const MeView(),
               ),

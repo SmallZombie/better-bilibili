@@ -6,7 +6,6 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/slider_panel
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/switch_panel_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
-import 'package:better_bilibili/ui/core/share/config_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -25,60 +24,69 @@ class DanmakuSettingsPanel implements Panel {
         Expanded(
           child: ListView(
             children: [
-              ConfigBuilder(
-                configItem: config.enabled,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.enabled.stream,
+                initialData: config.enabled.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.enabled.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('启用弹幕'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.showScroll,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.showScroll.stream,
+                initialData: config.showScroll.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.showScroll.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('自右向左弹幕'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.showScroll,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.showScroll.stream,
+                initialData: config.showScroll.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.showScroll.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('自左向右弹幕'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.showTop,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.showTop.stream,
+                initialData: config.showTop.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.showTop.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('顶部弹幕'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.showBottom,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.showBottom.stream,
+                initialData: config.showBottom.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.showBottom.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('底部弹幕'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.showAdvanced,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.showAdvanced.stream,
+                initialData: config.showAdvanced.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.showAdvanced.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('高级弹幕'),
                 ),
               ),
 
               const PanelSectionTitle(title: '显示设置'),
-              ConfigBuilder(
-                configItem: config.displayArea,
-                builder: (context, value) {
+              StreamBuilder(
+                stream: config.displayArea.stream,
+                initialData: config.displayArea.value,
+                builder: (context, asyncSnapshot) {
+                  final value = asyncSnapshot.data!;
                   final displayText = NumberFormat.percentPattern().format(value);
+
                   return SliderPanelTile(
                     title: const Text('滚动弹幕区域'),
                     subtitle: Text(displayText),
@@ -90,10 +98,13 @@ class DanmakuSettingsPanel implements Panel {
                   );
                 },
               ),
-              ConfigBuilder(
-                configItem: config.fixedDisplayArea,
-                builder: (context, value) {
+              StreamBuilder(
+                stream: config.fixedDisplayArea.stream,
+                initialData: config.fixedDisplayArea.value,
+                builder: (context, asyncSnapshot) {
+                  final value = asyncSnapshot.data!;
                   final displayText = NumberFormat.percentPattern().format(value);
+
                   return SliderPanelTile(
                     title: const Text('固定弹幕区域'),
                     subtitle: Text(displayText),
@@ -105,10 +116,13 @@ class DanmakuSettingsPanel implements Panel {
                   );
                 },
               ),
-              ConfigBuilder(
-                configItem: config.opacity,
-                builder: (context, value) {
+              StreamBuilder(
+                stream: config.opacity.stream,
+                initialData: config.opacity.value,
+                builder: (context, asyncSnapshot) {
+                  final value = asyncSnapshot.data!;
                   final displayText = NumberFormat.percentPattern().format(value);
+
                   return SliderPanelTile(
                     title: const Text('透明度'),
                     subtitle: Text(displayText),
@@ -119,10 +133,13 @@ class DanmakuSettingsPanel implements Panel {
                   );
                 },
               ),
-              ConfigBuilder(
-                configItem: config.fontSize,
-                builder: (context, value) {
+              StreamBuilder(
+                stream: config.fontSize.stream,
+                initialData: config.fontSize.value,
+                builder: (context, asyncSnapshot) {
+                  final value = asyncSnapshot.data!;
                   final displayText = NumberFormat.percentPattern().format(value);
+
                   return SliderPanelTile(
                     title: const Text('文字大小'),
                     subtitle: Text(displayText),
@@ -133,10 +150,13 @@ class DanmakuSettingsPanel implements Panel {
                   );
                 },
               ),
-              ConfigBuilder(
-                configItem: config.scrollSpeed,
-                builder: (context, value) {
+              StreamBuilder(
+                stream: config.scrollSpeed.stream,
+                initialData: config.scrollSpeed.value,
+                builder: (context, asyncSnapshot) {
+                  final value = asyncSnapshot.data!;
                   final displayText = NumberFormat.percentPattern().format(value);
+
                   return SliderPanelTile(
                     title: const Text('滚动速度'),
                     subtitle: Text(displayText),
@@ -148,38 +168,42 @@ class DanmakuSettingsPanel implements Panel {
                   );
                 },
               ),
-              ConfigBuilder(
-                configItem: config.syncPlaybackRate,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.syncPlaybackRate.stream,
+                initialData: config.syncPlaybackRate.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.syncPlaybackRate.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('同步播放速度'),
                   subtitle: const Text('与视频同步加减速'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.antiOcclusion,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.antiOcclusion.stream,
+                initialData: config.antiOcclusion.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.antiOcclusion.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('防止遮挡'),
                   subtitle: const Text('弹幕将尝试显示在人物等关键内容后方'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.carnivalMode,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.carnivalMode.stream,
+                initialData: config.carnivalMode.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.carnivalMode.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('狂欢模式'),
                   subtitle: const Text('所有弹幕忽略遮挡全量展示'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.duplicateMerge,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.duplicateMerge.stream,
+                initialData: config.duplicateMerge.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.duplicateMerge.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('重复合并'),
                   subtitle: const Text('以计数器形式展示重复过多的弹幕'),
                 ),

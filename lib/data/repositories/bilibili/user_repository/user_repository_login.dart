@@ -1,4 +1,4 @@
-import 'package:better_bilibili/config/adapter/config_prefs_storage.dart';
+import 'package:better_bilibili/config/account_config.dart';
 import 'package:better_bilibili/data/model/bilibili/movie_model.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
@@ -27,7 +27,6 @@ import 'package:better_bilibili/data/services/bilibili/model/get_watch_history.d
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_later.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class UserRepositoryLogin implements UserRepository {
   final AuthRepository authRepository;
@@ -35,10 +34,9 @@ class UserRepositoryLogin implements UserRepository {
     getClient: () => authRepository.getClient(type: .web),
     getAccount: authRepository.getAccount,
   );
+  final AccountConfig accountConfig;
 
-  UserRepositoryLogin({required this.authRepository});
-
-  final ConfigPrefsStorage prefs = ConfigPrefsStorage(prefs: SharedPreferencesAsync());
+  UserRepositoryLogin({required this.authRepository, required this.accountConfig});
 
   @override
   Future<Result<GetUserInfoResponse>> getUserInfo({required String userId}) async {
@@ -636,17 +634,21 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<String?> getLocalUserData(String userId, String key) {
-    return prefs.getString('user.$userId.$key');
+  Future<String?> getLocalUserData(String userId, String key) async {
+    final box = accountConfig.box;
+    final str = await box.get('user.$userId.$key');
+    return str is String ? str : null;
   }
 
   @override
   Future<void> removeLocalUserData(String userId, String key) {
-    return prefs.remove('user.$userId.$key');
+    final box = accountConfig.box;
+    return box.delete('user.$userId.$key');
   }
 
   @override
   Future<void> setLocalUserData(String userId, String key, String value) {
-    return prefs.setString('user.$userId.$key', value);
+    final box = accountConfig.box;
+    return box.put('user.$userId.$key', value);
   }
 }

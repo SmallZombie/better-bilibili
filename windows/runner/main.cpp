@@ -61,6 +61,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev, _In_ wch
 
   flutter::DartProject project(L"data");
 
+  // Temporarily disable Impeller due to severe performance issues, with its impact on the danmaku layer being particularly noticeable,
+  // A fairly intuitive comparison: the same video, at nearly the same point in time, with the same number of danmaku/configurations, Impeller only reaches around 60fps
+  // Disabling Impeller using Skia can reach 160fps.
+  // This is still just debug mode. If it were profile mode, the frame rate would be even higher
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
+
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
 

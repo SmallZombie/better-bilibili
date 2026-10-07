@@ -184,17 +184,7 @@ class DanmakuController extends SafeChangeNotifier {
     _coordinator = _ReplicationCoordinator(state: _state, topModule: _topModule);
   }
 
-  bool _disposed = false;
-  bool get disposed => _disposed;
-
-  @override
-  void dispose() {
-    _disposed = true;
-
-    super.dispose();
-  }
-
-  Duration _lastTick = Duration.zero;
+  Duration _currentPosition = Duration.zero;
 
   void load(List<Danmaku> data) {
     _log.i('load danmaku length=${data.length}');
@@ -202,55 +192,58 @@ class DanmakuController extends SafeChangeNotifier {
       item.load(data);
     }
     _coordinator.load(data);
+
+    if (_state.viewPortSize != Size.zero) {
+      _updatePosition(_currentPosition.inMilliseconds);
+      notifyListeners();
+    }
   }
 
-  void onVideoPositionChanged(Duration newPosition) {
+  void onVideoPositionChanged(Duration newPosition, {bool notify = true}) {
+    _currentPosition = newPosition;
     if (_state.viewPortSize == Size.zero) return;
 
     final time = newPosition.inMilliseconds;
-    _coordinator.currentPosition = time;
-
-    if (_state.showScroll) {
-      _scrollModule.onPosition(time);
-    }
-
-    if (_state.showTop) {
-      _topModule.onPosition(time);
-    }
-
-    if (_state.showBottom) {
-      _bottomModule.onPosition(time);
-    }
-
-    if (_state.showAdvanced) {
-      _advancedModule.onPosition(time);
-    }
-
-    notifyListeners();
+    _updatePosition(time);
+    if (notify) notifyListeners();
   }
 
   void onVideoSeek(Duration newPosition) {
     _log.i('onVideoSeek: $newPosition');
-    _coordinator.currentPosition = newPosition.inMilliseconds;
+    _currentPosition = newPosition;
 
     for (final item in _modules) {
       item.onSeek(newPosition);
     }
+
+    if (_state.viewPortSize != Size.zero) {
+      _updatePosition(newPosition.inMilliseconds);
+    }
+    notifyListeners();
   }
 
-  void onTick(Duration elapsed) {
+  void onTick(Duration delta) {
     if (_state.viewPortSize == Size.zero) return;
 
-    final deltaTime = (elapsed - _lastTick).inMilliseconds;
-    _lastTick = elapsed;
-
+    final deltaTime = delta.inMilliseconds;
     if (deltaTime <= 0) return;
 
+    bool needRepaint = false;
     for (final item in _modules) {
-      item.onTick(deltaTime);
+      if (item.onTick(deltaTime)) {
+        needRepaint = true;
+      }
     }
+    if (needRepaint) notifyListeners();
+  }
 
-    notifyListeners();
+  void _updatePosition(int time) {
+    _coordinator.currentPosition = time;
+
+    if (_state.showScroll) _scrollModule.onPosition(time);
+    if (_state.showTop) _topModule.onPosition(time);
+    if (_state.showBottom) _bottomModule.onPosition(time);
+    if (_state.showAdvanced) _advancedModule.onPosition(time);
   }
 
   void onPaint(Canvas canvas) {
@@ -270,46 +263,80 @@ class DanmakuController extends SafeChangeNotifier {
 
   void setScrollSpeed(double rate) {
     _state.scrollSpeed = gBaseScrollSpeed * rate;
+    notifyListeners();
   }
 
   void setOpacity(double newValue) {
     _state.opacity = newValue;
+    notifyListeners();
   }
 
   void setCarnivalMode(bool newValue) {
     _state.carnivalMode = newValue;
+    notifyListeners();
   }
 
   void setShowScroll(bool newValue) {
+    if (_state.showScroll == newValue) return;
     _state.showScroll = newValue;
-    if (!newValue) _scrollModule.clear();
+
+    if (!newValue) {
+      _scrollModule.clear();
+    } else if (_state.viewPortSize != Size.zero) {
+      _scrollModule.onPosition(_currentPosition.inMilliseconds);
+    }
+    notifyListeners();
   }
 
   void setShowTop(bool newValue) {
+    if (_state.showTop == newValue) return;
     _state.showTop = newValue;
-    if (!newValue) _topModule.clear();
+
+    if (!newValue) {
+      _topModule.clear();
+    } else if (_state.viewPortSize != Size.zero) {
+      _topModule.onPosition(_currentPosition.inMilliseconds);
+    }
+    notifyListeners();
   }
 
   void setShowBottom(bool newValue) {
+    if (_state.showBottom == newValue) return;
     _state.showBottom = newValue;
-    if (!newValue) _bottomModule.clear();
+
+    if (!newValue) {
+      _bottomModule.clear();
+    } else if (_state.viewPortSize != Size.zero) {
+      _bottomModule.onPosition(_currentPosition.inMilliseconds);
+    }
+    notifyListeners();
   }
 
   void setShowAdvanced(bool newValue) {
+    if (_state.showAdvanced == newValue) return;
     _state.showAdvanced = newValue;
-    if (!newValue) _advancedModule.clear();
+
+    if (!newValue) {
+      _advancedModule.clear();
+    } else if (_state.viewPortSize != Size.zero) {
+      _advancedModule.onPosition(_currentPosition.inMilliseconds);
+    }
+    notifyListeners();
   }
 
   void setDuplicateMerge(bool newValue) {
     _state.duplicateMerge = newValue;
+    notifyListeners();
   }
 
   void setDisplayArea(double newValue) {
     _state.displayArea = newValue;
+    notifyListeners();
   }
 
   void setFixedDisplayArea(double newValue) {
     _state.fixedDisplayArea = newValue;
+    notifyListeners();
   }
 
   bool onPreLaunchScroll(Danmaku danmaku) {
@@ -317,14 +344,14 @@ class DanmakuController extends SafeChangeNotifier {
   }
 }
 
-class _Module {
-  void load(List<Danmaku> data) {}
-  void onSize(Size size) {}
-  void onPosition(int time) {}
-  void onSeek(Duration position) {}
-  void onTick(int deltaTime) {}
-  void clear() {}
-  void onPaint(Canvas canvas) {}
+abstract interface class _Module {
+  void load(List<Danmaku> data);
+  void onSize(Size size);
+  void onPosition(int time);
+  void onSeek(Duration position);
+  bool onTick(int deltaTime);
+  void clear();
+  void onPaint(Canvas canvas);
 }
 
 class _ScrollDanmakuModule implements _Module {
@@ -519,7 +546,9 @@ class _ScrollDanmakuModule implements _Module {
   }
 
   @override
-  void onTick(int deltaTime) {
+  bool onTick(int deltaTime) {
+    bool needRepaint = launchedList.isNotEmpty;
+
     Set<LaunchedDanmaku> disposeSet = {};
     for (final item in launchedList) {
       item.left -= state.scrollSpeed * (deltaTime / 1000.0);
@@ -533,6 +562,8 @@ class _ScrollDanmakuModule implements _Module {
       launchedList.remove(item);
       item.track?.removeItem(item);
     }
+
+    return needRepaint;
   }
 
   @override
@@ -807,7 +838,9 @@ class _TopDanmakuModule implements _Module {
   void onSeek(Duration position) => clear();
 
   @override
-  void onTick(int deltaTime) {
+  bool onTick(int deltaTime) {
+    bool needRepaint = launchedList.isNotEmpty || counterTrack.painter != null;
+
     Set<LaunchedDanmaku> disposeSet = {};
     for (final item in launchedList) {
       item.age += deltaTime;
@@ -819,6 +852,8 @@ class _TopDanmakuModule implements _Module {
     launchedList.removeWhere(disposeSet.contains);
 
     counterTrack.onTick(deltaTime);
+
+    return needRepaint;
   }
 
   @override
@@ -989,7 +1024,9 @@ class _BottomDanmakuModule implements _Module {
   void onSeek(Duration position) => clear();
 
   @override
-  void onTick(int deltaTime) {
+  bool onTick(int deltaTime) {
+    bool needRepaint = launchedList.isNotEmpty;
+
     Set<LaunchedDanmaku> disposeSet = {};
     for (final item in launchedList) {
       item.age += deltaTime;
@@ -999,6 +1036,8 @@ class _BottomDanmakuModule implements _Module {
       }
     }
     launchedList.removeWhere(disposeSet.contains);
+
+    return needRepaint;
   }
 
   @override
@@ -1099,7 +1138,9 @@ class _AdvancedDanmakuModule implements _Module {
   void onSeek(Duration position) => clear();
 
   @override
-  void onTick(int deltaTime) {
+  bool onTick(int deltaTime) {
+    bool needRepaint = launchedList.isNotEmpty;
+
     Set<LaunchedAdvancedDanmaku> disposeSet = {};
     for (final item in launchedList) {
       if (item.age >= item.extra.duration.inMilliseconds) {
@@ -1113,6 +1154,8 @@ class _AdvancedDanmakuModule implements _Module {
       }
     }
     launchedList.removeWhere(disposeSet.contains);
+
+    return needRepaint;
   }
 
   @override

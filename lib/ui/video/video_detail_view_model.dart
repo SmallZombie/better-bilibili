@@ -120,11 +120,10 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     _detail = result.video;
     states = StateModel.from(result.video.stats);
 
-    playerConfig.hideMediaControlInfo.get().then((value) {
-      mediaSessionData.setPrivacyMode(value);
-      mediaSessionData.setTitle(_detail!.title);
-      mediaSessionData.setArtist(kAppName);
-    });
+    final hideMediaControlInfo = playerConfig.hideMediaControlInfo.value;
+    mediaSessionData.setPrivacyMode(hideMediaControlInfo);
+    mediaSessionData.setTitle(_detail!.title);
+    mediaSessionData.setArtist(kAppName);
 
     if (result.video.episodes.length > 1) {
       episodeController?.dispose();

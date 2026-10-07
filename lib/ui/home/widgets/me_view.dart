@@ -366,10 +366,10 @@ class _MeViewState extends State<MeView> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: SingleChildScrollView(
+      body: Center(
         child: Column(
+          mainAxisSize: .min,
           children: [
-            SizedBox(height: 64),
             CircleAvatar(
               radius: 64,
               backgroundColor: colorScheme.primaryContainer,
@@ -377,7 +377,7 @@ class _MeViewState extends State<MeView> {
             ),
             SizedBox(height: 8),
             Text(
-              _viewModel.getRandomNotLoggedInText(),
+              _viewModel.getRandomLogoutText(),
               style: textTheme.headlineLarge,
             ),
             SizedBox(height: 18.0),

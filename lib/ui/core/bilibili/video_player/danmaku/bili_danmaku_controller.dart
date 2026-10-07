@@ -78,8 +78,6 @@ class BiliDanmakuController extends DanmakuController {
       config.carnivalMode.stream.listen(super.setCarnivalMode),
       config.duplicateMerge.stream.listen(super.setDuplicateMerge),
     ]);
-
-    _initSettings();
   }
 
   @override
@@ -90,20 +88,6 @@ class BiliDanmakuController extends DanmakuController {
     _subscriptions.clear();
 
     super.dispose();
-  }
-
-  void _initSettings() {
-    config.enabled.get();
-    config.showScroll.get();
-    config.showTop.get();
-    config.showBottom.get();
-    config.showAdvanced.get();
-    config.displayArea.get();
-    config.fixedDisplayArea.get();
-    config.opacity.get();
-    config.scrollSpeed.get();
-    config.carnivalMode.get();
-    config.duplicateMerge.get();
   }
 
   bool _isVideoEnded = false;

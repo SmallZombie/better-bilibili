@@ -84,42 +84,41 @@ class _BsbsbLayerState extends State<BsbsbLayer> {
     .musicOfftopic => '非音乐部分',
   };
 
-  Future<Color> _getSegmentColor(SegmentCategoryEnum category) async {
-    final hex = await switch (category) {
-      .sponsor => controller.config.sponsorColor.get(),
-      .selfpromo => controller.config.sponsorColor.get(),
-      .exclusiveAccess => controller.config.sponsorColor.get(),
-      .interaction => controller.config.sponsorColor.get(),
-      .pointsOfInterest => controller.config.sponsorColor.get(),
-      .intro => controller.config.sponsorColor.get(),
-      .outro => controller.config.sponsorColor.get(),
-      .preview => controller.config.sponsorColor.get(),
-      .padding => controller.config.sponsorColor.get(),
-      .filler => controller.config.sponsorColor.get(),
-      .musicOfftopic => controller.config.sponsorColor.get(),
-    };
-    return HexColor(hex);
+  Color _getSegmentColor(SegmentCategoryEnum category) {
+    return HexColor(switch (category) {
+      .sponsor => controller.config.sponsorColor.value,
+      .selfpromo => controller.config.sponsorColor.value,
+      .exclusiveAccess => controller.config.sponsorColor.value,
+      .interaction => controller.config.sponsorColor.value,
+      .pointsOfInterest => controller.config.sponsorColor.value,
+      .intro => controller.config.sponsorColor.value,
+      .outro => controller.config.sponsorColor.value,
+      .preview => controller.config.sponsorColor.value,
+      .padding => controller.config.sponsorColor.value,
+      .filler => controller.config.sponsorColor.value,
+      .musicOfftopic => controller.config.sponsorColor.value,
+    });
   }
 
-  Future<SkipOptionsEnum> _getOption(SegmentCategoryEnum category) => switch (category) {
-    .sponsor => controller.config.sponsor.get(),
-    .selfpromo => controller.config.selfpromo.get(),
-    .interaction => controller.config.interaction.get(),
-    .pointsOfInterest => controller.config.pointsOfInterest.get(),
-    .intro => controller.config.intro.get(),
-    .outro => controller.config.outro.get(),
-    .preview => controller.config.preview.get(),
-    .padding => controller.config.padding.get(),
-    .filler => controller.config.filler.get(),
-    .musicOfftopic => controller.config.musicOfftopic.get(),
-    .exclusiveAccess => Future.value(.disable),
+  SkipOptionsEnum _getOption(SegmentCategoryEnum category) => switch (category) {
+    .sponsor => controller.config.sponsor.value,
+    .selfpromo => controller.config.selfpromo.value,
+    .interaction => controller.config.interaction.value,
+    .pointsOfInterest => controller.config.pointsOfInterest.value,
+    .intro => controller.config.intro.value,
+    .outro => controller.config.outro.value,
+    .preview => controller.config.preview.value,
+    .padding => controller.config.padding.value,
+    .filler => controller.config.filler.value,
+    .musicOfftopic => controller.config.musicOfftopic.value,
+    .exclusiveAccess => .disable,
   };
 
-  Future<void> _update() async {
+  void _update() {
     final segments = controller.data[widget.episodeId] ?? [];
     final List<TimelineSegment> data = [];
     for (final i in segments) {
-      final option = await _getOption(i.category);
+      final option = _getOption(i.category);
       if (option == .disable) continue;
 
       final name = _getSegmentName(i.category);
@@ -129,7 +128,7 @@ class _BsbsbLayerState extends State<BsbsbLayer> {
           start: i.start,
           end: i.end,
           name: name,
-          color: await _getSegmentColor(i.category),
+          color: _getSegmentColor(i.category),
           onPreEnter:
               (option == .askOnlyStart ? () => _ask('跳至$name开头?', i.start) : null) ??
               (option == .askOnlyEnd ? () => _ask('跳至$name末尾?', i.end) : null),

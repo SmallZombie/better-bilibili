@@ -3,7 +3,6 @@ import 'package:better_bilibili/data/model/bsbsb/user_info.dart';
 import 'package:better_bilibili/l10n/l10n_util.dart';
 import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_view_model.dart';
 import 'package:better_bilibili/ui/core/share/color_picker.dart';
-import 'package:better_bilibili/ui/core/share/config_builder.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/core/share/selector_dialog.dart';
@@ -134,13 +133,14 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
             ),
             SettingGroup(
               children: [
-                ConfigBuilder(
-                  configItem: viewModel.config.enable,
-                  builder: (context, value) => SettingSwitchTile(
+                StreamBuilder(
+                  stream: viewModel.config.enable.stream,
+                  initialData: viewModel.config.enable.value,
+                  builder: (context, asyncSnapshot) => SettingSwitchTile(
                     title: Text('启用'),
                     subtitle: Text('控制此集成的总开关'),
                     icon: const Icon(Icons.extension_outlined),
-                    value: value,
+                    value: asyncSnapshot.data!,
                     onChanged: viewModel.config.enable.set,
                   ),
                 ),
@@ -195,24 +195,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
 跳至末尾: Better 将在到达片段时自动跳至片段末尾'''),
               ),
               children: [
-                ConfigBuilder(
-                  configItem: viewModel.config.sponsor,
+                StreamBuilder(
+                  stream: viewModel.config.sponsor.stream,
+                  initialData: viewModel.config.sponsor.value,
                   builder: (context, option) => SettingTile(
                     title: Text('商业推广'),
-                    subtitle: Text('具有商业合作或付费推广的内容\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('具有商业合作或付费推广的内容\n${_getSkipOptionName(option.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.sponsor.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.sponsorColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.sponsorColor.stream,
+                      initialData: viewModel.config.sponsorColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.sponsorColor.defaultValue),
                           );
                           if (result != null) {
@@ -223,24 +225,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.selfpromo,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.selfpromo.stream,
+                  initialData: viewModel.config.selfpromo.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('无偿/自我推广'),
-                    subtitle: Text('无利益关系的推荐与自我推广内容\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('无利益关系的推荐与自我推广内容\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.selfpromo.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.selfpromoColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.selfpromoColor.stream,
+                      initialData: viewModel.config.selfpromoColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.selfpromoColor.defaultValue),
                           );
                           if (result != null) {
@@ -251,24 +255,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.interaction,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.interaction.stream,
+                  initialData: viewModel.config.interaction.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('三连/互动提醒'),
-                    subtitle: Text('点赞、关注、三连等互动提醒\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('点赞、关注、三连等互动提醒\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.interaction.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.interactionColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.interactionColor.stream,
+                      initialData: viewModel.config.interactionColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.interactionColor.defaultValue),
                           );
                           if (result != null) {
@@ -279,24 +285,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.pointsOfInterest,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.pointsOfInterest.stream,
+                  initialData: viewModel.config.pointsOfInterest.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('精彩时刻/重点'),
-                    subtitle: Text('通常指标题、封面或片头预告中所指部分\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('通常指标题、封面或片头预告中所指部分\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToStart: true);
                       if (result != null) {
                         viewModel.config.pointsOfInterest.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.pointsOfInterestColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.pointsOfInterestColor.stream,
+                      initialData: viewModel.config.pointsOfInterestColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.pointsOfInterestColor.defaultValue),
                           );
                           if (result != null) {
@@ -307,24 +315,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.intro,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.intro.stream,
+                  initialData: viewModel.config.intro.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('过场/开场动画'),
-                    subtitle: Text('无实际内容的开场与过场，如静帧、直播开始前的等待屏幕、主题式开场、版权或法律免责声明等\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('无实际内容的开场与过场，如静帧、直播开始前的等待屏幕、主题式开场、版权或法律免责声明等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.intro.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.introColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.introColor.stream,
+                      initialData: viewModel.config.introColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.introColor.defaultValue),
                           );
                           if (result != null) {
@@ -335,24 +345,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.outro,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.outro.stream,
+                  initialData: viewModel.config.outro.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('鸣谢/结束画面'),
-                    subtitle: Text('通常指视频结尾的鸣谢与收尾部分，如鸣谢名单、片尾字幕、结束卡片、告别语等\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('通常指视频结尾的鸣谢与收尾部分，如鸣谢名单、片尾字幕、结束卡片、告别语等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.outro.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.outroColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.outroColor.stream,
+                      initialData: viewModel.config.outroColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.outroColor.defaultValue),
                           );
                           if (result != null) {
@@ -363,24 +375,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.preview,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.preview.stream,
+                  initialData: viewModel.config.preview.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('回顾/概要'),
-                    subtitle: Text('回顾本系列过去内容或预览后续内容，且不包含新的额外信息\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('回顾本系列过去内容或预览后续内容，且不包含新的额外信息\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.preview.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.previewColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.previewColor.stream,
+                      initialData: viewModel.config.previewColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.previewColor.defaultValue),
                           );
                           if (result != null) {
@@ -391,24 +405,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.padding,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.padding.stream,
+                  initialData: viewModel.config.padding.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('填充内容/黑屏'),
-                    subtitle: Text('通常指搬运视频开头/结尾的纯填充内容和无意义黑屏\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('通常指搬运视频开头/结尾的纯填充内容和无意义黑屏\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.padding.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.paddingColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.paddingColor.stream,
+                      initialData: viewModel.config.paddingColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.paddingColor.defaultValue),
                           );
                           if (result != null) {
@@ -419,24 +435,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.filler,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.filler.stream,
+                  initialData: viewModel.config.filler.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('离题闲聊/玩笑'),
-                    subtitle: Text('与视频主要内容无关的闲聊、玩笑或辅助画面，如B-roll、NG片段、无关慢动作等\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('与视频主要内容无关的闲聊、玩笑或辅助画面，如B-roll、NG片段、无关慢动作等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.filler.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.fillerColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.fillerColor.stream,
+                      initialData: viewModel.config.fillerColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.fillerColor.defaultValue),
                           );
                           if (result != null) {
@@ -447,24 +465,26 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                     ),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.musicOfftopic,
-                  builder: (context, option) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.musicOfftopic.stream,
+                  initialData: viewModel.config.musicOfftopic.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('非音乐部分'),
-                    subtitle: Text('以音乐为主的视频中出现的非音乐片段\n${_getSkipOptionName(option)}'),
+                    subtitle: Text('以音乐为主的视频中出现的非音乐片段\n${_getSkipOptionName(asyncSnapshot.data!)}'),
                     onTap: () async {
                       final result = await _selectSkipType(allowSkipToEnd: true);
                       if (result != null) {
                         viewModel.config.musicOfftopic.set(result);
                       }
                     },
-                    action: ConfigBuilder(
-                      configItem: viewModel.config.musicOfftopicColor,
-                      builder: (context, color) => _ColorButton(
-                        color: HexColor(color),
+                    action: StreamBuilder(
+                      stream: viewModel.config.musicOfftopicColor.stream,
+                      initialData: viewModel.config.musicOfftopicColor.value,
+                      builder: (context, asyncSnapshot) => _ColorButton(
+                        color: HexColor(asyncSnapshot.data!),
                         onTap: () async {
                           final result = await context.showColorPicker(
-                            initialColor: HexColor(color),
+                            initialColor: HexColor(asyncSnapshot.data!),
                             resetColor: HexColor(viewModel.config.musicOfftopicColor.defaultValue),
                           );
                           if (result != null) {
@@ -479,37 +499,41 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
             ),
             SettingGroup(
               children: [
-                ConfigBuilder(
-                  configItem: viewModel.config.allowMutedSegment,
-                  builder: (context, value) => SettingSwitchTile(
+                StreamBuilder(
+                  stream: viewModel.config.allowMutedSegment.stream,
+                  initialData: viewModel.config.allowMutedSegment.value,
+                  builder: (context, asyncSnapshot) => SettingSwitchTile(
                     title: Text('允许静音片段'),
                     subtitle: Text('当某个片段的音频属于可跳过类别但视频内容包含重要信息时，这些片段会被标记为静音片段，Better 将会在经过这些片段时自动静音'),
                     onChanged: viewModel.config.allowMutedSegment.set,
-                    value: value,
+                    value: asyncSnapshot.data!,
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.showGlobalMark,
-                  builder: (context, value) => SettingSwitchTile(
+                StreamBuilder(
+                  stream: viewModel.config.showGlobalMark.stream,
+                  initialData: viewModel.config.showGlobalMark.value,
+                  builder: (context, asyncSnapshot) => SettingSwitchTile(
                     title: Text('显示全局标记'),
                     subtitle: Text('某些视频可能会被整体标记为广告或独家访问/抢鲜体验，Better 将在标题前方显示这些标记'),
                     onChanged: viewModel.config.showGlobalMark.set,
-                    value: value,
+                    value: asyncSnapshot.data!,
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.minSegmentDuration,
-                  builder: (context, value) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.minSegmentDuration.stream,
+                  initialData: viewModel.config.minSegmentDuration.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('最短片段时长'),
                     subtitle: Text('单位秒，低于此值的片段将被禁用'),
                     onTap: () {},
-                    action: Text('${value / 1000}s'),
+                    action: Text('${asyncSnapshot.data! / 1000}s'),
                   ),
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.whitelist,
-                  builder: (context, value) {
-                    final list = value.split(',');
+                StreamBuilder(
+                  stream: viewModel.config.whitelist.stream,
+                  initialData: viewModel.config.whitelist.value,
+                  builder: (context, asyncSnapshot) {
+                    final list = asyncSnapshot.data!.split(',');
                     return SettingTile(
                       title: Text('白名单'),
                       subtitle: Text('位于白名单内的用户将获得豁免，届时 Better 将忽略本应询问或跳转的片段'),
@@ -523,13 +547,14 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
             SettingGroup(
               title: Text('隐私'),
               children: [
-                ConfigBuilder(
-                  configItem: viewModel.config.shareMyData,
-                  builder: (context, value) => SettingSwitchTile(
+                StreamBuilder(
+                  stream: viewModel.config.shareMyData.stream,
+                  initialData: viewModel.config.shareMyData.value,
+                  builder: (context, asyncSnapshot) => SettingSwitchTile(
                     title: Text('共享我的使用情况'),
                     subtitle: Text('与 "小电视空降助手" 共享我跳过的片段，用于帮助提交者了解他们提交的片段帮助了多少人，所有的数据均为匿名提交，它们永远不会关联到您和您的账号'),
                     onChanged: viewModel.config.shareMyData.set,
-                    value: value,
+                    value: asyncSnapshot.data!,
                   ),
                 ),
               ],
@@ -542,11 +567,12 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   subtitle: Text('请勿泄露此ID，点按查看或修改'),
                   onTap: () {},
                 ),
-                ConfigBuilder(
-                  configItem: viewModel.config.baseUrls,
-                  builder: (context, value) => SettingTile(
+                StreamBuilder(
+                  stream: viewModel.config.baseUrls.stream,
+                  initialData: viewModel.config.baseUrls.value,
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('服务器地址'),
-                    subtitle: Text(value),
+                    subtitle: Text(asyncSnapshot.data!),
                     onTap: () {},
                   ),
                 ),

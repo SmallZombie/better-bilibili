@@ -15,7 +15,7 @@ abstract interface class BsbsbRepository {
     return str;
   }
 
-  Future<Dio> getClient();
+  Dio getClient();
 
   Future<Result<UserInfo>> getUserInfo([String? publicUserId]);
 

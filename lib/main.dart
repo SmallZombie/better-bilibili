@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
+import 'package:better_bilibili/config/account_config.dart';
+import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/config/constants.dart';
+import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/dependencies.dart';
+import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/l10n/generated/app_localizations.dart';
 import 'package:better_bilibili/routing/router.dart';
 import 'package:better_bilibili/routing/scheme_parser.dart';
@@ -14,18 +18,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:hive_ce_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:logger/logger.dart' as new_logger;
+import 'package:logger/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  new_logger.Logger.level = new_logger.Level.all;
+  Logger.level = .all;
 
   // debugRepaintRainbowEnabled = true;
+
+  final configDir = await getApplicationSupportDirectory();
+  await Hive.initFlutter(configDir.absolute.path);
+
+  final accountConfig = AccountConfig();
+  await accountConfig.init;
+  final playerConfig = PlayerConfig();
+  await playerConfig.init;
+  final danmakuConfig = DanmakuConfig();
+  await danmakuConfig.init;
+  final bsbsbConfig = BsbsbConfig();
+  await bsbsbConfig.init;
 
   if (Platform.isWindows) {
     // https://github.com/wyrindev/flutter-media-session/blob/main/doc/windows_setup.md#the-challenge
@@ -40,7 +58,7 @@ void main() async {
     const windowOptions = WindowOptions(
       size: Size(1635, 920),
       center: true,
-      titleBarStyle: TitleBarStyle.hidden,
+      titleBarStyle: .hidden,
       windowButtonVisibility: false,
       title: kDebugMode ? '$kAppName (Debug mode)' : kAppName,
     );
@@ -55,8 +73,21 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ...providersOnline,
         ChangeNotifierProvider(create: (_) => appearanceManager),
+        Provider.value(value: accountConfig),
+        Provider(
+          create: (_) => playerConfig,
+          dispose: (_, value) => value.dispose(),
+        ),
+        Provider(
+          create: (_) => danmakuConfig,
+          dispose: (_, value) => value.dispose(),
+        ),
+        Provider(
+          create: (_) => bsbsbConfig,
+          dispose: (_, value) => value.dispose(),
+        ),
+        ...providersOnline,
       ],
       child: const App(),
     ),

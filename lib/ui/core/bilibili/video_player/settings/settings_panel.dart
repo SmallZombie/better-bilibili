@@ -7,7 +7,6 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/settings/settings_fallback_codec_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/settings/settings_preferred_codec_panel.dart';
-import 'package:better_bilibili/ui/core/share/config_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -26,34 +25,38 @@ class SettingsPanel implements Panel {
         Expanded(
           child: ListView(
             children: [
-              ConfigBuilder(
-                configItem: config.autoPlay,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.autoPlay.stream,
+                initialData: config.autoPlay.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.autoPlay.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('自动播放'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.loopPlayback,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.loopPlayback.stream,
+                initialData: config.loopPlayback.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.loopPlayback.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('循环播放'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.ambientLight,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.ambientLight.stream,
+                initialData: config.ambientLight.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.ambientLight.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('氛围光效'),
                   subtitle: const Text('仅在深色模式下生效'),
                 ),
               ),
               // 响度均衡之死见 README.md
-              // ConfigBuilder(
-              // configItem   stream: config.loudnessNormalization,
+              // StreamBuilder(
+              // stream stream: config.loudnessNormalization.stream,
+              // initialData: tream: config.loudnessNormalization.value,
               //   builder: (context, asyncSnapshot) {
               //     final value = asyncSnapshot.data!;
               //     return PanelTile(
@@ -71,54 +74,60 @@ class SettingsPanel implements Panel {
               //     );
               //   },
               // ),
-              ConfigBuilder(
-                configItem: config.heatWaveforms,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.heatWaveforms.stream,
+                initialData: config.heatWaveforms.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.heatWaveforms.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('热度波形图'),
                   subtitle: const Text('显示一个代表互动热度的波形图，不支持部分视频'),
                 ),
               ),
 
               PanelSectionTitle(title: '连续播放'),
-              ConfigBuilder(
-                configItem: config.autoPlayNextEpisode,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.autoPlayNextEpisode.stream,
+                initialData: config.autoPlayNextEpisode.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.autoPlayNextEpisode.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('连续播放剧集'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.autoPlayNextPlaylist,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.autoPlayNextPlaylist.stream,
+                initialData: config.autoPlayNextPlaylist.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.autoPlayNextPlaylist.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('连续播放列表'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.autoPlayNextCollection,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.autoPlayNextCollection.stream,
+                initialData: config.autoPlayNextCollection.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.autoPlayNextCollection.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('连续播放合集'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.autoPlayNextRecommend,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.autoPlayNextRecommend.stream,
+                initialData: config.autoPlayNextRecommend.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.autoPlayNextRecommend.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('连续播放推荐'),
                 ),
               ),
 
               PanelSectionTitle(title: '编解码'),
-              ConfigBuilder(
-                configItem: config.preferredCodec,
-                builder: (context, value) => PanelTile(
+              StreamBuilder(
+                stream: config.preferredCodec.stream,
+                initialData: config.preferredCodec.value,
+                builder: (context, asyncSnapshot) => PanelTile(
                   onTap: () => controller.push(
                     SettingsPreferredCodecPanel(
                       controller: controller,
@@ -126,16 +135,17 @@ class SettingsPanel implements Panel {
                     ),
                   ),
                   title: const Text('首选编码格式'),
-                  subtitle: Text(value.toString()),
+                  subtitle: Text(asyncSnapshot.data.toString()),
                   trailing: Icon(
                     Icons.keyboard_arrow_right_outlined,
                     color: Colors.white.withAlpha(200),
                   ),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.fallbackCodec,
-                builder: (context, value) => PanelTile(
+              StreamBuilder(
+                stream: config.fallbackCodec.stream,
+                initialData: config.fallbackCodec.value,
+                builder: (context, asyncSnapshot) => PanelTile(
                   onTap: () => controller.push(
                     SettingsFallbackCodecPanel(
                       controller: controller,
@@ -143,7 +153,7 @@ class SettingsPanel implements Panel {
                     ),
                   ),
                   title: const Text('备选编码格式'),
-                  subtitle: Text(value.toString()),
+                  subtitle: Text(asyncSnapshot.data.toString()),
                   trailing: Icon(
                     Icons.keyboard_arrow_right_outlined,
                     color: Colors.white.withAlpha(200),
@@ -172,20 +182,22 @@ class SettingsPanel implements Panel {
               //   ),
               // ),
               PanelSectionTitle(title: '媒体控制'),
-              ConfigBuilder(
-                configItem: config.mediaControl,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.mediaControl.stream,
+                initialData: config.mediaControl.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.mediaControl.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('启用媒体控制'),
                   subtitle: const Text('允许通过系统媒体控件控制播放，并显示当前播放信息'),
                 ),
               ),
-              ConfigBuilder(
-                configItem: config.hideMediaControlInfo,
-                builder: (context, value) => SwitchPanelTile(
+              StreamBuilder(
+                stream: config.hideMediaControlInfo.stream,
+                initialData: config.hideMediaControlInfo.value,
+                builder: (context, asyncSnapshot) => SwitchPanelTile(
                   onChanged: config.hideMediaControlInfo.set,
-                  value: value,
+                  value: asyncSnapshot.data!,
                   title: const Text('隐藏信息'),
                   subtitle: const Text('即便使用媒体控制，也始终隐藏播放信息'),
                 ),
@@ -202,11 +214,12 @@ class SettingsPanel implements Panel {
               // ),
               if (kDebugMode) ...[
                 PanelSectionTitle(),
-                ConfigBuilder(
-                  configItem: config.historyReporterDebugHud,
-                  builder: (context, value) => SwitchPanelTile(
+                StreamBuilder(
+                  stream: config.historyReporterDebugHud.stream,
+                  initialData: config.historyReporterDebugHud.value,
+                  builder: (context, asyncSnapshot) => SwitchPanelTile(
                     onChanged: config.historyReporterDebugHud.set,
-                    value: value,
+                    value: asyncSnapshot.data!,
                     title: const Text('HistoryReporterDebugHUD'),
                   ),
                 ),

@@ -89,7 +89,8 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            // https://github.com/flutter/flutter/issues/97062#issuecomment-1019497630
+            VALUE "CompanyName", "" "\0"
             VALUE "FileDescription", "Better Bilibili" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "better_bilibili" "\0"

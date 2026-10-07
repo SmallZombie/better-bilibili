@@ -8,15 +8,11 @@ import 'package:flutter/scheduler.dart';
 class DanmakuLayer extends StatefulWidget {
   final DanmakuController controller;
   final ExtraVideoController videoController;
-  final Stream<Duration> positionStream;
-  final Stream<bool> playingStream;
 
   const DanmakuLayer({
     super.key,
     required this.controller,
     required this.videoController,
-    required this.positionStream,
-    required this.playingStream,
   });
 
   @override
@@ -24,29 +20,40 @@ class DanmakuLayer extends StatefulWidget {
 }
 
 class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderStateMixin {
+  DanmakuController get controller => widget.controller;
+  ExtraVideoController get videoController => widget.videoController;
+
   late final Ticker _renderTicker;
   final List<StreamSubscription> subscriptions = [];
   bool _lastPlaying = false;
+  Duration _lastTick = Duration.zero;
 
   @override
   void initState() {
     super.initState();
 
+    debugPrint('[aaaa] danmakuLayer initstate');
+
     _renderTicker = createTicker((elapsed) {
-      widget.controller.onTick(elapsed);
+      final delta = elapsed - _lastTick;
+      _lastTick = elapsed;
+      controller.onTick(delta);
     });
 
-    _lastPlaying = !widget.videoController.state.playing;
+    _lastPlaying = !videoController.state.playing;
 
     subscriptions.addAll([
-      widget.positionStream.listen((position) {
+      videoController.stream.position.listen((position) {
         if (!mounted) return;
-        widget.controller.onVideoPositionChanged(position);
+        controller.onVideoPositionChanged(
+          position,
+          notify: !_renderTicker.isActive,
+        );
       }),
-      widget.playingStream.listen(_onPlaying),
+      videoController.stream.playing.listen(_onPlaying),
     ]);
 
-    if (widget.videoController.state.playing) _onPlaying(true);
+    if (videoController.state.playing) _onPlaying(true);
   }
 
   @override
@@ -68,20 +75,24 @@ class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderSt
 
     if (playing) {
       if (!_renderTicker.isActive) {
+        _lastTick = Duration.zero;
         _renderTicker.start();
       }
     } else if (_renderTicker.isActive) {
       _renderTicker.stop();
+      _lastTick = Duration.zero;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: SizedBox.expand(
-        child: ClipRect(
-          child: CustomPaint(
-            painter: DanmakuLayerPainter(controller: widget.controller),
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: SizedBox.expand(
+          child: ClipRect(
+            child: CustomPaint(
+              painter: DanmakuLayerPainter(controller: controller),
+            ),
           ),
         ),
       ),
