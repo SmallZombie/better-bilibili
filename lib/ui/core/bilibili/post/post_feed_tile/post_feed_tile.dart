@@ -332,9 +332,13 @@ class _ImageGroup extends StatelessWidget {
 
   const _ImageGroup({required this.images});
 
+  String _getThumbUrl(String url) {
+    return '$url$_suffix';
+  }
+
   void _onTap(BuildContext context, int index) {
     context.openImageViewer(
-      images: images.map((v) => ImageViewerItem(thumbUrl: '${v.src}$_suffix', url: v.src)).toList(),
+      images.map((v) => ImageViewerItem(thumbUrl: _getThumbUrl(v.src), url: v.src)).toList(),
       initialIndex: index,
     );
   }
@@ -350,7 +354,7 @@ class _ImageGroup extends StatelessWidget {
       widget = GestureDetector(
         onTap: () => _onTap(context, 0),
         child: Hero(
-          tag: ImageViewerItem.defaultHeroTag(image.src),
+          tag: _getThumbUrl(image.src),
           child: LayoutBuilder(
             builder: (context, constraints) {
               double height = min(image.height.toDouble(), maxHeight);
@@ -476,7 +480,7 @@ class _ImageGroup extends StatelessWidget {
     return GestureDetector(
       onTap: () => _onTap(context, index),
       child: Hero(
-        tag: ImageViewerItem.defaultHeroTag(image.src),
+        tag: _getThumbUrl(image.src),
         child: BiliImageWapper(
           url: image.src,
           suffix: _suffix,

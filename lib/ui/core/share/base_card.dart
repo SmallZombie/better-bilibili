@@ -8,11 +8,10 @@ import 'package:go_router/go_router.dart';
 class BaseCard extends StatelessWidget {
   final Widget title;
   final Widget? subtitle;
-  final List<MetadataItem> contentItems;
-  final Widget? contentItemSeparator;
+  final List<MetadataItemGroup> contentItems;
   final Widget cover;
   final List<MetadataItem> coverItems;
-  final Widget? badge;
+  final String? badge;
   final List<PopupMenuEntry<String>> contextActions;
   final VoidCallback? onTap;
   final List<MetadataItem> sheetItems;
@@ -24,7 +23,6 @@ class BaseCard extends StatelessWidget {
     required this.cover,
     this.subtitle,
     this.contentItems = const [],
-    this.contentItemSeparator,
     this.coverItems = const [],
     this.badge,
     this.contextActions = const [],
@@ -96,25 +94,42 @@ class BaseCard extends StatelessWidget {
               Stack(
                 children: [
                   cover,
-                  Positioned(
-                    right: 4,
-                    bottom: 4,
-                    child: Container(
-                      padding: const .symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: .circular(20),
-                      ),
-                      child: DefaultTextStyle.merge(
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                        child: Row(
-                          mainAxisSize: .min,
-                          spacing: 6.0,
-                          children: coverItems.map((v) => _buildMetadata(v)).toList(),
+                  if (coverItems.isNotEmpty)
+                    Positioned(
+                      right: 4,
+                      bottom: 4,
+                      child: Container(
+                        padding: const .symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: .circular(20),
+                        ),
+                        child: DefaultTextStyle.merge(
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                          child: Row(
+                            mainAxisSize: .min,
+                            spacing: 6.0,
+                            children: coverItems.map((v) => _buildMetadata(v)).toList(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  if (badge != null)
+                    Positioned(
+                      top: 8.0,
+                      right: 8.0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: TextStyle(color: colorScheme.primary, fontSize: 12),
+                        ),
+                      ),
+                    ),
                 ],
               ),
               Padding(
@@ -135,16 +150,18 @@ class BaseCard extends StatelessWidget {
                             style: TextStyle(fontSize: 15),
                             child: title,
                           ),
-                          DefaultTextStyle.merge(
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colorScheme.outline,
-                            ),
-                            maxLines: 1,
-                            child: Row(
-                              children: contentItemSeparator == null
-                                  ? contentItems.map((v) => _buildMetadata(v)).toList()
-                                  : contentItems.map((v) => _buildMetadata(v)).toList().intersperse(contentItemSeparator!),
+                          ...contentItems.map(
+                            (v) => DefaultTextStyle.merge(
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.outline,
+                              ),
+                              maxLines: 1,
+                              child: Row(
+                                children: v.separator != null
+                                    ? v.items.map((vv) => _buildMetadata(vv)).toList().intersperse(v.separator!)
+                                    : v.items.map((vv) => _buildMetadata(vv)).toList(),
+                              ),
                             ),
                           ),
                         ],
@@ -245,4 +262,11 @@ class MetadataItem {
     this.autoClose = true,
     this.description,
   });
+}
+
+class MetadataItemGroup {
+  final List<MetadataItem> items;
+  final Widget? separator;
+
+  const MetadataItemGroup({required this.items, this.separator});
 }

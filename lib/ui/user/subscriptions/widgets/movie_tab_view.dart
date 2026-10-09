@@ -190,7 +190,7 @@ class _MovieTabViewState extends State<MovieTabView> with AutomaticKeepAliveClie
                                   onTap: () => _onUnsubscribe(item),
                                 ),
                               ]
-                            : null,
+                            : [],
                       );
                     },
                   ),

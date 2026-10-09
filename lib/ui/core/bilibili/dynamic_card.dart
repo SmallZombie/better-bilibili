@@ -48,7 +48,7 @@ class DynamicCard extends StatelessWidget {
         liveId: live.id,
         cover: live.cover,
         title: live.title,
-        nickname: live.owner.nickname,
+        user: live.owner,
         badge: '直播',
         watchTime: live.watchTime,
       );
@@ -170,7 +170,7 @@ class DynamicCard extends StatelessWidget {
         liveId: live.id,
         cover: live.cover,
         title: live.title,
-        nickname: live.owner.nickname,
+        user: live.owner,
         badge: '直播',
       );
     } else if (data case SearchResultArticle()) {

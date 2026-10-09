@@ -190,7 +190,7 @@ class _SeriesTabState extends State<SeriesTabView> with AutomaticKeepAliveClient
                                   onTap: () => _onUnsubscribe(item),
                                 ),
                               ]
-                            : null,
+                            : [],
                       );
                     },
                   ),

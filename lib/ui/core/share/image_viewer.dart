@@ -1,76 +1,409 @@
-import 'dart:async';
-
+import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
+import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+extension ImageViewer on BuildContext {
+  void openImageViewer(
+    List<ImageViewerItem> images, {
+    int initialIndex = 0,
+    List<ImageViewerAction> actions = const [],
+  }) {
+    Navigator.of(this).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: null,
+        barrierDismissible: false,
+        transitionDuration: const Duration(milliseconds: 200),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _ImageViewerScreen(
+            images: images,
+            initialIndex: initialIndex,
+            actions: actions,
+          );
+        },
+      ),
+    );
+  }
+}
 
 class ImageViewerItem {
-  final String thumbUrl;
   final String url;
-  final Object? heroTag;
+  final String thumbUrl;
+  final String? heroTag;
 
   const ImageViewerItem({
-    required this.thumbUrl,
     required this.url,
+    required this.thumbUrl,
     this.heroTag,
   });
-
-  static String defaultHeroTag(String url) => 'ImageViewer_$url';
 }
 
-enum ImageViewerQualityEnum {
-  origin,
-  thumbnail,
+class ImageViewerAction {
+  final String name;
+  final String? description;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  const ImageViewerAction({
+    required this.name,
+    this.description,
+    this.icon,
+    required this.onTap,
+  });
 }
 
-class ImageViewer extends StatefulWidget {
-  final ImageViewerQualityEnum defaultQuality;
+class _ImageViewerScreen extends StatefulWidget {
   final List<ImageViewerItem> images;
   final int initialIndex;
+  final List<ImageViewerAction> actions;
 
-  const ImageViewer({
-    super.key,
-    this.defaultQuality = ImageViewerQualityEnum.thumbnail,
+  const _ImageViewerScreen({
     required this.images,
-    this.initialIndex = 0,
+    required this.initialIndex,
+    required this.actions,
   });
 
   @override
-  State<ImageViewer> createState() => _ImageViewerState();
+  State<_ImageViewerScreen> createState() => _ImageViewerScreenState();
 }
 
-class _ImageViewerState extends State<ImageViewer> with SingleTickerProviderStateMixin {
-  late PageController _pageController;
-  late int _currentIndex;
+class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTickerProviderStateMixin {
+  List<ImageViewerItem> get images => widget.images;
+  int get initialIndex => widget.initialIndex;
 
-  final Map<int, ImageViewerQualityEnum> _qualityStates = {};
+  late final AnimationController controller;
+  late final PageController pageController;
+  late final List<ImageViewerAction> _defaultActions;
 
-  final TransformationController _transformationController = TransformationController();
-
-  bool _isLoadingQuality = false;
-  double _dragOffset = 0.0;
-  bool _isZoomed = false;
+  List<ImageViewerAction> get actions => [..._defaultActions, ...widget.actions];
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: _currentIndex);
-    _transformationController.addListener(_onScaleChanged);
+
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    )..forward();
+
+    pageController = PageController(initialPage: initialIndex);
+    pageIndex = initialIndex;
+
+    _defaultActions = [
+      ImageViewerAction(
+        name: '保存到本地',
+        icon: Icons.download,
+        onTap: () {
+          context.saveImage(images[pageIndex].url, 'bilibili_${_getSaveDateString()}', 'jpeg');
+        },
+      ),
+      if (images.length > 1)
+        ImageViewerAction(
+          name: '保存全部${images.length}张到本地',
+          icon: Icons.download,
+          onTap: () {
+            final List<String> urls = [];
+            final List<String> names = [];
+            final dateStr = _getSaveDateString();
+
+            for (int i = 0; i < images.length; i++) {
+              final image = images[i];
+              urls.add(image.url);
+              names.add('bilibili_${dateStr}_${i + 1}');
+            }
+
+            context.saveImages(urls, names, 'jpeg');
+          },
+        ),
+    ];
   }
 
   @override
   void dispose() {
-    _transformationController.removeListener(_onScaleChanged);
-    _transformationController.dispose();
-    _pageController.dispose();
+    controller.dispose();
+    pageController.dispose();
+
     super.dispose();
   }
 
-  ImageViewerQualityEnum get _currentImageQuality => _qualityStates[_currentIndex] ?? widget.defaultQuality;
+  void close() {
+    controller.reverse();
+    // context.pop();
+    Navigator.pop(context);
+  }
+
+  int pageIndex = 0;
+
+  void _setPage(int page) {
+    setState(() => pageIndex = page);
+    pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _onPageChanged(int event) {
+    if (event == pageIndex) return;
+    setState(() => pageIndex = event);
+  }
+
+  final Set<int> _originalImageSet = {};
+
+  void _viewOriginalImage(int index) {
+    setState(() => _originalImageSet.add(index));
+  }
+
+  void _showMoreOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (context) => BottomSheetWapper(
+        child: ListView(
+          children: actions.map((v) {
+            return ListTile(
+              leading: v.icon != null ? Icon(v.icon!) : null,
+              title: Text(v.name),
+              subtitle: v.description != null ? Text(v.description!) : null,
+              onTap: () {
+                // context.pop();
+                Navigator.pop(context);
+                v.onTap();
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  String _getSaveDateString() {
+    final now = DateTime.now();
+    return '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}_${now.minute.toString().padLeft(2, '0')}_${now.second.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) => ColoredBox(
+                color: Color.lerp(
+                  Colors.transparent,
+                  Colors.black,
+                  controller.value,
+                )!,
+              ),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, child) => Opacity(
+              opacity: controller.value,
+              child: child,
+            ),
+            child: PageView(
+              controller: pageController,
+              onPageChanged: _onPageChanged,
+              children: [
+                for (int i = 0; i < images.length; i++)
+                  _ImagePage(
+                    image: images[i],
+                    useHighQuality: _originalImageSet.contains(i),
+                    controller: controller,
+                    onClose: close,
+                  ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 16.0,
+            left: 16.0,
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) => Opacity(
+                opacity: controller.value,
+                child: child,
+              ),
+              child: _buildTopLeft(),
+            ),
+          ),
+          Positioned(
+            top: 16.0,
+            right: 16.0,
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) => Opacity(
+                opacity: controller.value,
+                child: child,
+              ),
+              child: _buildTopRight(),
+            ),
+          ),
+          if (pageIndex > 0)
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 16.0,
+              child: Center(child: _buildLeft()),
+            ),
+          if (pageIndex < images.length - 1)
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 16.0,
+              child: Center(child: _buildRight()),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopLeft() {
+    return IconButton(
+      color: const Color(0xffffffff),
+      onPressed: close,
+      icon: const Icon(Icons.close),
+      style: IconButton.styleFrom(backgroundColor: Colors.black45),
+    );
+  }
+
+  Widget _buildTopRight() {
+    return Row(
+      spacing: 12.0,
+      children: [
+        if (!_originalImageSet.contains(pageIndex))
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.black45,
+              foregroundColor: const Color(0xffffffff),
+              shape: const StadiumBorder(),
+              minimumSize: const Size(0, 40),
+            ),
+            onPressed: () => _viewOriginalImage(pageIndex),
+            icon: Icon(Icons.hd),
+            label: Text('查看原图'),
+          ),
+        Container(
+          alignment: .center,
+          padding: const .symmetric(horizontal: 16.0, vertical: 6.0),
+          decoration: const ShapeDecoration(color: Colors.black45, shape: StadiumBorder()),
+          child: Text(
+            '${pageIndex + 1} / ${images.length}',
+            style: const TextStyle(color: Color(0xffffffff)),
+          ),
+        ),
+        IconButton(
+          color: const Color(0xffffffff),
+          onPressed: _showMoreOptionsSheet,
+          icon: const Icon(Icons.more_horiz),
+          style: IconButton.styleFrom(backgroundColor: Colors.black45),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLeft() {
+    return IconButton(
+      color: const Color(0xffffffff),
+      onPressed: () {
+        _setPage(pageIndex - 1);
+      },
+      icon: const Icon(Icons.arrow_left_rounded, size: 32.0),
+    );
+  }
+
+  Widget _buildRight() {
+    return IconButton(
+      color: const Color(0xffffffff),
+      onPressed: () {
+        _setPage(pageIndex + 1);
+      },
+      icon: const Icon(Icons.arrow_right_rounded, size: 32.0),
+    );
+  }
+}
+
+class _ImagePage extends StatefulWidget {
+  final ImageViewerItem image;
+  final bool useHighQuality;
+  final AnimationController controller;
+  final VoidCallback onClose;
+
+  const _ImagePage({
+    required this.image,
+    required this.useHighQuality,
+    required this.controller,
+    required this.onClose,
+  });
+
+  @override
+  State<_ImagePage> createState() => _ImagePageState();
+}
+
+class _ImagePageState extends State<_ImagePage> {
+  ImageViewerItem get image => widget.image;
+  bool get useHighQuality => widget.useHighQuality;
+  AnimationController get controller => widget.controller;
+
+  late final TransformationController transformationController;
+
+  Future? pending;
+
+  @override
+  void initState() {
+    super.initState();
+
+    transformationController = TransformationController();
+    transformationController.addListener(_onScaleChanged);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    transformationController.removeListener(_onScaleChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (useHighQuality) {
+      pending ??= _loadOriginalImage();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ImagePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.useHighQuality != useHighQuality) {
+      pending ??= _loadOriginalImage();
+    }
+  }
+
+  bool _showHighQuality = false;
+
+  Future<void> _loadOriginalImage() async {
+    await precacheImage(NetworkImage(image.url), context);
+    if (!mounted) return;
+
+    setState(() => _showHighQuality = true);
+  }
+
+  bool _isZoomed = false;
 
   void _onScaleChanged() {
-    final isZoomed = _transformationController.value.getMaxScaleOnAxis() > 1.001;
+    final isZoomed = transformationController.value.getMaxScaleOnAxis() > 1;
     if (_isZoomed != isZoomed) {
       setState(() {
         _isZoomed = isZoomed;
@@ -78,283 +411,106 @@ class _ImageViewerState extends State<ImageViewer> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _toggleQuality() async {
-    if (_isLoadingQuality) return;
+  bool _dragging = false;
+  Offset _dragOffset = .zero;
 
-    final nextQuality = _currentImageQuality == ImageViewerQualityEnum.thumbnail
-        ? ImageViewerQualityEnum.origin
-        : ImageViewerQualityEnum.thumbnail;
+  // 拖动距离到达此值时完全隐藏背景遮罩
+  double _dragHideMaskDistance = 0.0;
 
-    setState(() => _isLoadingQuality = true);
+  // 拖动距离超过此值时视为关闭
+  final double _dragCloseDistance = 240.0;
 
-    final imageUrl = nextQuality == ImageViewerQualityEnum.origin
-        ? widget.images[_currentIndex].url
-        : widget.images[_currentIndex].thumbUrl;
+  void _onPointerDown(PointerDownEvent event) {
+    if (_isZoomed) return;
 
-    try {
-      final ImageProvider provider = NetworkImage(imageUrl);
-      final completer = Completer<void>();
-      final stream = provider.resolve(ImageConfiguration.empty);
+    controller.stop();
 
-      late ImageStreamListener listener;
-      listener = ImageStreamListener(
-        (info, synchronousCall) {
-          completer.complete();
-          stream.removeListener(listener);
-        },
-        onError: (e, s) {
-          completer.completeError(e);
-          stream.removeListener(listener);
-        },
-      );
+    final viewport = MediaQuery.sizeOf(context);
+    _dragHideMaskDistance = viewport.longestSide * 1.25;
 
-      stream.addListener(listener);
-      await completer.future;
-    } catch (e) {
-      debugPrint('Load failed: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _qualityStates[_currentIndex] = nextQuality;
-          _isLoadingQuality = false;
-        });
-      }
+    _dragging = true;
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    if (_isZoomed) return;
+
+    setState(() {
+      _dragOffset = _dragOffset += event.delta;
+    });
+
+    final closeProgress = 1 - (_dragOffset.distance / _dragHideMaskDistance).clamp(0.0, 1.0);
+    controller.value = closeProgress;
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    if (_isZoomed) return;
+
+    if (_dragOffset.distance > _dragCloseDistance) {
+      widget.onClose();
+    } else {
+      setState(() {
+        _dragOffset = .zero;
+        _dragging = false;
+      });
+      controller.forward();
     }
   }
 
-  void _handleScale(bool zoomIn) {
-    double scale = _transformationController.value.getMaxScaleOnAxis();
-    double newScale = zoomIn ? scale * 1.5 : scale / 1.5;
-    _transformationController.value = Matrix4.identity()..scale(newScale.clamp(1.0, 5.0));
-  }
-
-  Widget _buildHeroFlightShuttle(
-    BuildContext flightContext,
-    Animation<double> animation,
-    HeroFlightDirection flightDirection,
-    BuildContext fromHeroContext,
-    BuildContext toHeroContext,
-  ) {
-    final hero = (flightDirection == HeroFlightDirection.pop ? fromHeroContext.widget : toHeroContext.widget) as Hero;
-    return hero.child;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bool isDesktop = Theme.of(context).platform == TargetPlatform.windows || Theme.of(context).platform == TargetPlatform.macOS;
-
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
-            _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuart),
-        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
-            _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutQuart),
-        const SingleActivator(LogicalKeyboardKey.equal, control: true): () => _handleScale(true),
-        const SingleActivator(LogicalKeyboardKey.minus, control: true): () => _handleScale(false),
-        const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.pop(context),
-      },
-      child: Focus(
-        autofocus: true,
-        child: Material(
-          color: Colors.transparent,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: (1 - (_dragOffset.abs() / 500)).clamp(0.0, 1.0),
-                  child: Container(color: Colors.black),
-                ),
-              ),
-
-              Positioned.fill(
-                child: GestureDetector(
-                  onVerticalDragUpdate: _isZoomed
-                      ? null
-                      : (details) {
-                          setState(() => _dragOffset += details.delta.dy);
-                        },
-                  onVerticalDragEnd: _isZoomed
-                      ? null
-                      : (details) {
-                          if (_dragOffset.abs() > 150) {
-                            Navigator.pop(context);
-                          } else {
-                            setState(() => _dragOffset = 0);
-                          }
-                        },
-                  child: Transform.translate(
-                    offset: Offset(0, _dragOffset),
-                    child: PageView.builder(
-                      controller: _pageController,
-                      physics: _isZoomed ? const NeverScrollableScrollPhysics() : const BouncingScrollPhysics(),
-                      itemCount: widget.images.length,
-                      onPageChanged: (index) {
-                        _transformationController.value = Matrix4.identity();
-                        setState(() {
-                          _currentIndex = index;
-                          _dragOffset = 0;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final item = widget.images[index];
-                        final itemQuality = _qualityStates[index] ?? widget.defaultQuality;
-                        final displayUrl = itemQuality == ImageViewerQualityEnum.origin ? item.url : item.thumbUrl;
-                        final heroTag = item.heroTag ?? ImageViewerItem.defaultHeroTag(item.url);
-
-                        return InteractiveViewer(
-                          transformationController: _transformationController,
-                          minScale: 1.0,
-                          maxScale: 5.0,
-                          child: SizedBox.expand(
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: Hero(
-                                tag: heroTag,
-                                createRectTween: (begin, end) => RectTween(begin: begin, end: end),
-                                flightShuttleBuilder: _buildHeroFlightShuttle,
-                                child: ImageWapper(image: NetworkImage(displayUrl), fit: .contain),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-
-              _buildTopLeftBar(),
-              _buildTopRightBar(),
-
-              if (isDesktop) ...[
-                if (_currentIndex > 0) _buildSideNav(isLeft: true),
-                if (_currentIndex < widget.images.length - 1) _buildSideNav(isLeft: false),
-              ],
-            ],
-          ),
+    return Listener(
+      onPointerDown: _onPointerDown,
+      onPointerMove: _onPointerMove,
+      onPointerUp: _onPointerUp,
+      child: TweenAnimationBuilder<Offset>(
+        tween: Tween(
+          begin: _dragging ? .zero : _dragOffset,
+          end: _dragging ? _dragOffset : .zero,
         ),
-      ),
-    );
-  }
-
-  Widget _buildTopLeftBar() {
-    return Positioned(
-      top: 16.0,
-      left: 16.0,
-      child: _CircleButton(
-        icon: Icons.close,
-        onPressed: () => Navigator.pop(context),
-      ),
-    );
-  }
-
-  Widget _buildTopRightBar() {
-    return Positioned(
-      top: 16.0,
-      right: 16.0,
-      child: Row(
-        children: [
-          _isLoadingQuality
-              ? Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: const ShapeDecoration(
-                    color: Colors.black54,
-                    shape: StadiumBorder(),
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    ),
-                  ),
-                )
-              : TextButton.icon(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.black54,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
-                    minimumSize: const Size(0, 40),
-                  ),
-                  onPressed: _toggleQuality,
-                  icon: Icon(_currentImageQuality == ImageViewerQualityEnum.origin ? Icons.hd : Icons.sd),
-                  label: Text(_currentImageQuality == ImageViewerQualityEnum.origin ? '切换到缩略质量' : '切换到原始质量'),
-                ),
-          const SizedBox(width: 12),
-          Container(
-            height: 40,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: const ShapeDecoration(color: Colors.black54, shape: StadiumBorder()),
-            child: Text('${_currentIndex + 1} / ${widget.images.length}', style: const TextStyle(color: Colors.white)),
-          ),
-          const SizedBox(width: 12),
-          _CircleButton(icon: Icons.more_vert, onPressed: () {}),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSideNav({required bool isLeft}) {
-    return Positioned(
-      left: isLeft ? 20 : null,
-      right: isLeft ? null : 20,
-      top: 0,
-      bottom: 0,
-      child: Center(
-        child: _CircleButton(
-          icon: isLeft ? Icons.chevron_left : Icons.chevron_right,
-          onPressed: () => isLeft
-              ? _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOut)
-              : _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOut),
-        ),
-      ),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  const _CircleButton({required this.icon, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-      child: IconButton(
-        iconSize: 20,
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, color: Colors.white),
-        onPressed: onPressed,
-      ),
-    );
-  }
-}
-
-extension BuildContextImageViewerExtension on BuildContext {
-  void openImageViewer({
-    required List<ImageViewerItem> images,
-    ImageViewerQualityEnum? defaultQuality,
-    int? initialIndex,
-  }) {
-    Navigator.push(
-      this,
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.transparent,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return ImageViewer(
-            images: images,
-            defaultQuality: defaultQuality ?? .thumbnail,
-            initialIndex: initialIndex ?? 0,
-          );
+        duration: _dragging ? .zero : const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        builder: (context, value, child) {
+          return Transform.translate(offset: value, child: child);
         },
+        child: InteractiveViewer(
+          transformationController: transformationController,
+          minScale: 1.0,
+          maxScale: 5.0,
+          child: Center(
+            child: Hero(
+              tag: image.thumbUrl,
+              createRectTween: (begin, end) => _CurvedRectTween(
+                begin: begin,
+                end: end,
+                curve: Curves.easeOutCubic,
+              ),
+              child: Stack(
+                alignment: .center,
+                children: [
+                  ImageWapper(
+                    image: NetworkImage(_showHighQuality ? image.url : image.thumbUrl),
+                    fit: .contain,
+                  ),
+                  if (!_showHighQuality && useHighQuality) CircularProgressIndicator(),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+}
+
+class _CurvedRectTween extends RectTween {
+  _CurvedRectTween({
+    super.begin,
+    super.end,
+    required this.curve,
+  });
+
+  final Curve curve;
+
+  @override
+  Rect? lerp(double t) => super.lerp(curve.transform(t));
 }

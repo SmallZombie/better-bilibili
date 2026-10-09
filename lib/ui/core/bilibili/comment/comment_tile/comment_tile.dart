@@ -96,15 +96,15 @@ class _CommentTileState extends State<CommentTile> {
 
   void _onTapImage(int index) {
     context.openImageViewer(
-      images: _viewModel.comment.content.images.map((v) {
-        return ImageViewerItem(
-          thumbUrl: '$v@478w_270h_1s',
-          url: v,
-          heroTag: ImageViewerItem.defaultHeroTag(v),
-        );
+      _viewModel.comment.content.images.map((v) {
+        return ImageViewerItem(thumbUrl: _getThumbUrl(v), url: v);
       }).toList(),
       initialIndex: index,
     );
+  }
+
+  String _getThumbUrl(String url) {
+    return '$url@478w_270h_1s';
   }
 
   @override
@@ -239,14 +239,14 @@ class _CommentTileState extends State<CommentTile> {
                                 scrollDirection: .horizontal,
                                 itemCount: comment.content.images.length,
                                 itemBuilder: (context, index) {
-                                  final image = comment.content.images[index];
+                                  final url = comment.content.images[index];
                                   return GestureDetector(
                                     onTap: () => _onTapImage(index),
                                     child: Hero(
-                                      tag: ImageViewerItem.defaultHeroTag(image),
+                                      tag: _getThumbUrl(url),
                                       createRectTween: (begin, end) => RectTween(begin: begin, end: end),
                                       child: BiliImageWapper(
-                                        url: image,
+                                        url: url,
                                         suffix: '@478w_270h_1s',
                                         borderRadius: .circular(4.0),
                                       ),

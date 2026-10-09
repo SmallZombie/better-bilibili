@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:better_bilibili/ui/core/bilibili/video_player/media_session/media_session_data.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:logger/logger.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
-import 'package:flutter_media_session/flutter_media_session_platform_interface.dart';
 
 /// A production-ready adapter to bridge `media_kit` [Player] and [FlutterMediaSession].
 /// https://github.com/wyrindev/flutter-media-session/blob/main/doc/usage.md#b-copy-ready-media_kit-adapter
@@ -13,15 +13,17 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
 
   final Player player;
   final MediaSessionData mediaSessionData;
+  PlaylistController? playlistController;
   final bool manageLifecycle;
 
   final List<StreamSubscription> _subscriptions = [];
   FlutterMediaSession? _session;
   bool _isUpdating = false;
 
-  ExtraVideoPlayerMediaSessionAdapter(
-    this.player,
-    this.mediaSessionData, {
+  ExtraVideoPlayerMediaSessionAdapter({
+    required this.player,
+    required this.mediaSessionData,
+    this.playlistController,
     this.manageLifecycle = false,
   });
 
@@ -53,6 +55,8 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
       mediaSessionData.stream.privacyMode.listen((_) => _syncMetadata()),
     ]);
 
+    playlistController?.addListener(_syncAvailableActions);
+
     _syncMetadata();
     _syncPlaybackState();
   }
@@ -63,6 +67,8 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
       sub.cancel();
     }
     _subscriptions.clear();
+
+    playlistController?.removeListener(_syncAvailableActions);
 
     if (manageLifecycle) {
       _session?.deactivate().catchError((e) {
@@ -157,10 +163,10 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
           }
           break;
         case 'skipToNext':
-          await player.next();
+          playlistController?.next();
           break;
         case 'skipToPrevious':
-          await player.previous();
+          playlistController?.previous();
           break;
         case 'repeat':
           PlaylistMode nextMode = player.state.playlistMode == PlaylistMode.none
@@ -178,9 +184,8 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
   void _syncAvailableActions() {
     if (_session == null) return;
 
-    final playlist = player.state.playlist;
-    final hasNext = playlist.index < playlist.medias.length - 1;
-    final hasPrev = playlist.index > 0;
+    final hasNext = playlistController?.hasNext ?? false;
+    final hasPrev = playlistController?.hasPrevious ?? false;
 
     final actions = {
       MediaAction.play,

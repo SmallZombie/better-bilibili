@@ -90,7 +90,7 @@ class _VideoCardState extends State<VideoCard> {
       final userRepository = context.read<UserRepository>();
       final result = await userRepository.addVideoToWatchLater(videoId: widget.videoId);
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       switch (result) {
         case Ok():
@@ -191,18 +191,22 @@ class _VideoCardState extends State<VideoCard> {
         _ => null,
       },
       contentItems: [
-        if (widget.user != null)
-          MetadataItem(
-            key: '上传者',
-            value: widget.user!.nickname,
-            onTap: () => context.push(Routes.buildUserDetail(widget.user!.id)),
-          ),
-        if (widget.uploadTime != null) MetadataItem(key: '上传时间', value: formatTimeToHumanReadable(widget.uploadTime!)),
-        if (widget.watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(widget.watchTime!)),
-        if (widget.favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(widget.favoriteTime!)),
-        if (widget.watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(widget.watchLaterTime!)),
+        MetadataItemGroup(
+          items: [
+            if (widget.user != null)
+              MetadataItem(
+                key: '上传者',
+                value: widget.user!.nickname,
+                onTap: () => context.push(Routes.buildUserDetail(widget.user!.id)),
+              ),
+            if (widget.uploadTime != null) MetadataItem(key: '上传时间', value: formatTimeToHumanReadable(widget.uploadTime!)),
+            if (widget.watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(widget.watchTime!)),
+            if (widget.favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(widget.favoriteTime!)),
+            if (widget.watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(widget.watchLaterTime!)),
+          ],
+          separator: const Text(' · '),
+        ),
       ],
-      contentItemSeparator: const Text(' · '),
       onTap: widget.onTap ?? _onTap,
       sheetItems: [
         MetadataItem(

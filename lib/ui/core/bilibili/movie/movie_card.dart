@@ -53,11 +53,15 @@ class MovieCard extends StatelessWidget {
         if (duration != null) MetadataItem(value: formatSeconds(duration!)),
       ],
       contentItems: [
-        if (watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(watchTime!)),
-        if (favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(favoriteTime!)),
-        if (watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(watchLaterTime!)),
+        MetadataItemGroup(
+          items: [
+            if (watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(watchTime!)),
+            if (favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(favoriteTime!)),
+            if (watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(watchLaterTime!)),
+          ],
+          separator: const Text(' · '),
+        ),
       ],
-      contentItemSeparator: const Text(' · '),
       onTap: onTap ?? () => _onTap(context),
       sheetItems: [
         MetadataItem(

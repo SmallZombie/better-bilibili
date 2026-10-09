@@ -23,7 +23,6 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/bili_video_player.
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice/notice_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/collection/bili_collection_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/episode/bili_episode_controller.dart';
-import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/bili_playlist_coordinator.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/recommend/bili_recommend_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist/bili_playlist_controller.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
@@ -521,13 +520,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
             mediaSessionController: viewModel.mediaSessionController,
             mediaSessionData: viewModel.mediaSessionData,
             authRepository: viewModel.authRepository,
-            playlistController: BiliPlaylistCoordinator(
-              config: viewModel.playerConfig,
-              episodeController: viewModel.episodeController,
-              playlistController: viewModel.playlistController,
-              collectionController: viewModel.collectionController,
-              recommendController: viewModel.recommendController,
-            ),
+            playlistController: viewModel.playlistCoordinator,
             noticeController: viewModel.noticeController,
             onRefresh: () {
               viewModel.videoController.setInitPosition(viewModel.videoController.state.position);

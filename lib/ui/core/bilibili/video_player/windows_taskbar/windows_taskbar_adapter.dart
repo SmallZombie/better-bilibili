@@ -38,6 +38,16 @@ class _WindowsTaskbarAdapterState extends State<WindowsTaskbarAdapter> {
   }
 
   @override
+  void didUpdateWidget(covariant WindowsTaskbarAdapter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.playlistController != playlistController) {
+      oldWidget.playlistController?.removeListener(_updateButtons);
+      playlistController?.addListener(_updateButtons);
+    }
+  }
+
+  @override
   void dispose() {
     for (final subscription in _subscriptions) {
       subscription.cancel();

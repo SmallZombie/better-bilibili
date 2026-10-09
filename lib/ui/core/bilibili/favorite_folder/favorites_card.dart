@@ -50,12 +50,16 @@ class FavoritesCard extends StatelessWidget {
         fit: .cover,
       ),
       contentItems: [
-        if (user != null)
-          MetadataItem(
-            key: '上传者',
-            value: user!.nickname,
-            onTap: () => context.push(Routes.buildUserDetail(user!.id)),
-          ),
+        MetadataItemGroup(
+          items: [
+            if (user != null)
+              MetadataItem(
+                key: '上传者',
+                value: user!.nickname,
+                onTap: () => context.push(Routes.buildUserDetail(user!.id)),
+              ),
+          ],
+        ),
       ],
       onTap: onTap ?? () => _onTap(context),
       sheetItems: [

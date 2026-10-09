@@ -66,7 +66,7 @@ class PostCard extends StatelessWidget {
         fit: .cover,
       ),
       subtitle: summary != null ? Text(summary!) : null,
-      badge: badge != null ? Badge(label: Text(badge!)) : null,
+      badge: badge,
       coverItems: [
         if (viewCount != null)
           MetadataItem(

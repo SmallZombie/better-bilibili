@@ -1,11 +1,8 @@
-import 'package:better_bilibili/data/services/storage_service.dart';
-import 'package:better_bilibili/utils/result.dart';
-import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/foundation.dart';
+import 'package:better_bilibili/ui/core/share/base_card.dart';
+import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:flutter/material.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
-import 'package:provider/provider.dart';
 
 class SeriesCard extends StatelessWidget {
   final String seriesId;
@@ -15,6 +12,8 @@ class SeriesCard extends StatelessWidget {
   final double? duration;
   final int? watchTime;
   final int? watchLaterTime;
+  final List<PopupMenuEntry<String>> contextActions;
+  final VoidCallback? onTap;
 
   const SeriesCard({
     super.key,
@@ -25,206 +24,59 @@ class SeriesCard extends StatelessWidget {
     this.duration,
     this.watchTime,
     this.watchLaterTime,
+    this.contextActions = const [],
+    this.onTap,
   });
 
-  void _showInfoSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => _buildBottomSheet(
-        context,
-        Theme.of(context).colorScheme,
-        Theme.of(context).textTheme,
-      ),
-    );
-  }
+  void _onTap(BuildContext context) {}
 
-  Future<void> _saveCoverImage(BuildContext context) async {
-    assert(!kIsWeb);
-
-    final storageService = context.read<StorageService>();
-    final result = await storageService.saveNetworkImage(cover, '${seriesId}_cover', 'jpeg');
-    if (context.mounted) {
-      switch (result) {
-        case Ok():
-          context.showInfo('保存成功');
-        case Error():
-          context.showError('保存失败: ${result.error.toString()}');
-      }
-    }
+  void _saveCover(BuildContext context) {
+    context.saveImage(cover, 'bilibili_series_${seriesId}_cover', 'jpeg');
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
-      type: MaterialType.card,
-      child: InkWell(
-        // onTap:
-        //     () => AppService().toVideoDetail(
-        //       context,
-        //       videoId,
-        //       episodeId: episodeId,
-        //       preloadTitle: title,
-        //       preloadCover: cover,
-        //       preloadViewCount: viewCount,
-        //       preloadDanmuCount: danmakuCount,
-        //       playListId: playListId,
-        //     ),
-        onSecondaryTap: () => _showInfoSheet(context),
-        onLongPress: () => _showInfoSheet(context),
-        borderRadius: BorderRadius.circular(12.0),
-        child: Container(
-          margin: const EdgeInsets.all(10.0),
-          child: Column(
-            children: [
-              // 上半部分
-              Stack(
-                children: [
-                  BiliImageWapper(
-                    url: cover,
-                    suffix: BiliImageSuffix.homeVideoCard,
-                    width: 900,
-                    aspectRatio: 16 / 9,
-                    borderRadius: BorderRadius.circular(12.0),
-                    fit: BoxFit.cover,
-                  ),
-                  if (duration != null)
-                    Positioned(
-                      right: 4,
-                      bottom: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          formatSeconds(duration!),
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-
-              // 下半部分
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 标题
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                      ),
-                    ),
-
-                    if (watchTime != null) ...[
-                      SizedBox(height: 4),
-                      Text(
-                        ' · 观看于${formatTimeToHumanReadable(watchTime!)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.outline,
-                        ),
-                        maxLines: 1,
-                      ),
-                    ],
-
-                    if (watchLaterTime != null) ...[
-                      SizedBox(height: 4),
-                      Text(
-                        ' · 添加于${formatTimeToHumanReadable(watchLaterTime!)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.outline,
-                        ),
-                        maxLines: 1,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              SizedBox(width: 4.0),
-            ],
-          ),
-        ),
+    return BaseCard(
+      title: Text(title),
+      cover: BiliImageWapper(
+        url: cover,
+        suffix: '@672w_378h_1c',
+        width: 900,
+        aspectRatio: 16 / 9,
+        borderRadius: .circular(12.0),
+        fit: .cover,
       ),
-    );
-  }
+      contentItems: [
+        MetadataItemGroup(
+          items: [
+            if (watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(watchTime!)),
+            if (watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(watchLaterTime!)),
+          ],
+          separator: const Text(' · '),
+        ),
+      ],
+      onTap: onTap ?? () => _onTap(context),
+      sheetItems: [
+        MetadataItem(
+          icon: Icons.file_download_outlined,
+          value: '保存封面',
+          onTap: () => _saveCover(context),
+        ),
 
-  Widget _buildBottomSheet(BuildContext context, ColorScheme colorScheme, TextTheme textTheme) {
-    final titleStyle = textTheme.titleMedium!.copyWith(fontSize: 18.0, fontWeight: FontWeight.w500);
-    final textStyle = TextStyle(fontSize: 14.0, color: colorScheme.onSurfaceVariant);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double screenHeight = MediaQuery.of(context).size.height;
-        final double maxHeight = screenHeight / 2 < 500 ? screenHeight / 2 : 500;
-        return ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight, minWidth: 640, maxWidth: 640),
-          child: SingleChildScrollView(
-            padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(24)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('封面', style: titleStyle),
-                SizedBox(height: 4.0),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    BiliImageWapper(
-                      url: cover,
-                      suffix: BiliImageSuffix.recommendVideoCard,
-                      width: 380,
-                      aspectRatio: 16 / 9,
-                      borderRadius: BorderRadius.circular(12.0),
-                      fit: BoxFit.cover,
-                    ),
-                    SizedBox(width: 8.0),
-                    IconButton(
-                      onPressed: () => _saveCoverImage(context),
-                      icon: Icon(Icons.download_outlined),
-                      tooltip: '下载原图',
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 24.0),
-                Text('标题', style: titleStyle),
-                SelectableText(title, style: textStyle),
-
-                if (watchTime != null) ...[
-                  SizedBox(height: 24.0),
-                  Text('观看于', style: titleStyle),
-                  SelectableText(
-                    '${formatTime(watchTime!)} (${formatTimeToHumanReadable(watchTime!)})',
-                    style: textStyle,
-                  ),
-                ],
-
-                if (watchLaterTime != null) ...[
-                  SizedBox(height: 24.0),
-                  Text('添加于', style: titleStyle),
-                  SelectableText(
-                    '${formatTime(watchLaterTime!)} (${formatTimeToHumanReadable(watchLaterTime!)})',
-                    style: textStyle,
-                  ),
-                ],
-              ],
-            ),
+        MetadataItem(key: 'ID', value: seriesId),
+        MetadataItem(key: '标题', value: title),
+        if (watchTime != null)
+          MetadataItem(
+            key: '观看于',
+            value: '${formatTime(watchTime!)} (${formatTimeToHumanReadable(watchTime!)})',
           ),
-        );
-      },
+        if (watchLaterTime != null)
+          MetadataItem(
+            key: '添加于',
+            value: '${formatTime(watchLaterTime!)} (${formatTimeToHumanReadable(watchLaterTime!)})',
+          ),
+      ],
+      contextActions: contextActions,
     );
   }
 }

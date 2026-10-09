@@ -16,6 +16,7 @@ import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/media_session/media_session_data.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice/notice_controller.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/bili_playlist_coordinator.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/collection/bili_collection_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/episode/bili_episode_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist/bili_playlist_controller.dart';
@@ -89,6 +90,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     playlistController?.dispose();
     collectionController?.dispose();
     recommendController?.dispose();
+    playlistCoordinator?.dispose();
     noticeController.dispose();
     mediaSessionData.dispose();
 
@@ -107,6 +109,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   BiliPlaylistController? playlistController;
   BiliCollectionController? collectionController;
   BiliRecommendController? recommendController;
+  BiliPlaylistCoordinator? playlistCoordinator;
 
   Future<Result<GetVideoDetailResponse>> _getDetail() async {
     final result = await videoRepository.getVideoDetail(videoId: videoId);
@@ -159,6 +162,21 @@ class VideoDetailViewModel extends SafeChangeNotifier {
         onPlay: (event) {
           switchVideo(event.id, event.episodeId, event.cover);
         },
+      );
+    }
+    if ([
+      episodeController,
+      playlistController,
+      collectionController,
+      recommendController,
+    ].any((v) => v != null)) {
+      playlistCoordinator?.dispose();
+      playlistCoordinator = BiliPlaylistCoordinator(
+        config: playerConfig,
+        episodeController: episodeController,
+        playlistController: playlistController,
+        collectionController: collectionController,
+        recommendController: recommendController,
       );
     }
 
@@ -467,11 +485,6 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     states = states!.copyWith(hasFollowed: followed);
     notifyListeners();
   }
-
-  // void disposePlayer() {
-  //   _playInfo = null;
-  //   notifyListeners();
-  // }
 }
 
 class UpdateVideoFavoritesRequest {

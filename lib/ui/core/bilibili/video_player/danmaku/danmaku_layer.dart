@@ -32,8 +32,6 @@ class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    debugPrint('[aaaa] danmakuLayer initstate');
-
     _renderTicker = createTicker((elapsed) {
       final delta = elapsed - _lastTick;
       _lastTick = elapsed;
