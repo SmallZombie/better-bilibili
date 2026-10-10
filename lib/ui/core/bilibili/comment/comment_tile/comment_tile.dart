@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:better_bilibili/config/app_config.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
@@ -42,6 +44,8 @@ class CommentTile extends StatefulWidget {
 
 class _CommentTileState extends State<CommentTile> {
   late final CommentTileViewModel _viewModel;
+  late final AppConfig _appConfig;
+  late final NetworkManager _networkManager;
 
   bool _isExpandedMoreReplies = false;
 
@@ -50,6 +54,9 @@ class _CommentTileState extends State<CommentTile> {
     super.initState();
 
     _viewModel = context.read();
+    _appConfig = context.read();
+    _networkManager = context.read();
+
     _viewModel.like.addListener(_onResult);
     _viewModel.dislike.addListener(_onResult);
   }
@@ -97,14 +104,41 @@ class _CommentTileState extends State<CommentTile> {
   void _onTapImage(int index) {
     context.openImageViewer(
       _viewModel.comment.content.images.map((v) {
-        return ImageViewerItem(thumbUrl: _getThumbUrl(v), url: v);
+        return ImageViewerItem(
+          thumbUrl: _getThumbUrl(v.url),
+          url: v.url,
+          width: v.width,
+          height: v.height,
+        );
       }).toList(),
       initialIndex: index,
+      shouldUseOriginalQuality: (ImageViewerItem image) {
+        if (_appConfig.viewOriginalImage.value == .always) {
+          return true;
+        }
+        if (_appConfig.viewOriginalImage.value == .never) {
+          return false;
+        }
+        if (_appConfig.viewOriginalImage.value == .auto) {
+          if (image.width / 2 > _thumbWidth || image.height / 2 > _thumbHeight) {
+            return true;
+          }
+          return false;
+        }
+        if (_appConfig.viewOriginalImage.value == .wifiOnly) {
+          return !_networkManager.isMobileNetwork();
+        }
+
+        return false;
+      },
     );
   }
 
+  final _thumbWidth = 478;
+  final _thumbHeight = 270;
+
   String _getThumbUrl(String url) {
-    return '$url@478w_270h_1s';
+    return '$url@${_thumbWidth}w_${_thumbHeight}h_1s';
   }
 
   @override
@@ -239,14 +273,14 @@ class _CommentTileState extends State<CommentTile> {
                                 scrollDirection: .horizontal,
                                 itemCount: comment.content.images.length,
                                 itemBuilder: (context, index) {
-                                  final url = comment.content.images[index];
+                                  final image = comment.content.images[index];
                                   return GestureDetector(
                                     onTap: () => _onTapImage(index),
                                     child: Hero(
-                                      tag: _getThumbUrl(url),
+                                      tag: _getThumbUrl(image.url),
                                       createRectTween: (begin, end) => RectTween(begin: begin, end: end),
                                       child: BiliImageWapper(
-                                        url: url,
+                                        url: image.url,
                                         suffix: '@478w_270h_1s',
                                         borderRadius: .circular(4.0),
                                       ),

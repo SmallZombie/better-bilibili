@@ -58,7 +58,7 @@ class _MeViewState extends State<MeView> {
         actions: [
           IconButton(
             onPressed: () {
-              context.push(Routes.setting);
+              context.push(Routes.setting.path);
             },
             icon: Icon(Icons.settings_outlined, color: Colors.white),
           ),
@@ -397,7 +397,7 @@ class _MeViewState extends State<MeView> {
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    context.push(Routes.settingAccountManager);
+                    context.push(Routes.settingAccountManager.path);
                   },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),

@@ -23,35 +23,35 @@ class DeveloperSettingScreen extends StatelessWidget {
               leading: const Icon(Icons.question_mark),
               title: const Text('测试用户'),
               onTap: () {
-                context.push(Routes.settingDevTestUsers);
+                context.push(Routes.settingDevTestUsers.path);
               },
             ),
             ListTile(
               leading: const Icon(Icons.question_mark),
               title: const Text('测试视频'),
               onTap: () {
-                context.push(Routes.settingDevTestVideos);
+                context.push(Routes.settingDevTestVideos.path);
               },
             ),
             ListTile(
               leading: const Icon(Icons.question_mark),
               title: const Text('测试文章'),
               onTap: () {
-                context.push(Routes.settingDevTestArticles);
+                context.push(Routes.settingDevTestArticles.path);
               },
             ),
             ListTile(
               leading: const Icon(Icons.question_mark),
               title: const Text('测试帖子'),
               onTap: () {
-                context.push(Routes.settingDevTestPosts);
+                context.push(Routes.settingDevTestPosts.path);
               },
             ),
             ListTile(
               leading: const Icon(Icons.question_mark),
               title: const Text('标题栏测试'),
               onTap: () {
-                context.push(Routes.settingDevTestAppTitleBar);
+                context.push(Routes.settingDevTestAppTitleBar.path);
               },
             ),
             SettingGroup(

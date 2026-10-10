@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:better_bilibili/config/account_config.dart';
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
@@ -36,14 +37,18 @@ void main() async {
   final configDir = await getApplicationSupportDirectory();
   await Hive.initFlutter(configDir.absolute.path);
 
+  final appConfig = AppConfig();
   final accountConfig = AccountConfig();
-  await accountConfig.init;
   final playerConfig = PlayerConfig();
-  await playerConfig.init;
   final danmakuConfig = DanmakuConfig();
-  await danmakuConfig.init;
   final bsbsbConfig = BsbsbConfig();
-  await bsbsbConfig.init;
+  await Future.wait([
+    appConfig.init,
+    accountConfig.init,
+    playerConfig.init,
+    danmakuConfig.init,
+    bsbsbConfig.init,
+  ]);
 
   if (Platform.isWindows) {
     // https://github.com/wyrindev/flutter-media-session/blob/main/doc/windows_setup.md#the-challenge
@@ -60,7 +65,7 @@ void main() async {
       center: true,
       titleBarStyle: .hidden,
       windowButtonVisibility: false,
-      title: kDebugMode ? '$kAppName (Debug mode)' : kAppName,
+      title: kAppName,
     );
     await windowManager.waitUntilReadyToShow(windowOptions);
     await windowManager.show();
@@ -74,6 +79,10 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => appearanceManager),
+        Provider(
+          create: (_) => appConfig,
+          dispose: (_, value) => value.dispose(),
+        ),
         Provider.value(value: accountConfig),
         Provider(
           create: (_) => playerConfig,

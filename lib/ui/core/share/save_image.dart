@@ -47,9 +47,9 @@ extension SaveImage on BuildContext {
     }
   }
 
-  Future<void> saveImages(List<String> urls, List<String> fileNames, String fileExt) async {
+  Future<void> saveImages(List<String> urls, List<String> fileNames, List<String> fileExts) async {
     assert(!kIsWeb, 'Unsupported platform: Web');
-    assert(urls.length == fileNames.length);
+    assert(urls.length == fileNames.length && fileNames.length == fileExts.length);
 
     try {
       if (isDesktop) {
@@ -61,9 +61,10 @@ extension SaveImage on BuildContext {
 
         for (int i = 0; i < urls.length; i++) {
           final url = urls[i];
-          final fileName = fileNames[i];
+          final name = fileNames[i];
+          final ext = fileExts[i];
 
-          futures.add(storageService.saveNetworkImageForDesktop(url, dirPath, fileName, fileExt));
+          futures.add(storageService.saveNetworkImageForDesktop(url, dirPath, name, ext));
         }
 
         final results = await Future.wait(futures);
@@ -83,9 +84,10 @@ extension SaveImage on BuildContext {
 
         for (int i = 0; i < urls.length; i++) {
           final url = urls[i];
-          final fileName = fileNames[i];
+          final name = fileNames[i];
+          final ext = fileExts[i];
 
-          futures.add(storageService.saveNetworkImageForMobile(url, fileName, fileExt));
+          futures.add(storageService.saveNetworkImageForMobile(url, name, ext));
         }
 
         if (!mounted) return;

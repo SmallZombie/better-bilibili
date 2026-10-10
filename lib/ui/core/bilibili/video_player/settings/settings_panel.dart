@@ -215,12 +215,12 @@ class SettingsPanel implements Panel {
               if (kDebugMode) ...[
                 PanelSectionTitle(),
                 StreamBuilder(
-                  stream: config.historyReporterDebugHud.stream,
-                  initialData: config.historyReporterDebugHud.value,
+                  stream: config.historyReporterDebugOverlay.stream,
+                  initialData: config.historyReporterDebugOverlay.value,
                   builder: (context, asyncSnapshot) => SwitchPanelTile(
-                    onChanged: config.historyReporterDebugHud.set,
+                    onChanged: config.historyReporterDebugOverlay.set,
                     value: asyncSnapshot.data!,
-                    title: const Text('HistoryReporterDebugHUD'),
+                    title: const Text('HistoryReporterDebugOverlay'),
                   ),
                 ),
               ],

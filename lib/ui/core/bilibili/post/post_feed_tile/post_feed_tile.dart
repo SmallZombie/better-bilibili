@@ -338,7 +338,7 @@ class _ImageGroup extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     context.openImageViewer(
-      images.map((v) => ImageViewerItem(thumbUrl: _getThumbUrl(v.src), url: v.src)).toList(),
+      images.map((v) => ImageViewerItem(thumbUrl: _getThumbUrl(v.src), url: v.src, width: v.width, height: v.height)).toList(),
       initialIndex: index,
     );
   }

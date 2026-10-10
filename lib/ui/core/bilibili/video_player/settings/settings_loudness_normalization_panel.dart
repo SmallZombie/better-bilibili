@@ -20,7 +20,7 @@ class SettingsLoudnessNormalizationPanel implements Panel {
         final loudnessNormalization = asyncSnapshot.data!;
         return SelectionPanel(
           header: PanelHeader(title: const Text('响度均衡'), onBack: controller.pop),
-          items: LoudnessNormalizationModeEnum.values.map((v) {
+          items: LoudnessNormalizationEnum.values.map((v) {
             return SelectionPanelItem(
               label: switch (v) {
                 .off => '关闭',

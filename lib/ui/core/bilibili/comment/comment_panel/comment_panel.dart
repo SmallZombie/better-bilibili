@@ -372,7 +372,7 @@ class _CommentInputState extends State<_CommentInput> {
       if (file.path == null) continue;
 
       widget.viewModel.addAndUploadImage(
-        CommentImage(
+        UploadImage(
           localPath: file.path!,
           localName: file.name,
         ),
@@ -480,7 +480,7 @@ class _CommentInputState extends State<_CommentInput> {
                 ),
               ),
               // 待发送图片
-              Selector<CommentPanelViewModel, List<CommentImage>>(
+              Selector<CommentPanelViewModel, List<UploadImage>>(
                 selector: (context, vm) => vm.images,
                 builder: (context, images, _) {
                   if (images.isEmpty) {

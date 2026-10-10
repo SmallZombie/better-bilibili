@@ -16,19 +16,19 @@ class AsyncConfigItem<T> {
     required this.defaultValue,
   }) : _box = box,
        _value = defaultValue {
-    get();
+    get().then((value) {
+      if (value != _value) {
+        _value = value;
+        _controller.add(value);
+      }
+    });
   }
 
   final StreamController<T> _controller = StreamController.broadcast();
   late final Stream<T> stream = _controller.stream;
 
   Future<T> get() async {
-    final value = await _box.get(key) as T;
-    if (value != _value) {
-      _value = value;
-      _controller.add(value);
-    }
-    return value;
+    return await _box.get(key) as T? ?? defaultValue;
   }
 
   Future<void> set(T newValue) {

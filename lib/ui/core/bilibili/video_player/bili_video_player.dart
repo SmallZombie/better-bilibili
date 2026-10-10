@@ -557,8 +557,8 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
         ExtraVideoPlayerLayer(
           inForeground: false,
           child: StreamBuilder(
-            stream: config.historyReporterDebugHud.stream,
-            initialData: config.historyReporterDebugHud.value,
+            stream: config.historyReporterDebugOverlay.stream,
+            initialData: config.historyReporterDebugOverlay.value,
             builder: (context, asyncSnapshot) {
               if (!asyncSnapshot.data!) {
                 return SizedBox.shrink();

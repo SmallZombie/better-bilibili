@@ -26,6 +26,7 @@ import 'package:better_bilibili/ui/post_detail/widgets/post_detail_screen.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/post_detail_view_model.dart';
 import 'package:better_bilibili/ui/settings/developer/developer_setting_screen.dart';
 import 'package:better_bilibili/ui/settings/developer/test_app_title_bar_screen.dart';
+import 'package:better_bilibili/ui/settings/general_settings_screen.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_screen.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_view_model.dart';
 import 'package:better_bilibili/ui/user/recently_liked/recently_liked_screen.dart';
@@ -254,7 +255,7 @@ final GoRouter router = GoRouter(
       ),
     ),
     GoRoute(
-      path: Routes.userDetail,
+      path: Routes.userDetail.path,
       builder: (context, state) => ChangeNotifierProvider(
         create: (context) => UserDetailViewModel(
           userRepository: context.read(),
@@ -369,8 +370,9 @@ final GoRouter router = GoRouter(
         child: FavoritesDetailScreen(favoritesId: state.pathParameters['favoritesId']!),
       ),
     ),
+
     GoRoute(
-      path: Routes.userSubscriptions,
+      path: Routes.userSubscriptions.path,
       builder: (context, state) {
         final initTabIndex = state.uri.queryParameters['initTabIndex'];
         return SubscriptionsScreen(
@@ -380,18 +382,101 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: Routes.setting,
-      builder: (context, state) => const SettingsScreen(),
+      path: Routes.userRecentlyLiked.path,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (_) => RecentlyLikedViewModel(
+          userRepository: context.read(),
+          userId: state.pathParameters['userId']!,
+        ),
+        builder: (context, _) => RecentlyLikedScreen(
+          viewModel: context.read(),
+          nickname: state.uri.queryParameters['nickname'],
+        ),
+      ),
     ),
     GoRoute(
-      path: Routes.settingAccountManager,
+      path: Routes.userRecentlyCoined.path,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => AccountManagerViewModel(
-          authRepository: context.read(),
+        create: (_) => RecentlyCoinedViewModel(
           userRepository: context.read(),
+          userId: state.pathParameters['userId']!,
         ),
-        builder: (context, _) => AccountManagerScreen(viewModel: context.read()),
+        builder: (context, _) => RecentlyCoinedScreen(
+          viewModel: context.read(),
+          nickname: state.uri.queryParameters['nickname'],
+        ),
       ),
+    ),
+    GoRoute(
+      path: Routes.userFollowings.path,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => UserFollowingsViewModel(
+          userRepository: context.read(),
+          authRepository: context.read(),
+          userDialogViewModel: context.read(),
+          userId: state.pathParameters['userId']!,
+        ),
+        builder: (context, _) => UserFollowingsScreen(viewModel: context.read()),
+      ),
+    ),
+    GoRoute(
+      path: Routes.userFans.path,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (_) => UserFansViewModel(
+          userRepository: context.read(),
+          authRepository: context.read(),
+          userId: state.pathParameters['userId']!,
+        ),
+        builder: (context, _) => UserFansScreen(viewModel: context.read()),
+      ),
+    ),
+    GoRoute(
+      path: Routes.setting.path,
+      builder: (context, state) => const SettingsScreen(),
+      routes: [
+        GoRoute(
+          path: Routes.settingAccountManager.name,
+          builder: (context, state) => ChangeNotifierProvider(
+            create: (_) => AccountManagerViewModel(
+              authRepository: context.read(),
+              userRepository: context.read(),
+            ),
+            builder: (context, _) => AccountManagerScreen(viewModel: context.read()),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.settingGeneral.name,
+          builder: (context, state) => GeneralSettingsScreen(config: context.read()),
+        ),
+
+        GoRoute(
+          path: Routes.settingDeveloper.name,
+          builder: (context, state) => const DeveloperSettingScreen(),
+          routes: [
+            GoRoute(
+              path: Routes.settingDevTestUsers.name,
+              builder: (context, state) => const TestUsersScreen(),
+            ),
+            GoRoute(
+              path: Routes.settingDevTestVideos.name,
+              builder: (context, state) => const TestVideosScreen(),
+            ),
+            GoRoute(
+              path: Routes.settingDevTestArticles.name,
+              builder: (context, state) => const TestArticlesScreen(),
+            ),
+            GoRoute(
+              path: Routes.settingDevTestPosts.name,
+              builder: (context, state) => const TestPostsScreen(),
+            ),
+            GoRoute(
+              path: Routes.settingDevTestAppTitleBar.name,
+              builder: (context, state) => const TestAppTitleBarScreen(),
+            ),
+          ],
+        ),
+      ],
     ),
     // GoRoute(
     //   path: Routes.webView,
@@ -424,79 +509,6 @@ final GoRouter router = GoRouter(
         ),
         builder: (context, _) => PostDetailScreen(viewModel: context.read()),
       ),
-    ),
-    GoRoute(
-      path: Routes.userRecentlyLiked,
-      builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => RecentlyLikedViewModel(
-          userRepository: context.read(),
-          userId: state.pathParameters['userId']!,
-        ),
-        builder: (context, _) => RecentlyLikedScreen(
-          viewModel: context.read(),
-          nickname: state.uri.queryParameters['nickname'],
-        ),
-      ),
-    ),
-    GoRoute(
-      path: Routes.userRecentlyCoined,
-      builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => RecentlyCoinedViewModel(
-          userRepository: context.read(),
-          userId: state.pathParameters['userId']!,
-        ),
-        builder: (context, _) => RecentlyCoinedScreen(
-          viewModel: context.read(),
-          nickname: state.uri.queryParameters['nickname'],
-        ),
-      ),
-    ),
-    GoRoute(
-      path: Routes.userFollowings,
-      builder: (context, state) => ChangeNotifierProvider(
-        create: (context) => UserFollowingsViewModel(
-          userRepository: context.read(),
-          authRepository: context.read(),
-          userDialogViewModel: context.read(),
-          userId: state.pathParameters['userId']!,
-        ),
-        builder: (context, _) => UserFollowingsScreen(viewModel: context.read()),
-      ),
-    ),
-    GoRoute(
-      path: Routes.userFans,
-      builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => UserFansViewModel(
-          userRepository: context.read(),
-          authRepository: context.read(),
-          userId: state.pathParameters['userId']!,
-        ),
-        builder: (context, _) => UserFansScreen(viewModel: context.read()),
-      ),
-    ),
-    GoRoute(
-      path: Routes.settingDeveloper,
-      builder: (context, state) => const DeveloperSettingScreen(),
-    ),
-    GoRoute(
-      path: Routes.settingDevTestUsers,
-      builder: (context, state) => const TestUsersScreen(),
-    ),
-    GoRoute(
-      path: Routes.settingDevTestVideos,
-      builder: (context, state) => const TestVideosScreen(),
-    ),
-    GoRoute(
-      path: Routes.settingDevTestArticles,
-      builder: (context, state) => const TestArticlesScreen(),
-    ),
-    GoRoute(
-      path: Routes.settingDevTestPosts,
-      builder: (context, state) => const TestPostsScreen(),
-    ),
-    GoRoute(
-      path: Routes.settingDevTestAppTitleBar,
-      builder: (context, state) => const TestAppTitleBarScreen(),
     ),
     GoRoute(
       path: Routes.echoCave,

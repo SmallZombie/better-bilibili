@@ -74,16 +74,16 @@ class CommentPanelViewModel extends SafeChangeNotifier {
     loadData.execute();
   }
 
-  final List<CommentImage> _images = [];
-  List<CommentImage> get images => List.unmodifiable(_images);
+  final List<UploadImage> _images = [];
+  List<UploadImage> get images => List.unmodifiable(_images);
 
-  Future<void> addAndUploadImage(CommentImage image) async {
+  Future<void> addAndUploadImage(UploadImage image) async {
     _images.add(image);
     notifyListeners();
     await uploadImage(image);
   }
 
-  Future<void> uploadImage(CommentImage image) async {
+  Future<void> uploadImage(UploadImage image) async {
     assert(image.status == .waiting || image.status == .failed);
 
     final index = _images.indexOf(image);
@@ -101,7 +101,7 @@ class CommentPanelViewModel extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  void removeImage(CommentImage image) {
+  void removeImage(UploadImage image) {
     _images.remove(image);
     notifyListeners();
   }
@@ -233,14 +233,14 @@ enum CommentImageStatus {
   failed,
 }
 
-class CommentImage {
+class UploadImage {
   final String localPath;
   final String localName;
   final CommentImageStatus status;
   final UploadedImage? result;
   final String? errorMessage;
 
-  const CommentImage({
+  const UploadImage({
     required this.localPath,
     required this.localName,
     this.status = CommentImageStatus.waiting,
@@ -248,12 +248,12 @@ class CommentImage {
     this.errorMessage,
   });
 
-  CommentImage copyWith({
+  UploadImage copyWith({
     CommentImageStatus? status,
     UploadedImage? result,
     String? errorMessage,
   }) {
-    return CommentImage(
+    return UploadImage(
       localPath: localPath,
       localName: localName,
       status: status ?? this.status,

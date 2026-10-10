@@ -10,9 +10,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('设置'),
-      ),
+      appBar: AppBar(title: const Text('设置')),
       body: ListView(
         children: [
           SettingGroup(
@@ -27,14 +25,25 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('切换账号'),
                 icon: const Icon(Icons.person_outline),
                 onTap: () {
-                  context.push(Routes.settingAccountManager);
+                  context.push(Routes.settingAccountManager.path);
                 },
               ),
               SettingTile(
                 title: const Text('通知'),
                 icon: const Icon(Icons.notifications_none),
                 onTap: () {
-                  context.push(Routes.settingNotification);
+                  context.push(Routes.settingNotification.path);
+                },
+              ),
+            ],
+          ),
+          SettingGroup(
+            children: [
+              SettingTile(
+                title: const Text('通用'),
+                icon: const Icon(Icons.code),
+                onTap: () {
+                  context.push(Routes.settingGeneral.path);
                 },
               ),
             ],
@@ -64,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('开发者选项'),
                 icon: const Icon(Icons.code),
                 onTap: () {
-                  context.push(Routes.settingDeveloper);
+                  context.push(Routes.settingDeveloper.path);
                 },
               ),
               SettingTile(

@@ -2,6 +2,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(better_bilibili LANGUAGES CXX)
 
+# error C2220: 以下警告被视为错误 [build\windows\x64\plugins\connectivity_plus\connectivity_plus_plugin.vcxproj]
+# warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失 [build\windows\x64\plugins\connectivity_plus\connectivity_plus_plugin.vcxproj]
+if(MSVC)
+  add_compile_options(/utf-8)
+endif()
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 # 此名称中不能包含空格，这是 flutter 的限制

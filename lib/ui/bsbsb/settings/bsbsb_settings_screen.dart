@@ -37,42 +37,22 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
   Future<SkipOptionsEnum?> _selectSkipType({
     bool allowSkipToStart = false,
     bool allowSkipToEnd = false,
+    required SkipOptionsEnum initialSelected,
   }) async {
-    final result = await context.showSelectorDialog(
+    final result = await context.showSelectorDialog<SkipOptionsEnum>(
       items: [
-        SelectorDialogItem(
-          id: SkipOptionsEnum.disable.stringOf(),
-          value: _getSkipOptionName(.disable),
-        ),
-        SelectorDialogItem(
-          id: SkipOptionsEnum.showOnly.stringOf(),
-          value: _getSkipOptionName(.showOnly),
-        ),
-        if (allowSkipToStart)
-          SelectorDialogItem(
-            id: SkipOptionsEnum.askOnlyStart.stringOf(),
-            value: _getSkipOptionName(.askOnlyStart),
-          ),
-        if (allowSkipToEnd)
-          SelectorDialogItem(
-            id: SkipOptionsEnum.askOnlyEnd.stringOf(),
-            value: _getSkipOptionName(.askOnlyEnd),
-          ),
-        if (allowSkipToStart)
-          SelectorDialogItem(
-            id: SkipOptionsEnum.skipToStart.stringOf(),
-            value: _getSkipOptionName(.skipToStart),
-          ),
-        if (allowSkipToEnd)
-          SelectorDialogItem(
-            id: SkipOptionsEnum.skipToEnd.stringOf(),
-            value: _getSkipOptionName(.skipToEnd),
-          ),
+        SelectorDialogItem(name: _getSkipOptionName(.disable), value: .disable),
+        SelectorDialogItem(name: _getSkipOptionName(.showOnly), value: .showOnly),
+        if (allowSkipToStart) SelectorDialogItem(name: _getSkipOptionName(.askOnlyStart), value: .askOnlyStart),
+        if (allowSkipToEnd) SelectorDialogItem(name: _getSkipOptionName(.askOnlyEnd), value: .askOnlyEnd),
+        if (allowSkipToStart) SelectorDialogItem(name: _getSkipOptionName(.skipToStart), value: .skipToStart),
+        if (allowSkipToEnd) SelectorDialogItem(name: _getSkipOptionName(.skipToEnd), value: .skipToEnd),
       ],
+      initialSelected: initialSelected,
     );
 
-    if (result == null) return null;
-    return SkipOptionsEnum.fromString(result);
+    if (result == null || !mounted) return null;
+    return result;
   }
 
   String _colorToHex(Color color) {
@@ -198,11 +178,15 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                 StreamBuilder(
                   stream: viewModel.config.sponsor.stream,
                   initialData: viewModel.config.sponsor.value,
-                  builder: (context, option) => SettingTile(
+                  builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('商业推广'),
-                    subtitle: Text('具有商业合作或付费推广的内容\n${_getSkipOptionName(option.data!)}'),
+                    subtitle: Text('具有商业合作或付费推广的内容'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.sponsor.set(result);
                       }
@@ -230,9 +214,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.selfpromo.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('无偿/自我推广'),
-                    subtitle: Text('无利益关系的推荐与自我推广内容\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('无利益关系的推荐与自我推广内容'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.selfpromo.set(result);
                       }
@@ -260,9 +248,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.interaction.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('三连/互动提醒'),
-                    subtitle: Text('点赞、关注、三连等互动提醒\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('点赞、关注、三连等互动提醒'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.interaction.set(result);
                       }
@@ -290,9 +282,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.pointsOfInterest.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('精彩时刻/重点'),
-                    subtitle: Text('通常指标题、封面或片头预告中所指部分\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('通常指标题、封面或片头预告中所指部分'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToStart: true);
+                      final result = await _selectSkipType(
+                        allowSkipToStart: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.pointsOfInterest.set(result);
                       }
@@ -320,9 +316,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.intro.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('过场/开场动画'),
-                    subtitle: Text('无实际内容的开场与过场，如静帧、直播开始前的等待屏幕、主题式开场、版权或法律免责声明等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('无实际内容的开场与过场，如静帧、直播开始前的等待屏幕、主题式开场、版权或法律免责声明等'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.intro.set(result);
                       }
@@ -350,9 +350,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.outro.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('鸣谢/结束画面'),
-                    subtitle: Text('通常指视频结尾的鸣谢与收尾部分，如鸣谢名单、片尾字幕、结束卡片、告别语等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('通常指视频结尾的鸣谢与收尾部分，如鸣谢名单、片尾字幕、结束卡片、告别语等'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.outro.set(result);
                       }
@@ -380,9 +384,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.preview.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('回顾/概要'),
-                    subtitle: Text('回顾本系列过去内容或预览后续内容，且不包含新的额外信息\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('回顾本系列过去内容或预览后续内容，且不包含新的额外信息'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.preview.set(result);
                       }
@@ -410,9 +418,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.padding.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('填充内容/黑屏'),
-                    subtitle: Text('通常指搬运视频开头/结尾的纯填充内容和无意义黑屏\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('通常指搬运视频开头/结尾的纯填充内容和无意义黑屏'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.padding.set(result);
                       }
@@ -440,9 +452,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.filler.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('离题闲聊/玩笑'),
-                    subtitle: Text('与视频主要内容无关的闲聊、玩笑或辅助画面，如B-roll、NG片段、无关慢动作等\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('与视频主要内容无关的闲聊、玩笑或辅助画面，如B-roll、NG片段、无关慢动作等'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.filler.set(result);
                       }
@@ -470,9 +486,13 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                   initialData: viewModel.config.musicOfftopic.value,
                   builder: (context, asyncSnapshot) => SettingTile(
                     title: Text('非音乐部分'),
-                    subtitle: Text('以音乐为主的视频中出现的非音乐片段\n${_getSkipOptionName(asyncSnapshot.data!)}'),
+                    subtitle: Text('以音乐为主的视频中出现的非音乐片段'),
+                    trailing: Text(_getSkipOptionName(asyncSnapshot.data!)),
                     onTap: () async {
-                      final result = await _selectSkipType(allowSkipToEnd: true);
+                      final result = await _selectSkipType(
+                        allowSkipToEnd: true,
+                        initialSelected: asyncSnapshot.data!,
+                      );
                       if (result != null) {
                         viewModel.config.musicOfftopic.set(result);
                       }

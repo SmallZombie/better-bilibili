@@ -152,7 +152,7 @@ class Comment {
                   size: e.value['package_id'] == 1 ? 24.0 : 60.0,
                 );
               }).toList(),
-        images: (json['content']['pictures'] as List?)?.map((image) => image['img_src'] as String).toList() ?? const [],
+        images: (json['content']['pictures'] as List?)?.map((image) => CommentImage.fromJson(image)).toList() ?? const [],
         // Map<String, dynamic> => Map<String, CommentContentLink>
         links: (json['content']['jump_url'] as Map<String, dynamic>).entries.map(
           (e) {
@@ -204,7 +204,7 @@ class CommentContent {
   final String? text;
   final List<CommentContentUser> users;
   final List<Sticker> stickers;
-  final List<String> images;
+  final List<CommentImage> images;
   final List<CommentContentLink> links;
 
   CommentContent({
@@ -322,4 +322,30 @@ class SubscriptionTier {
     // required this.description,
     required this.price,
   });
+}
+
+class CommentImage {
+  final int width;
+  final int height;
+  final String url;
+  final String ext;
+
+  const CommentImage({
+    required this.width,
+    required this.height,
+    required this.url,
+    required this.ext,
+  });
+
+  factory CommentImage.fromJson(Map<String, dynamic> obj) {
+    final src = obj['img_src'] as String;
+    final ext = src.split('.').last;
+
+    return CommentImage(
+      width: obj['img_width'] as int,
+      height: obj['img_height'] as int,
+      url: src,
+      ext: ext,
+    );
+  }
 }

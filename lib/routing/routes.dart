@@ -18,13 +18,13 @@ abstract final class Routes {
 
   static const search = '/search';
 
-  static const userDetail = '/user/:userId';
-  static const userFollowings = '/user/:userId/followings';
-  static const userMutualFollowings = '/user/:userId/mutual_followings';
-  static const userFans = '/user/:userId/fans';
-  static const userRecentlyLiked = '/user/:userId/recently_liked';
-  static const userRecentlyCoined = '/user/:userId/recently_coined';
-  static const userSubscriptions = '/user/:userId/subscriptions';
+  static const userDetail = RoutePath(path: '/user/:userId', name: '');
+  static const userFollowings = RoutePath(path: '/user/:userId/followings', name: 'followings');
+  static const userMutualFollowings = RoutePath(path: '/user/:userId/mutual_followings', name: 'mutual_followings');
+  static const userFans = RoutePath(path: '/user/:userId/fans', name: 'fans');
+  static const userRecentlyLiked = RoutePath(path: '/user/:userId/recently_liked', name: 'recently_liked');
+  static const userRecentlyCoined = RoutePath(path: '/user/:userId/recently_coined', name: 'recently_coined');
+  static const userSubscriptions = RoutePath(path: '/user/:userId/subscriptions', name: 'subscriptions');
 
   static const login = '/login';
   static const videoDetail = '/video/:videoId';
@@ -38,15 +38,16 @@ abstract final class Routes {
   static const articleDetail = '/article/:articleId';
   static const postDetail = '/post/:postId';
 
-  static const setting = '/setting';
-  static const settingAccountManager = '/setting/account_manager';
-  static const settingNotification = '/setting/notification';
-  static const settingDeveloper = '/setting/developer';
-  static const settingDevTestUsers = '/setting/developer/test_users';
-  static const settingDevTestVideos = '/setting/developer/test_videos';
-  static const settingDevTestArticles = '/setting/developer/test_articles';
-  static const settingDevTestPosts = '/setting/developer/test_posts';
-  static const settingDevTestAppTitleBar = '/setting/developer/test_app_title_bar';
+  static const setting = RoutePath(path: '/setting', name: '');
+  static const settingGeneral = RoutePath(path: '/setting/general', name: 'general');
+  static const settingAccountManager = RoutePath(path: '/setting/account_manager', name: 'account_manager');
+  static const settingNotification = RoutePath(path: '/setting/notification', name: 'notification');
+  static const settingDeveloper = RoutePath(path: '/setting/developer', name: 'developer');
+  static const settingDevTestUsers = RoutePath(path: '/setting/developer/test_users', name: 'test_users');
+  static const settingDevTestVideos = RoutePath(path: '/setting/developer/test_videos', name: 'test_videos');
+  static const settingDevTestArticles = RoutePath(path: '/setting/developer/test_articles', name: 'test_articles');
+  static const settingDevTestPosts = RoutePath(path: '/setting/developer/test_posts', name: 'test_posts');
+  static const settingDevTestAppTitleBar = RoutePath(path: '/setting/developer/test_app_title_bar', name: 'test_app_title_bar');
 
   static const echoCave = '/echo_cave';
 
@@ -61,7 +62,7 @@ abstract final class Routes {
     }
 
     final uri = Uri(
-      path: userDetail.replaceAll(':userId', userId),
+      path: userDetail.path.replaceAll(':userId', userId),
       queryParameters: params,
     );
     return uri.toString();
@@ -146,15 +147,15 @@ abstract final class Routes {
   }
 
   static String buildUserFollowings(String userId) {
-    return userFollowings.replaceAll(':userId', userId);
+    return userFollowings.path.replaceAll(':userId', userId);
   }
 
   static String buildUserMutualFollowings(String userId) {
-    return userMutualFollowings.replaceAll(':userId', userId);
+    return userMutualFollowings.path.replaceAll(':userId', userId);
   }
 
   static String buildUserFans(String userId) {
-    return userFans.replaceAll(':userId', userId);
+    return userFans.path.replaceAll(':userId', userId);
   }
 
   static String buildUserRecentlyLiked(String userId, {String? nickname}) {
@@ -164,7 +165,7 @@ abstract final class Routes {
     }
 
     final uri = Uri(
-      path: userRecentlyLiked.replaceAll(':userId', userId),
+      path: userRecentlyLiked.path.replaceAll(':userId', userId),
       queryParameters: params,
     );
     return uri.toString();
@@ -177,7 +178,7 @@ abstract final class Routes {
     }
 
     final uri = Uri(
-      path: userRecentlyCoined.replaceAll(':userId', userId),
+      path: userRecentlyCoined.path.replaceAll(':userId', userId),
       queryParameters: params,
     );
     return uri.toString();
@@ -190,7 +191,7 @@ abstract final class Routes {
     }
 
     final uri = Uri(
-      path: userSubscriptions.replaceAll(':userId', userId),
+      path: userSubscriptions.path.replaceAll(':userId', userId),
       queryParameters: params,
     );
     return uri.toString();
@@ -199,4 +200,11 @@ abstract final class Routes {
   static String buildConversationDetail(String conversationId) {
     return '$homeChat?conversationId=$conversationId';
   }
+}
+
+class RoutePath {
+  final String path;
+  final String name;
+
+  const RoutePath({required this.path, required this.name});
 }

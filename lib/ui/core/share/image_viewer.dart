@@ -4,11 +4,16 @@ import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:flutter/material.dart';
 
 extension ImageViewer on BuildContext {
+  /// [shouldUseOriginalQuality] 每次导航到新图片时被调用，
+  /// 此回调用于指示图片查看器是否应该立即为其加载原始质量
   void openImageViewer(
     List<ImageViewerItem> images, {
     int initialIndex = 0,
     List<ImageViewerAction> actions = const [],
+    bool Function(ImageViewerItem image)? shouldUseOriginalQuality,
   }) {
+    assert(images.isNotEmpty);
+
     Navigator.of(this).push(
       PageRouteBuilder(
         opaque: false,
@@ -21,6 +26,7 @@ extension ImageViewer on BuildContext {
             images: images,
             initialIndex: initialIndex,
             actions: actions,
+            shouldUseOriginalQuality: shouldUseOriginalQuality,
           );
         },
       ),
@@ -32,11 +38,15 @@ class ImageViewerItem {
   final String url;
   final String thumbUrl;
   final String? heroTag;
+  final int width;
+  final int height;
 
   const ImageViewerItem({
     required this.url,
     required this.thumbUrl,
     this.heroTag,
+    required this.width,
+    required this.height,
   });
 }
 
@@ -58,11 +68,13 @@ class _ImageViewerScreen extends StatefulWidget {
   final List<ImageViewerItem> images;
   final int initialIndex;
   final List<ImageViewerAction> actions;
+  final bool Function(ImageViewerItem image)? shouldUseOriginalQuality;
 
   const _ImageViewerScreen({
     required this.images,
     required this.initialIndex,
     required this.actions,
+    this.shouldUseOriginalQuality,
   });
 
   @override
@@ -96,7 +108,8 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
         name: '保存到本地',
         icon: Icons.download,
         onTap: () {
-          context.saveImage(images[pageIndex].url, 'bilibili_${_getSaveDateString()}', 'jpeg');
+          final ext = images[pageIndex].url.split('.').last;
+          context.saveImage(images[pageIndex].url, 'bilibili_${_getSaveDateString()}', ext);
         },
       ),
       if (images.length > 1)
@@ -106,18 +119,25 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
           onTap: () {
             final List<String> urls = [];
             final List<String> names = [];
-            final dateStr = _getSaveDateString();
+            final List<String> exts = [];
 
+            final dateStr = _getSaveDateString();
             for (int i = 0; i < images.length; i++) {
               final image = images[i];
               urls.add(image.url);
               names.add('bilibili_${dateStr}_${i + 1}');
+              exts.add(image.url.split('.').last);
             }
 
-            context.saveImages(urls, names, 'jpeg');
+            context.saveImages(urls, names, exts);
           },
         ),
     ];
+
+    final useOriginalQuality = widget.shouldUseOriginalQuality?.call(images[0]) ?? false;
+    if (useOriginalQuality) {
+      _originalImageSet.add(0);
+    }
   }
 
   @override
@@ -147,6 +167,11 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
 
   void _onPageChanged(int event) {
     if (event == pageIndex) return;
+
+    if (widget.shouldUseOriginalQuality?.call(images[event]) ?? false) {
+      _originalImageSet.add(event);
+    }
+
     setState(() => pageIndex = event);
   }
 

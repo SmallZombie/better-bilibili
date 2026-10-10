@@ -10,22 +10,32 @@ const data1 = [
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image1.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image1_low.jpg',
+    width: 2560,
+    height: 1811,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image2.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image2_low.jpg',
+    width: 2560,
+    height: 2560,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image3.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image3_low.jpg',
+    width: 1544,
+    height: 2560,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image4.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image4_low.jpg',
+    width: 1806,
+    height: 2560,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image5.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image5_low.jpg',
+    width: 3840,
+    height: 2160,
   ),
 ];
 
@@ -33,18 +43,26 @@ const data2 = [
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image6.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image6_low.jpg',
+    width: 2508,
+    height: 1771,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image7.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image7_low.jpg',
+    width: 640,
+    height: 640,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image8.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image8_low.jpg',
+    width: 1807,
+    height: 2560,
   ),
   ImageViewerItem(
     url: 'http://127.0.0.1:5500/test/assets/images/image9.jpg',
     thumbUrl: 'http://127.0.0.1:5500/test/assets/images/image9_low.jpg',
+    width: 1595,
+    height: 2560,
   ),
 ];
 
