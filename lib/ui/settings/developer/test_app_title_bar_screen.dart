@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class TestAppTitleBarScreen extends StatelessWidget {

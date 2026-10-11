@@ -3,7 +3,7 @@ import 'package:better_bilibili/data/model/bsbsb/user_info.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BsbsbSettingsViewModel extends ChangeNotifier {
   final BsbsbConfig config;

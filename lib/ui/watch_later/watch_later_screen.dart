@@ -8,7 +8,7 @@ import 'package:better_bilibili/ui/core/share/selectable_item_wrapper.dart';
 import 'package:better_bilibili/ui/watch_later/watch_later_view_model.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 const _orderLabels = ['添加时间降序', '添加时间升序'];

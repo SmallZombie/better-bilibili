@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/share/image_viewer.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   runApp(MaterialApp(home: ImageViewerTest2()));

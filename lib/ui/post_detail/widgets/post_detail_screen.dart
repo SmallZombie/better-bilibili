@@ -14,7 +14,7 @@ import 'package:better_bilibili/ui/post_detail/widgets/collection_tab.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/post_detail_view_model.dart';
 import 'package:better_bilibili/ui/post_detail/widgets/contents_tab.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:go_router/go_router.dart' hide Block;
 import 'package:provider/provider.dart';

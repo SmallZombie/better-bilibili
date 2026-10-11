@@ -1,5 +1,5 @@
 import 'package:better_bilibili/utils/bili_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 const scheme = 'bilibili://';
 

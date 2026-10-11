@@ -11,7 +11,7 @@ import 'package:better_bilibili/ui/core/bilibili/movie/movie_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/series/series_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/unsupported_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/video/video_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 根据传入的数据类型动态决定要展示的卡片类型
 class DynamicCard extends StatelessWidget {

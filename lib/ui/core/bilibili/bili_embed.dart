@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
 import 'package:better_bilibili/ui/core/bilibili/video/video_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 const String kThumbnailSuffix = '@1280w_720h_1c';

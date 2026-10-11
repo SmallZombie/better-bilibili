@@ -4,7 +4,7 @@ import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_
 import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliBackgroundService extends ChangeNotifier {
   final UserRepository _userRepository;

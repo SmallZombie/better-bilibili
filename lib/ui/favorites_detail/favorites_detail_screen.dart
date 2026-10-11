@@ -9,7 +9,7 @@ import 'package:better_bilibili/ui/core/share/selectable_item_wrapper.dart';
 import 'package:better_bilibili/ui/favorites_detail/favorites_detail_view_model.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

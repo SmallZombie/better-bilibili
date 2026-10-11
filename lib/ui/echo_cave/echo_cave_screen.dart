@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class Echo {

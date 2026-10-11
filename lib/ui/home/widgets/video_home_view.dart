@@ -5,7 +5,7 @@ import 'package:better_bilibili/ui/core/bilibili/video/video_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
 import 'package:better_bilibili/ui/home/view_models/video_home_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:silky_scroll/silky_scroll.dart';
 

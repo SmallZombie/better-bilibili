@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_header.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SelectionPanelItem<T> {
   final String label;

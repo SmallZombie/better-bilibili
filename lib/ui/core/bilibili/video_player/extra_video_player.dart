@@ -13,7 +13,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_contro
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';

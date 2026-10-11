@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_group.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_info_box.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_switch.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EagleSettingsScreen extends StatefulWidget {
   const EagleSettingsScreen({super.key});

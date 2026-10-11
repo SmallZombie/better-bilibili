@@ -2,7 +2,7 @@ import 'package:better_bilibili/data/services/bilibili/model/search_response.dar
 import 'package:better_bilibili/ui/core/bilibili/movie/movie_poster.dart';
 import 'package:better_bilibili/ui/core/bilibili/series/series_poster.dart';
 import 'package:better_bilibili/ui/core/bilibili/unsupported_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class DynamicPoster extends StatelessWidget {
   final dynamic data;

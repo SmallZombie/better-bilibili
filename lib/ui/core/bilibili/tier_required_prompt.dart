@@ -1,5 +1,5 @@
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class TierRequiredPrompt extends StatelessWidget {
   final SubscriptionTier requiredTier;

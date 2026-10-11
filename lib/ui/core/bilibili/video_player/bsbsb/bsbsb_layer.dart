@@ -9,7 +9,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/t
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment_data_source.dart';
 import 'package:better_bilibili/utils/hex_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BsbsbLayer extends StatefulWidget {
   final BsbsbController controller;

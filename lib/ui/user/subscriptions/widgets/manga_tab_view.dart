@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/ui/user/subscriptions/view_models/manga_tab_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:provider/provider.dart';
 

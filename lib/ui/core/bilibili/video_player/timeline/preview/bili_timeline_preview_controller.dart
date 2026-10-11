@@ -9,7 +9,7 @@ import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 

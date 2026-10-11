@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/watch_history/watch_history_view_model.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 const _typeLabels = ['全部', '视频', '文章', '直播'];

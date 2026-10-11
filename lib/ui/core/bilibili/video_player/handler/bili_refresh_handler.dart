@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 超过此时间触发重载，单位毫秒
 const _kRefreshThreshold = 115 * 60 * 1000; // 1h55m

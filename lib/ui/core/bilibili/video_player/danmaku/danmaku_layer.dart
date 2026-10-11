@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku/danmaku_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/scheduler.dart';
 
 class DanmakuLayer extends StatefulWidget {

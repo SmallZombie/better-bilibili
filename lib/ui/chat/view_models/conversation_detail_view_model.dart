@@ -8,7 +8,7 @@ import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ConversationDetailViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;

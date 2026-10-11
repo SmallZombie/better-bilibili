@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/bilibili/rich_text/bili_rich_text_wapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

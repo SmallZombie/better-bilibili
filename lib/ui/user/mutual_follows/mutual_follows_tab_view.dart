@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/user/mutual_follows/mutual_follows_tab_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MutualFollowsTabView extends StatefulWidget {
   final MutualFollowsTabViewModel viewModel;

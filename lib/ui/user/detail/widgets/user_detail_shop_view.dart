@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_shop_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class UserDetailShopView extends StatefulWidget {
   final UserDetailShopViewModel viewModel;

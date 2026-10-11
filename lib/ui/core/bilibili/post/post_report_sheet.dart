@@ -2,7 +2,7 @@ import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_
 import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

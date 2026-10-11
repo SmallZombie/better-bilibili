@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/bilibili/collection/subscription_text_button.dart/subscription_collection_text_button_view_model.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SubscriptionCollectionTextButton extends StatefulWidget {
   final SubscriptionCollectionTextButtonViewModel viewModel;

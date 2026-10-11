@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SettingSwitchTile extends StatelessWidget {
   final Widget title;

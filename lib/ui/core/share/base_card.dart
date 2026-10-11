@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/mini_text_button.dart';
 import 'package:better_bilibili/utils/list_util.dart';
 import 'package:better_bilibili/utils/platform_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class BaseCard extends StatelessWidget {

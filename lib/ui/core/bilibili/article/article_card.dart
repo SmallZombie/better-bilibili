@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/base_card.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 

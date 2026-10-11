@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
 import 'package:better_bilibili/l10n/l10n_util.dart';
 import 'package:better_bilibili/ui/home/widgets/home_shell.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

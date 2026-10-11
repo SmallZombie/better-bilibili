@@ -44,7 +44,7 @@ import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/router_helper.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/media_kit_media_session_adapter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';

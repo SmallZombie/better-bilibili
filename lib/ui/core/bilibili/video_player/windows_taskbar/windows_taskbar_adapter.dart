@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_contro
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist_controller.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class WindowsTaskbarAdapter extends StatefulWidget {
   final ExtraVideoController controller;

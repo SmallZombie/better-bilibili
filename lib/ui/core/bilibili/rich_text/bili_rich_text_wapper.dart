@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/rich_text/parse_node.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 

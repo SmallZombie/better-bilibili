@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/share/settings/setting_group.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_switch.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   runApp(

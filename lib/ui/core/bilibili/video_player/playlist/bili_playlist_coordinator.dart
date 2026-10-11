@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/episode/b
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist/bili_playlist_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/recommend/bili_recommend_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 负责协调剧集、播放列表、合集与推荐视频之间的播放逻辑
 class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistController {

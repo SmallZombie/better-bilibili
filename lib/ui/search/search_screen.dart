@@ -20,7 +20,7 @@ import 'package:better_bilibili/ui/core/share/simple_dialog.dart';
 import 'package:better_bilibili/ui/search/search_view_model.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

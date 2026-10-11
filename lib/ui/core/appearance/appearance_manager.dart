@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 

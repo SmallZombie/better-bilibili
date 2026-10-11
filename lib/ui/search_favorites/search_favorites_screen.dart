@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/share/enhanced_appbar.dart';
 import 'package:better_bilibili/ui/search_favorites/search_favorites_view_model.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 const _orderLabels = ['收藏时间', '播放量', '发布时间'];

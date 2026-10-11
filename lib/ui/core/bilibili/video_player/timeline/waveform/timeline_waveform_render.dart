@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/svg.dart';
 
 class TimelineWaveformRender extends StatelessWidget {

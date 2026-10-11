@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class BiliUserAvatar extends StatelessWidget {

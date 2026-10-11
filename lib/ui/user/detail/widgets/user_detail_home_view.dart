@@ -12,7 +12,7 @@ import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
 import 'package:better_bilibili/ui/core/share/sliver_scetion_tile.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_home_view_model.dart';
 import 'package:better_bilibili/ui/user/detail/widgets/user_detail_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class UserDetailHomeView extends StatefulWidget {

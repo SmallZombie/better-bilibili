@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EventTile extends StatelessWidget {
   final String eventId;

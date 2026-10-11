@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_t
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_post_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 const _orderLabels = ['全部', '视频'];

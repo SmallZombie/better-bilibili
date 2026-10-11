@@ -1,7 +1,7 @@
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/ui/core/bilibili/rich_text/parse_node.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class StickerParseNode implements ParseNode {
   final List<Sticker> stickers;

@@ -15,8 +15,7 @@ import 'package:better_bilibili/ui/core/app/app_title_bar.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/appearance/appearance_manager.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_ce_flutter/adapters.dart';
@@ -136,9 +135,7 @@ class _AppState extends State<App> {
       themeMode: appearanceManager.themeMode,
       localizationsDelegates: [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
         FlutterQuillLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,

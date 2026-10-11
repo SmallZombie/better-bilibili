@@ -7,7 +7,7 @@ import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/utils/bili_util.dart';
 import 'package:better_bilibili/utils/hex_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/svg.dart';
 
 // https://medium.com/@diegoveloper/flutter-collapsing-toolbar-sliver-app-bar-14b858e87abe

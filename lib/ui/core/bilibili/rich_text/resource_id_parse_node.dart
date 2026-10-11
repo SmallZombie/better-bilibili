@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/bilibili/rich_text/parse_node.dart';
 import 'package:better_bilibili/utils/bili_util.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 用于解析纯 BVID、AVID、UserId，最低优先级
 class ResourceIdParseNode implements ParseNode {

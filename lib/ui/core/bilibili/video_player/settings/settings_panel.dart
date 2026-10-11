@@ -1,4 +1,4 @@
-﻿import 'package:better_bilibili/config/player_config.dart';
+import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_header.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_section_title.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_tile.dart';
@@ -8,7 +8,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_contro
 import 'package:better_bilibili/ui/core/bilibili/video_player/settings/settings_fallback_codec_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/settings/settings_preferred_codec_panel.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SettingsPanel implements Panel {
   final PanelController controller;

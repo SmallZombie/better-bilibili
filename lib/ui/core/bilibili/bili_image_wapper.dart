@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 const kDefaultUserAvatar = 'https://i0.hdslb.com/bfs/face/member/noface.jpg';
 

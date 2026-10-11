@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_qr_code_status_response.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';

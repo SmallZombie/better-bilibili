@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/selection_pa
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_header.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SettingsFallbackCodecPanel implements Panel {
   final PanelController controller;

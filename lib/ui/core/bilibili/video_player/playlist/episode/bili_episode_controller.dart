@@ -1,5 +1,5 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_response.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliEpisodeController extends ChangeNotifier {
   final List<VideoDetailEpisode> episodes;

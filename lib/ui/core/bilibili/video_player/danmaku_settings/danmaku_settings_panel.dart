@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/slider_panel
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/switch_panel_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 class DanmakuSettingsPanel implements Panel {

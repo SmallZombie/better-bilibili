@@ -5,7 +5,7 @@ import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:logger/logger.dart';
 import 'package:media_kit/media_kit.dart';
 

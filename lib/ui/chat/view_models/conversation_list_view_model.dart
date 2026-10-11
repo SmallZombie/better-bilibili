@@ -3,7 +3,7 @@ import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_
 import 'package:better_bilibili/domain/models/bilibili/chat.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ConversationListViewModel extends ChangeNotifier {
   final AuthRepository authRepository;

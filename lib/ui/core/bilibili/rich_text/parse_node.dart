@@ -1,5 +1,5 @@
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 解析器接受原始文本并返回自身关注的片段
 abstract class ParseNode {

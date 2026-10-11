@@ -1,5 +1,5 @@
 import 'package:better_bilibili/config/constants.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 一个集缓存、比例、大小、圆角、加载动画为一体的图片组件
 class ImageWapper extends StatelessWidget {

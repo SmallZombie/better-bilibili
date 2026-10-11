@@ -2,7 +2,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_playlist_videos
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist/bili_playlist_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class PlaylistPanel implements Panel {
   final BiliPlaylistController controller;

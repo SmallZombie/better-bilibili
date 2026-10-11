@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension ImageViewer on BuildContext {
   /// [shouldUseOriginalQuality] 每次导航到新图片时被调用，

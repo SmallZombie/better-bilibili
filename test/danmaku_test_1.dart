@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:better_bilibili/utils/hex_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/scheduler.dart';
 
 void main() {

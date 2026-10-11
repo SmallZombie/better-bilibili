@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_controller.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliTimelineWaveformController extends ChangeNotifier implements TimelineWaveformController {
   final String videoId;

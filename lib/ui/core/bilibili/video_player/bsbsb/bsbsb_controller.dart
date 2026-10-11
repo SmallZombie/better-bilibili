@@ -3,7 +3,7 @@ import 'package:better_bilibili/data/model/bsbsb/segment.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BsbsbController extends ChangeNotifier {
   final BsbsbRepository bsbsbRepository;

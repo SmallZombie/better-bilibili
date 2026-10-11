@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/bilibili/article/article_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/sliver_grid_layout_builder.dart';
 import 'package:better_bilibili/ui/home/view_models/article_home_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ArticleHomeView extends StatefulWidget {
   final ArticleHomeViewModel viewModel;

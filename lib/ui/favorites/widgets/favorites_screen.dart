@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/favorites/view_models/favorite_article_view_m
 import 'package:better_bilibili/ui/favorites/view_models/favorites_tab_view_model.dart';
 import 'package:better_bilibili/ui/favorites/widgets/favorite_article_view.dart';
 import 'package:better_bilibili/ui/favorites/widgets/favorites_tab_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

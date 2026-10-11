@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_tile.d
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/quality/bili_quality_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class QualityPanel implements Panel {
   final BiliQualityController controller;

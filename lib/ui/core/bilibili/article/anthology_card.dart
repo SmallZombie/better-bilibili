@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/utils/list_util.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class AnthologyCard extends StatelessWidget {

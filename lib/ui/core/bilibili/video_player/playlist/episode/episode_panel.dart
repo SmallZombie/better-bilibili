@@ -2,7 +2,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_re
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/episode/bili_episode_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EpisodePanel implements Panel {
   final BiliEpisodeController controller;

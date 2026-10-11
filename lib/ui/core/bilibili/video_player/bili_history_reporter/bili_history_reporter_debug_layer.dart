@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/bilibili/video_player/bili_history_reporter/bili_history_reporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliHistoryReporterDebugLayer extends StatelessWidget {
   final BiliHistoryReporter controller;

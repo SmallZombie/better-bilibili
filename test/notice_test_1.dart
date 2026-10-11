@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice/notice_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/notice/notice_layer.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   runApp(

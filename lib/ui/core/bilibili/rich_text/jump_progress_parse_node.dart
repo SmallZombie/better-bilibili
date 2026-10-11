@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/bilibili/rich_text/parse_node.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class JumpProgressParseNode implements ParseNode {
   final Color primaryColor;

@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/bilibili/video_player/panel/panel_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class PanelLayer extends StatelessWidget {
   final PanelController controller;

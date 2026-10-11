@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_article_colllection_detail_response.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/collection_tab_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollview_observer/scrollview_observer.dart';
 

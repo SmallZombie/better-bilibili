@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/bilibili/favorite_folder/favorites_card.
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/ui/favorites/view_models/favorites_tab_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
 

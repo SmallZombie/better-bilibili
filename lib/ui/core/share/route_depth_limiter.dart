@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:better_bilibili/routing/app_route_observer.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:logger/logger.dart';
 
 /// 路由深度限制器，当所在页面路由深度到达阈值时，销毁内部的组件，直到页面重新可见

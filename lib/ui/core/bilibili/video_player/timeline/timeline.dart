@@ -7,7 +7,7 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_contro
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/preview/timeline_preview_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_render.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 

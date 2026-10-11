@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/chat/view_models/conversation_detail_view_mod
 import 'package:better_bilibili/ui/chat/view_models/conversation_list_view_model.dart';
 import 'package:better_bilibili/ui/chat/widgets/conversation_detail_view.dart';
 import 'package:better_bilibili/ui/chat/widgets/conversation_list_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

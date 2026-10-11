@@ -3,7 +3,7 @@ import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
 import 'package:better_bilibili/ui/core/share/sliver_grid_layout_builder.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_audio_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 const _orderLabels = ['最新发布', '最多播放', '最多收藏'];

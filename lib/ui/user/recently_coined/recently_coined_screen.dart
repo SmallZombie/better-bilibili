@@ -2,7 +2,7 @@ import 'package:better_bilibili/ui/core/bilibili/dynamic_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class RecentlyCoinedScreen extends StatefulWidget {
   final RecentlyCoinedViewModel viewModel;

@@ -1,5 +1,5 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_videos_response.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliRecommendController extends ChangeNotifier {
   final List<RecommendVideo> videos;

@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/core/share/paginator.dart';
 import 'package:better_bilibili/ui/core/share/section_tile.dart';
 import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_playlist_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class UserDetailPlaylistView extends StatefulWidget {

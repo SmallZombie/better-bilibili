@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/auth/login/widgets/password_login_view.dart';
 import 'package:better_bilibili/ui/auth/login/widgets/qr_login_view.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {

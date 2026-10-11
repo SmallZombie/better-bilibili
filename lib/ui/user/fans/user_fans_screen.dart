@@ -7,7 +7,7 @@ import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
 import 'package:better_bilibili/ui/user/fans/user_fans_view_model.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

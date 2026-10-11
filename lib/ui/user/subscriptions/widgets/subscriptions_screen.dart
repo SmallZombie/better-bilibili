@@ -6,7 +6,7 @@ import 'package:better_bilibili/ui/user/subscriptions/widgets/manga_tab_view.dar
 import 'package:better_bilibili/ui/user/subscriptions/widgets/movie_tab_view.dart';
 import 'package:better_bilibili/ui/user/subscriptions/widgets/playlist_tab_view.dart';
 import 'package:better_bilibili/ui/user/subscriptions/widgets/series_tab_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class SubscriptionsScreen extends StatelessWidget {

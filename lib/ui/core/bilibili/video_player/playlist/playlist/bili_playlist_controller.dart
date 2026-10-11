@@ -3,7 +3,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_playlist_info_r
 import 'package:better_bilibili/data/services/bilibili/model/get_playlist_videos_response.dart';
 import 'package:better_bilibili/utils/command.dart';
 import 'package:better_bilibili/utils/result.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BiliPlaylistController extends ChangeNotifier {
   final String playlistId;

@@ -11,7 +11,7 @@ import 'package:better_bilibili/ui/core/share/settings/setting_info_box.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_switch.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
 import 'package:better_bilibili/utils/hex_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class BsbsbSettingsScreen extends StatefulWidget {

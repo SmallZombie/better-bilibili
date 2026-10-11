@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 负责告诉播放器是否存在上一个或下一个，并提供他们的简单信息用于显示可能的预览
 abstract interface class PlaylistController implements Listenable {

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
 
 /// 作为中间层解决因为前方路由的销毁比后方路由的恢复晚发生

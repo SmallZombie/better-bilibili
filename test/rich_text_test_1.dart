@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   runApp(

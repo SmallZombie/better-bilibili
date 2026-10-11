@@ -1,5 +1,5 @@
 import 'package:better_bilibili/ui/core/share/responsive/max_width_viewport.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SettingGroup extends StatelessWidget {
   final Widget? title;
