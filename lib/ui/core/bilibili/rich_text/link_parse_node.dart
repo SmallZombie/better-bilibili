@@ -1,6 +1,6 @@
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/ui/core/bilibili/rich_text/parse_node.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 

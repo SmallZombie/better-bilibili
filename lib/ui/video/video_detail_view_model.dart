@@ -134,7 +134,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
         episodes: result.video.episodes,
         onPlay: switchEpisode,
       );
+    } else {
+      episodeController?.dispose();
+      episodeController = null;
     }
+
     if (playlistId != null && playlistController == null) {
       playlistController = BiliPlaylistController(
         playlistId: playlistId!,
@@ -145,6 +149,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
         },
       );
     }
+
     if (result.video.collection != null && result.video.collection?.id != collectionController?.collection.id) {
       collectionController?.dispose();
       collectionController = BiliCollectionController(
@@ -154,7 +159,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
           switchVideo(event.id, event.episodeId, event.cover);
         },
       );
+    } else {
+      collectionController?.dispose();
+      collectionController = null;
     }
+
     if (result.recommendVideos.isNotEmpty) {
       recommendController?.dispose();
       recommendController = BiliRecommendController(
@@ -163,7 +172,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
           switchVideo(event.id, event.episodeId, event.cover);
         },
       );
+    } else {
+      recommendController?.dispose();
+      recommendController = null;
     }
+
     if ([
       episodeController,
       playlistController,
@@ -178,6 +191,9 @@ class VideoDetailViewModel extends SafeChangeNotifier {
         collectionController: collectionController,
         recommendController: recommendController,
       );
+    } else {
+      playlistCoordinator?.dispose();
+      playlistCoordinator = null;
     }
 
     if (_canResumePosition()) {

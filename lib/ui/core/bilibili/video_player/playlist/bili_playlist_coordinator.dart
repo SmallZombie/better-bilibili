@@ -195,6 +195,7 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
 
       if (previous != null) {
         collectionController!.play(previous);
+        return;
       }
     }
   }
@@ -210,6 +211,7 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
 
       if (next != null) {
         episodeController!.play(next);
+        return;
       }
     }
 
@@ -220,6 +222,7 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
 
       if (next != null) {
         playlistController!.play(next);
+        return;
       }
     }
 
@@ -230,6 +233,7 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
 
       if (next != null) {
         collectionController!.play(next);
+        return;
       }
     }
 
@@ -237,6 +241,7 @@ class BiliPlaylistCoordinator extends ChangeNotifier implements PlaylistControll
     if (config.autoPlayNextRecommend.value && (recommendController?.length ?? 0) >= 0) {
       final next = recommendController!.videos.first;
       recommendController!.play(next);
+      return;
     }
   }
 }

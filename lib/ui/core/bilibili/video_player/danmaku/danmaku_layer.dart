@@ -106,7 +106,7 @@ class DanmakuLayerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     controller.setViewPortSize(size);
-    controller.onPaint(canvas);
+    controller.onPaint(canvas, size);
   }
 
   @override

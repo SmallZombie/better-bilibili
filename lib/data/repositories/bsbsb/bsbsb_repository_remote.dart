@@ -9,7 +9,7 @@ import 'package:better_bilibili/data/model/bsbsb/user_info.dart';
 import 'package:better_bilibili/data/model/bsbsb/video.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/data/services/bsbsb/bsbsb_api_service.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';

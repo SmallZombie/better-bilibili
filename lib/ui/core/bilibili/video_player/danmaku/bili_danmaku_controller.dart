@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/danmaku.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku/bili_danmaku_mask_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/danmaku/danmaku_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
@@ -39,8 +41,10 @@ class BiliDanmakuController extends DanmakuController {
   final ExtraVideoController controller;
   final DanmakuConfig config;
   final VideoRepository videoRepository;
+  final String? maskUrl;
 
   final List<StreamSubscription> _subscriptions = [];
+  BiliDanmakuMaskController? maskController;
 
   BiliDanmakuController({
     required this.contentType,
@@ -49,6 +53,7 @@ class BiliDanmakuController extends DanmakuController {
     required this.controller,
     required this.config,
     required this.videoRepository,
+    this.maskUrl,
   }) : super(
          showScroll: config.showScroll.value,
          showTop: config.showTop.value,
@@ -56,16 +61,18 @@ class BiliDanmakuController extends DanmakuController {
          showAdvanced: config.showAdvanced.value,
          displayArea: config.displayArea.value,
          fixedDisplayArea: config.fixedDisplayArea.value,
+         fontSize: config.fontSize.value,
          scrollSpeed: config.scrollSpeed.value,
          opacity: config.opacity.value,
          carnivalMode: config.carnivalMode.value,
          duplicateMerge: config.duplicateMerge.value,
        ) {
     _subscriptions.addAll([
-      controller.stream.position.listen(onPosition),
-      controller.stream.playing.listen(onPlaying),
-      controller.stream.completed.listen(onCompleted),
-      controller.stream.seek.listen(onSeek),
+      controller.stream.position.listen(_onPosition),
+      controller.stream.playing.listen(_onPlaying),
+      controller.stream.completed.listen(_onCompleted),
+      controller.stream.seek.listen(_onSeek),
+      controller.stream.rate.listen(_onRate),
 
       config.showScroll.stream.listen(super.setShowScroll),
       config.showTop.stream.listen(super.setShowTop),
@@ -74,10 +81,16 @@ class BiliDanmakuController extends DanmakuController {
       config.displayArea.stream.listen(super.setDisplayArea),
       config.fixedDisplayArea.stream.listen(super.setFixedDisplayArea),
       config.opacity.stream.listen(super.setOpacity),
-      config.scrollSpeed.stream.listen(super.setScrollSpeed),
+      config.fontSize.stream.listen(super.setFontSize),
+      config.scrollSpeed.stream.listen(_onRate),
       config.carnivalMode.stream.listen(super.setCarnivalMode),
       config.duplicateMerge.stream.listen(super.setDuplicateMerge),
+      config.antiOcclusion.stream.listen(_onAntiOcclusion),
     ]);
+
+    if (config.antiOcclusion.value && maskUrl != null) {
+      maskController = BiliDanmakuMaskController(maskUrl!);
+    }
   }
 
   @override
@@ -87,19 +100,21 @@ class BiliDanmakuController extends DanmakuController {
     }
     _subscriptions.clear();
 
+    maskController?.dispose();
+
     super.dispose();
   }
 
   bool _isVideoEnded = false;
 
-  void onSeek(Duration event) {
+  void _onSeek(Duration event) {
     if (!config.enabled.value) return;
     super.onVideoSeek(event);
   }
 
   final Map<int, Chunk> indexToData = {};
 
-  void onPosition(Duration event) {
+  void _onPosition(Duration event) {
     if (!config.enabled.value) return;
 
     final currentChunkIndex = event.inMinutes ~/ 6 + 1;
@@ -110,15 +125,19 @@ class BiliDanmakuController extends DanmakuController {
     if (nextChunkIndex != currentChunkIndex) {
       _checkAndFetchChunk(nextChunkIndex);
     }
+
+    if (config.antiOcclusion.value) {
+      maskController?.onPosition(event);
+    }
   }
 
-  void onCompleted(bool event) {
+  void _onCompleted(bool event) {
     if (event) _isVideoEnded = true;
   }
 
-  void onPlaying(bool event) {
+  void _onPlaying(bool event) {
     if (event && _isVideoEnded) {
-      onSeek(.zero);
+      _onSeek(.zero);
       _isVideoEnded = false;
     }
   }
@@ -165,6 +184,59 @@ class BiliDanmakuController extends DanmakuController {
       chunk.nextRetryAt = DateTime.now().add(retryDelay);
     } finally {
       chunk.loading = false;
+    }
+  }
+
+  void _onAntiOcclusion(bool event) {
+    if (event && maskUrl != null) {
+      maskController ??= BiliDanmakuMaskController(maskUrl!);
+      maskController!.enable();
+      notifyListeners();
+    } else {
+      maskController?.disable();
+      notifyListeners();
+    }
+  }
+
+  void _onRate(double event) {
+    if (config.syncPlaybackRate.value) {
+      final videoRate = controller.state.rate;
+      if (videoRate == 1) {
+        return super.setScrollSpeed(config.scrollSpeed.value);
+      }
+      super.setScrollSpeed(config.scrollSpeed.value + videoRate);
+    } else {
+      super.setScrollSpeed(config.scrollSpeed.value);
+    }
+  }
+
+  @override
+  void onPaint(Canvas canvas, Size size) {
+    final mask = config.antiOcclusion.value ? maskController?.getClosestPicture(controller.state.position) : null;
+
+    if (mask != null) {
+      final bounds = Offset.zero & size;
+
+      canvas.save();
+      canvas.saveLayer(bounds, Paint());
+      super.onPaint(canvas, size);
+
+      canvas.saveLayer(
+        bounds,
+        Paint()..blendMode = BlendMode.dstIn,
+      );
+
+      canvas.save();
+      canvas.scale(size.width / mask.size.width, size.height / mask.size.height);
+      canvas.drawPicture(mask.picture);
+      canvas.restore();
+
+      canvas.restore(); // 将遮罩以 dstIn 模式合成到文字图层
+      canvas.restore(); // 将处理完的文字图层合成到画布
+
+      canvas.restore(); // 恢复裁剪状态
+    } else {
+      super.onPaint(canvas, size);
     }
   }
 }

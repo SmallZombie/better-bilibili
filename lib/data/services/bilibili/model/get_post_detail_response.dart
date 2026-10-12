@@ -2,7 +2,7 @@ import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/domain/models/bilibili/post.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:flutter_quill/quill_delta.dart';
 
 class PostDetail {

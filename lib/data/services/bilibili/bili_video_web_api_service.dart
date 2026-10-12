@@ -24,7 +24,7 @@ import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/danmaku.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
@@ -314,11 +314,16 @@ class BiliVideoWebApiService {
         return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
       }
 
+      final maskUrl = resp.data['data']?['dm_mask']?['mask_url'];
       extraPlayInfoResp = GetExtraPlayInfoResponse(
         subtitles: (resp.data['data']['subtitle']['subtitles'] as List).map((v) => Subtitle.fromJson(v)).toList(),
         lastPosition: Duration(milliseconds: resp.data['data']['last_play_time']),
         lastEpisodeId: resp.data['data']['last_play_cid'] != 0 ? resp.data['data']['last_play_cid'].toString() : null,
         chapters: (resp.data['data']['view_points'] as List).map((v) => Chapter.fromJson(v)).toList(),
+        // fps 跟随视频，最高 30，且向下取整
+        // 例如 29.97 帧的视频会生成 29 帧的遮罩，
+        // 60 帧的视频会生成 30 帧的遮罩
+        maskUrl: maskUrl != null ? 'https:$maskUrl' : null,
       );
     }
 

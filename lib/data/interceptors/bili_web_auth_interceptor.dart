@@ -1,5 +1,5 @@
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:dio/dio.dart';
 
 InterceptorsWrapper buildBiliWebAuthIntercrptor(Account account) {

@@ -15,6 +15,7 @@ class PlayInfo {
   final String? lastEpisodeId;
   final Duration lastPosition;
   final List<Chapter> chapters;
+  final String? maskUrl;
 
   const PlayInfo({
     required this.id,
@@ -29,6 +30,7 @@ class PlayInfo {
     required this.lastEpisodeId,
     required this.lastPosition,
     this.chapters = const [],
+    this.maskUrl,
   });
 
   factory PlayInfo.assembly(GetPlayInfoResponse playInfoResp, GetExtraPlayInfoResponse extraPlayInfoResp) {
@@ -45,6 +47,7 @@ class PlayInfo {
       lastEpisodeId: extraPlayInfoResp.lastEpisodeId,
       lastPosition: extraPlayInfoResp.lastPosition,
       chapters: extraPlayInfoResp.chapters,
+      maskUrl: extraPlayInfoResp.maskUrl,
     );
   }
 }

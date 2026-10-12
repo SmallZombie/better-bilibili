@@ -1,6 +1,6 @@
 import 'package:better_bilibili/domain/models/bilibili/article.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:flutter_quill/quill_delta.dart';
 
 class ArticleDetail {

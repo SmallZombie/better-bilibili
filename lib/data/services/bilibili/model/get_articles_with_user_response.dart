@@ -1,5 +1,5 @@
 import 'package:better_bilibili/config/constants.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 
 class GetArticlesWithUserResponse {
   final List<GetArticlesWithUserItem> list;

@@ -1,6 +1,6 @@
 import 'package:better_bilibili/data/model/bilibili/movie_model.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 
 /// 去除字符串中的 HTML 标签
 String _handleTitle(String title) {

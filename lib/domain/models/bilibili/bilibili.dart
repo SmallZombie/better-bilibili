@@ -1,4 +1,4 @@
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 
 enum BiliContentTypeEnum {
   unknown,

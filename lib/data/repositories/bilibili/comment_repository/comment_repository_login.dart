@@ -6,7 +6,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_comment_report_
 import 'package:better_bilibili/data/services/bilibili/model/uploaded_image.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 
 class CommentRepositoryLogin implements CommentRepository {

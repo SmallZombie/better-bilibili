@@ -5,11 +5,13 @@ class GetExtraPlayInfoResponse {
   final Duration lastPosition;
   final String? lastEpisodeId;
   final List<Chapter> chapters;
+  final String? maskUrl;
 
   const GetExtraPlayInfoResponse({
     required this.subtitles,
     required this.lastPosition,
     required this.lastEpisodeId,
     required this.chapters,
+    this.maskUrl,
   });
 }

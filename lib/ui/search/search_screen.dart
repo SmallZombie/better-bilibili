@@ -40,8 +40,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
     if (widget.initialKeyword != null && widget.initialKeyword!.isNotEmpty) {
       viewModel.setKeyword(widget.initialKeyword!);

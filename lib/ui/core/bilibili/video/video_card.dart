@@ -11,7 +11,7 @@ import 'package:better_bilibili/ui/core/share/base_card.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:better_bilibili/utils/base_util.dart';

@@ -134,6 +134,8 @@ class _ControllerState {
   bool showAdvanced = true;
   double displayArea = 1.0;
   double fixedDisplayArea = 1.0;
+  // 字体大小倍率
+  double fontSize = 1.0;
   double scrollSpeed = gBaseScrollSpeed;
   double opacity = 1.0;
   bool carnivalMode = false;
@@ -159,6 +161,7 @@ class DanmakuController extends SafeChangeNotifier {
     bool? showAdvanced,
     double? displayArea,
     double? fixedDisplayArea,
+    double? fontSize,
     double? scrollSpeed,
     double? opacity,
     bool? carnivalMode,
@@ -170,6 +173,7 @@ class DanmakuController extends SafeChangeNotifier {
     if (showAdvanced != null) _state.showAdvanced = showAdvanced;
     if (displayArea != null) _state.displayArea = displayArea;
     if (fixedDisplayArea != null) _state.fixedDisplayArea = fixedDisplayArea;
+    if (fontSize != null) _state.fontSize = fontSize;
     if (scrollSpeed != null) _state.scrollSpeed = scrollSpeed * gBaseScrollSpeed;
     if (opacity != null) _state.opacity = opacity;
     if (carnivalMode != null) _state.carnivalMode = carnivalMode;
@@ -246,9 +250,9 @@ class DanmakuController extends SafeChangeNotifier {
     if (_state.showAdvanced) _advancedModule.onPosition(time);
   }
 
-  void onPaint(Canvas canvas) {
+  void onPaint(Canvas canvas, Size size) {
     for (final item in _modules) {
-      item.onPaint(canvas);
+      item.onPaint(canvas, size);
     }
   }
 
@@ -259,6 +263,11 @@ class DanmakuController extends SafeChangeNotifier {
     for (final i in _modules) {
       i.onSize(newSize);
     }
+  }
+
+  void setFontSize(double newSize) {
+    _state.fontSize = newSize;
+    notifyListeners();
   }
 
   void setScrollSpeed(double rate) {
@@ -351,7 +360,7 @@ abstract interface class _Module {
   void onSeek(Duration position);
   bool onTick(int deltaTime);
   void clear();
-  void onPaint(Canvas canvas);
+  void onPaint(Canvas canvas, Size size);
 }
 
 class _ScrollDanmakuModule implements _Module {
@@ -494,7 +503,7 @@ class _ScrollDanmakuModule implements _Module {
         text: TextSpan(
           text: item.text,
           style: TextStyle(
-            fontSize: item.size.toDouble(),
+            fontSize: item.size.toDouble() * state.fontSize,
             color: color,
             height: 1.2,
             shadows: [
@@ -567,7 +576,7 @@ class _ScrollDanmakuModule implements _Module {
   }
 
   @override
-  void onPaint(Canvas canvas) {
+  void onPaint(Canvas canvas, Size size) {
     for (final item in launchedList) {
       item.painter.paint(canvas, Offset(item.left, item.top));
     }
@@ -779,7 +788,7 @@ class _TopDanmakuModule implements _Module {
         text: TextSpan(
           text: item.text,
           style: TextStyle(
-            fontSize: item.size.toDouble(),
+            fontSize: item.size.toDouble() * state.fontSize,
             color: color,
             height: 1.2,
             shadows: [
@@ -870,7 +879,7 @@ class _TopDanmakuModule implements _Module {
   }
 
   @override
-  void onPaint(Canvas canvas) {
+  void onPaint(Canvas canvas, Size size) {
     if (counterTrack.painter != null) {
       counterTrack.painter!.paint(canvas, Offset(counterTrack.left, counterTrack.top));
     }
@@ -964,7 +973,7 @@ class _BottomDanmakuModule implements _Module {
         text: TextSpan(
           text: item.text,
           style: TextStyle(
-            fontSize: item.size.toDouble(),
+            fontSize: item.size.toDouble() * state.fontSize,
             color: color,
             height: 1.2,
             shadows: [
@@ -1052,7 +1061,7 @@ class _BottomDanmakuModule implements _Module {
   }
 
   @override
-  void onPaint(Canvas canvas) {
+  void onPaint(Canvas canvas, Size size) {
     for (final item in launchedList) {
       item.painter.paint(canvas, Offset(item.left, item.top));
     }
@@ -1091,7 +1100,7 @@ class _AdvancedDanmakuModule implements _Module {
           text: TextSpan(
             text: item.text,
             style: TextStyle(
-              fontSize: item.size.toDouble(),
+              fontSize: item.size.toDouble() * state.fontSize,
               color: color,
               height: 1.2,
               fontFamily: item.extra?.fontFamily,
@@ -1170,7 +1179,7 @@ class _AdvancedDanmakuModule implements _Module {
   }
 
   @override
-  void onPaint(Canvas canvas) {
+  void onPaint(Canvas canvas, Size size) {
     for (final item in launchedList) {
       if (item.alpha <= 0) continue;
 

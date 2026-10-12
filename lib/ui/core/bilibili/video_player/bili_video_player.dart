@@ -43,7 +43,6 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/windows_taskbar/wi
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/router_helper.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
-import 'package:better_bilibili/utils/media_kit_media_session_adapter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
@@ -248,6 +247,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       controller: controller,
       config: widget.danmakuConfig,
       videoRepository: widget.videoRepository,
+      maskUrl: widget.playInfo.maskUrl,
     );
     historyReporter = BiliHistoryReporter(
       controller: controller,
@@ -255,7 +255,6 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       qualityController: qualityController,
       videoRepository: widget.videoRepository,
     );
-
     refreshHandler = BiliRefreshHandler(
       controller: controller,
       onRefresh: widget.onRefresh,
@@ -273,7 +272,11 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   void _onMediaControl(bool event) {
     if (event) {
       _mediaSession ??= widget.mediaSessionController.createSession(
-        MediaKitMediaSessionAdapter(controller.player),
+        ExtraVideoPlayerMediaSessionAdapter(
+          player: controller.player,
+          mediaSessionData: widget.mediaSessionData,
+          playlistController: widget.playlistController,
+        ),
       );
       _mediaSession!.activate();
     } else {
@@ -300,11 +303,8 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     }
   }
 
-  bool _isFirstPlay = true;
-
   void _onDuration(Duration event) {
-    if (_isFirstPlay && config.autoPlay.value) controller.play();
-    _isFirstPlay = false;
+    if (config.autoPlay.value) controller.play();
   }
 
   void _onVolume(double event) {

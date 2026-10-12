@@ -1,4 +1,4 @@
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:material_ui/material_ui.dart';
 
 const scheme = 'bilibili://';

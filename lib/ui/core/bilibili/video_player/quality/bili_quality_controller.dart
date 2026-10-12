@@ -134,13 +134,12 @@ class BiliQualityController extends ChangeNotifier {
       return;
     }
 
-    bool restorePlaying;
+    bool restorePlaying = false;
     Duration restorePosition;
     if (_state.videoStream != null || _state.audioStream != null) {
       restorePlaying = controller.state.playing;
       restorePosition = controller.state.position;
     } else {
-      restorePlaying = true;
       restorePosition = .zero;
     }
 

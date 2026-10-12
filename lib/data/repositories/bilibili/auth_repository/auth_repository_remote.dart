@@ -13,7 +13,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_qr_code_status_
 import 'package:better_bilibili/data/services/bilibili/model/get_self_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_ticket_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';

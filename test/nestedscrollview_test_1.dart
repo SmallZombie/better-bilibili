@@ -5,7 +5,7 @@ import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/hex_color.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/svg.dart';

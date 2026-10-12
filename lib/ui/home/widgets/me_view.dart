@@ -15,7 +15,7 @@ import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/section_tile.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/home/view_models/me_view_model.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';

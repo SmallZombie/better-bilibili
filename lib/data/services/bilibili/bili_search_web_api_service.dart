@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_trending_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/search_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
