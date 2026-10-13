@@ -7,6 +7,7 @@ import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/dependencies.dart';
+import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/l10n/generated/app_localizations.dart';
 import 'package:better_bilibili/routing/router.dart';
@@ -41,12 +42,14 @@ void main() async {
   final playerConfig = PlayerConfig();
   final danmakuConfig = DanmakuConfig();
   final bsbsbConfig = BsbsbConfig();
+  final eagleConfig = EagleConfig();
   await Future.wait([
     appConfig.init,
     accountConfig.init,
     playerConfig.init,
     danmakuConfig.init,
     bsbsbConfig.init,
+    eagleConfig.init,
   ]);
 
   if (Platform.isWindows) {
@@ -93,6 +96,10 @@ void main() async {
         ),
         Provider(
           create: (_) => bsbsbConfig,
+          dispose: (_, value) => value.dispose(),
+        ),
+        Provider(
+          create: (_) => eagleConfig,
           dispose: (_, value) => value.dispose(),
         ),
         ...providersOnline,

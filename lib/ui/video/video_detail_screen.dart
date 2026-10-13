@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:better_bilibili/config/app_config.dart';
+import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_video_detail_response.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
@@ -63,10 +67,18 @@ const double _kSidebarSpacing = 12.0;
 
 class VideoDetailScreen extends StatefulWidget {
   final VideoDetailViewModel viewModel;
+  final AppConfig appConfig;
+  final NetworkManager networkManager;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
 
   const VideoDetailScreen({
     super.key,
     required this.viewModel,
+    required this.appConfig,
+    required this.networkManager,
+    required this.eagleConfig,
+    required this.eagleRepository,
   });
 
   @override
@@ -610,6 +622,10 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
         ),
         builder: (context, _) => CommentPanel(
           viewModel: context.read(),
+          appConfig: widget.appConfig,
+          networkManager: widget.networkManager,
+          eagleConfig: widget.eagleConfig,
+          eagleRepository: widget.eagleRepository,
           onTapTime: _onTapTime,
         ),
       ),

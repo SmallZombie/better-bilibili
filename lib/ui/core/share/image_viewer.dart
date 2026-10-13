@@ -9,7 +9,13 @@ extension ImageViewer on BuildContext {
   void openImageViewer(
     List<ImageViewerItem> images, {
     int initialIndex = 0,
-    List<ImageViewerAction> actions = const [],
+    List<ImageViewerAction> Function(
+      BuildContext context,
+      ImageViewerItem image,
+      int index,
+      List<ImageViewerItem> images,
+    )?
+    actionsBuilder,
     bool Function(ImageViewerItem image)? shouldUseOriginalQuality,
   }) {
     assert(images.isNotEmpty);
@@ -25,12 +31,18 @@ extension ImageViewer on BuildContext {
           return _ImageViewerScreen(
             images: images,
             initialIndex: initialIndex,
-            actions: actions,
+            actionsBuilder: actionsBuilder,
             shouldUseOriginalQuality: shouldUseOriginalQuality,
           );
         },
       ),
     );
+  }
+
+  static String getSaveDateString(BuildContext context) {
+    final now = DateTime.now();
+    return '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}_${now.minute.toString().padLeft(2, '0')}_${now.second.toString().padLeft(2, '0')}';
   }
 }
 
@@ -67,13 +79,19 @@ class ImageViewerAction {
 class _ImageViewerScreen extends StatefulWidget {
   final List<ImageViewerItem> images;
   final int initialIndex;
-  final List<ImageViewerAction> actions;
+  final List<ImageViewerAction> Function(
+    BuildContext context,
+    ImageViewerItem image,
+    int index,
+    List<ImageViewerItem> images,
+  )?
+  actionsBuilder;
   final bool Function(ImageViewerItem image)? shouldUseOriginalQuality;
 
   const _ImageViewerScreen({
     required this.images,
     required this.initialIndex,
-    required this.actions,
+    required this.actionsBuilder,
     this.shouldUseOriginalQuality,
   });
 
@@ -89,7 +107,10 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
   late final PageController pageController;
   late final List<ImageViewerAction> _defaultActions;
 
-  List<ImageViewerAction> get actions => [..._defaultActions, ...widget.actions];
+  List<ImageViewerAction> get actions => [
+    ..._defaultActions,
+    if (widget.actionsBuilder != null) ...widget.actionsBuilder!(context, images[pageIndex], pageIndex, images),
+  ];
 
   @override
   void initState() {
@@ -109,7 +130,7 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
         icon: Icons.download,
         onTap: () {
           final ext = images[pageIndex].url.split('.').last;
-          context.saveImage(images[pageIndex].url, 'bilibili_${_getSaveDateString()}', ext);
+          context.saveImage(images[pageIndex].url, 'bilibili_${ImageViewer.getSaveDateString(context)}', ext);
         },
       ),
       if (images.length > 1)
@@ -121,7 +142,7 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
             final List<String> names = [];
             final List<String> exts = [];
 
-            final dateStr = _getSaveDateString();
+            final dateStr = ImageViewer.getSaveDateString(context);
             for (int i = 0; i < images.length; i++) {
               final image = images[i];
               urls.add(image.url);
@@ -203,12 +224,6 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
         ),
       ),
     );
-  }
-
-  String _getSaveDateString() {
-    final now = DateTime.now();
-    return '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-        '${now.hour.toString().padLeft(2, '0')}_${now.minute.toString().padLeft(2, '0')}_${now.second.toString().padLeft(2, '0')}';
   }
 
   @override

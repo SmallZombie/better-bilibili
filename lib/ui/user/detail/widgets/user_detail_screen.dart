@@ -177,7 +177,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
                         postRepository: context.read(),
                         userId: widget.viewModel.userId,
                       ),
-                      builder: (context, _) => UserDetailPostView(viewModel: context.read()),
+                      builder: (context, _) => UserDetailPostView(
+                        viewModel: context.read(),
+                        eagleConfig: context.read(),
+                        eagleRepository: context.read(),
+                      ),
                     ),
                     ChangeNotifierProvider(
                       create: (context) => UserDetailVideoViewModel(

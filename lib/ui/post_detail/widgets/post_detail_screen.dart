@@ -1,4 +1,8 @@
+import 'package:better_bilibili/config/app_config.dart';
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_embed.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
@@ -21,8 +25,19 @@ import 'package:provider/provider.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final PostDetailViewModel viewModel;
+  final AppConfig appConfig;
+  final NetworkManager networkManager;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
 
-  const PostDetailScreen({super.key, required this.viewModel});
+  const PostDetailScreen({
+    super.key,
+    required this.viewModel,
+    required this.appConfig,
+    required this.networkManager,
+    required this.eagleConfig,
+    required this.eagleRepository,
+  });
 
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
@@ -414,7 +429,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             type: detail.commentType,
             id: detail.commentId,
           ),
-          builder: (context, _) => CommentPanel(viewModel: context.read()),
+          builder: (context, _) => CommentPanel(
+            viewModel: context.read(),
+            appConfig: widget.appConfig,
+            networkManager: widget.networkManager,
+            eagleConfig: widget.eagleConfig,
+            eagleRepository: widget.eagleRepository,
+          ),
         ),
       );
     }

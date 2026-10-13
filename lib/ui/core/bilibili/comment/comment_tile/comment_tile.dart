@@ -1,6 +1,9 @@
-import 'dart:ui';
+import 'dart:async';
 
 import 'package:better_bilibili/config/app_config.dart';
+import 'package:better_bilibili/config/constants.dart';
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/routing/routes.dart';
@@ -20,11 +23,17 @@ import 'package:better_bilibili/ui/core/share/mini_text_button.dart';
 import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/utils/base_util.dart';
+import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class CommentTile extends StatefulWidget {
+  final CommentTileViewModel viewModel;
+  final AppConfig appConfig;
+  final NetworkManager networkManager;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
   final ValueChanged<Comment> onReply;
   final ValueChanged<Comment> onDelete;
   final bool compact;
@@ -32,6 +41,11 @@ class CommentTile extends StatefulWidget {
 
   const CommentTile({
     super.key,
+    required this.viewModel,
+    required this.appConfig,
+    required this.networkManager,
+    required this.eagleConfig,
+    required this.eagleRepository,
     required this.onReply,
     required this.onDelete,
     this.compact = false,
@@ -43,9 +57,12 @@ class CommentTile extends StatefulWidget {
 }
 
 class _CommentTileState extends State<CommentTile> {
-  late final CommentTileViewModel _viewModel;
-  late final AppConfig _appConfig;
-  late final NetworkManager _networkManager;
+  CommentTileViewModel get viewModel => widget.viewModel;
+  AppConfig get appConfig => widget.appConfig;
+  NetworkManager get networkManager => widget.networkManager;
+  EagleConfig get eagleConfig => widget.eagleConfig;
+  EagleRepository get eagleRepository => widget.eagleRepository;
+  Comment get comment => widget.viewModel.comment;
 
   bool _isExpandedMoreReplies = false;
 
@@ -53,39 +70,35 @@ class _CommentTileState extends State<CommentTile> {
   void initState() {
     super.initState();
 
-    _viewModel = context.read();
-    _appConfig = context.read();
-    _networkManager = context.read();
-
-    _viewModel.like.addListener(_onResult);
-    _viewModel.dislike.addListener(_onResult);
+    viewModel.like.addListener(_onResult);
+    viewModel.dislike.addListener(_onResult);
   }
 
   @override
   void dispose() {
-    _viewModel.like.removeListener(_onResult);
-    _viewModel.dislike.removeListener(_onResult);
+    viewModel.like.removeListener(_onResult);
+    viewModel.dislike.removeListener(_onResult);
 
     super.dispose();
   }
 
   void _onResult() {
-    if (_viewModel.like.error) {
-      context.showError('赞失败: ${(_viewModel.like.result as Error).toString()}');
-      _viewModel.like.clearResult();
+    if (viewModel.like.error) {
+      context.showError('赞失败: ${(viewModel.like.result as Error).toString()}');
+      viewModel.like.clearResult();
     }
-    if (_viewModel.dislike.error) {
-      context.showError('踩失败: ${(_viewModel.dislike.result as Error).toString()}');
-      _viewModel.dislike.clearResult();
+    if (viewModel.dislike.error) {
+      context.showError('踩失败: ${(viewModel.dislike.result as Error).toString()}');
+      viewModel.dislike.clearResult();
     }
   }
 
   Future<void> _onLike() async {
-    _viewModel.like.execute();
+    unawaited(viewModel.like.execute());
   }
 
   Future<void> _onDislike() async {
-    _viewModel.dislike.execute();
+    unawaited(viewModel.dislike.execute());
   }
 
   void _onTapLink(String url) {
@@ -101,35 +114,72 @@ class _CommentTileState extends State<CommentTile> {
     context.push(Routes.buildUserDetail(userId));
   }
 
+  String _getSourceUrl() {
+    final useExternalLinks = eagleConfig.useExternalLinks.value;
+
+    switch (comment.type) {
+      case .video:
+        // https://www.bilibili.com/video/BV1i36kBjESA#reply290270007472
+        // https://www.bilibili.com/video/BV1i36kBjESA?comment_secondary_id=294166889552#reply294166889552
+        if (useExternalLinks) {
+          return 'https://www.bilibili.com/video/${av2bv(comment.contextId)}#reply${comment.id}';
+        } else {
+          return '$kAppDeepLinkScheme://video/${comment.contextId}?comment=${comment.id}';
+        }
+      case .article:
+        // https://www.bilibili.com/read/cv25817263#reply315549751057
+        // https://www.bilibili.com/read/cv25817263?comment_secondary_id=315753375793#reply315753375793
+        if (useExternalLinks) {
+          return 'https://www.bilibili.com/opus/${comment.contextId}#reply${comment.id}';
+        } else {
+          return '$kAppDeepLinkScheme://post/${comment.contextId}?comment=${comment.id}';
+        }
+      case _:
+        return '';
+    }
+  }
+
   void _onTapImage(int index) {
+    final images = viewModel.comment.content.images.map((v) {
+      return ImageViewerItem(
+        thumbUrl: _getThumbUrl(v.url),
+        url: v.url,
+        width: v.width,
+        height: v.height,
+      );
+    }).toList();
     context.openImageViewer(
-      _viewModel.comment.content.images.map((v) {
-        return ImageViewerItem(
-          thumbUrl: _getThumbUrl(v.url),
-          url: v.url,
-          width: v.width,
-          height: v.height,
-        );
-      }).toList(),
+      images,
       initialIndex: index,
       shouldUseOriginalQuality: (ImageViewerItem image) {
-        if (_appConfig.viewOriginalImage.value == .always) {
+        if (appConfig.viewOriginalImage.value == .always) {
           return true;
         }
-        if (_appConfig.viewOriginalImage.value == .never) {
+        if (appConfig.viewOriginalImage.value == .never) {
           return false;
         }
-        if (_appConfig.viewOriginalImage.value == .auto) {
+        if (appConfig.viewOriginalImage.value == .auto) {
           if (image.width / 2 > _thumbWidth || image.height / 2 > _thumbHeight) {
             return true;
           }
           return false;
         }
-        if (_appConfig.viewOriginalImage.value == .wifiOnly) {
-          return !_networkManager.isMobileNetwork();
+        if (appConfig.viewOriginalImage.value == .wifiOnly) {
+          return !networkManager.isMobileNetwork();
         }
 
         return false;
+      },
+      actionsBuilder: (context, image, index, images) {
+        if (!eagleConfig.enable.value) return [];
+
+        return eagleRepository.imageViewerActionsBuilder(
+          context: context,
+          image: image,
+          index: index,
+          images: images,
+          sourceUrl: _getSourceUrl(),
+        );
       },
     );
   }
@@ -144,7 +194,7 @@ class _CommentTileState extends State<CommentTile> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final comment = _viewModel.comment;
+    final comment = viewModel.comment;
     final compact = widget.compact;
 
     return Padding(
@@ -301,10 +351,10 @@ class _CommentTileState extends State<CommentTile> {
                       children: [
                         // 赞
                         ListenableBuilder(
-                          listenable: Listenable.merge([_viewModel.like, _viewModel.dislike]),
+                          listenable: Listenable.merge([viewModel.like, viewModel.dislike]),
                           builder: (context, child) {
-                            final isLiked = _viewModel.comment.isLiked;
-                            final likeCount = _viewModel.comment.likeCount;
+                            final isLiked = viewModel.comment.isLiked;
+                            final likeCount = viewModel.comment.likeCount;
 
                             return MiniTextButton(
                               onTap: _onLike,
@@ -333,9 +383,9 @@ class _CommentTileState extends State<CommentTile> {
 
                         // 踩
                         ListenableBuilder(
-                          listenable: Listenable.merge([_viewModel.like, _viewModel.dislike]),
+                          listenable: Listenable.merge([viewModel.like, viewModel.dislike]),
                           builder: (context, child) {
-                            final isDisliked = _viewModel.comment.isDisliked;
+                            final isDisliked = viewModel.comment.isDisliked;
                             return InkWell(
                               onTap: _onDislike,
                               borderRadius: BorderRadius.circular(4),
@@ -466,7 +516,7 @@ class _CommentTileState extends State<CommentTile> {
 
           // 回复
           ListenableBuilder(
-            listenable: _viewModel.getReplies,
+            listenable: viewModel.getReplies,
             builder: (context, child) => _buildReplies(),
           ),
         ],
@@ -476,7 +526,7 @@ class _CommentTileState extends State<CommentTile> {
 
   Widget _buildReplies() {
     final colorScheme = Theme.of(context).colorScheme;
-    final comment = _viewModel.comment;
+    final comment = viewModel.comment;
     final hasReplies = comment.replyCount > 0;
     final moreRepliesCount = comment.replyCount - comment.replies.length;
 
@@ -490,7 +540,12 @@ class _CommentTileState extends State<CommentTile> {
               (reply) => ChangeNotifierProvider(
                 key: ValueKey('reply-${comment.id}-${reply.id}'),
                 create: (context) => CommentTileViewModel(commentRepository: context.read(), comment: reply),
-                child: CommentTile(
+                builder: (context, child) => CommentTile(
+                  viewModel: context.read(),
+                  appConfig: appConfig,
+                  networkManager: networkManager,
+                  eagleConfig: eagleConfig,
+                  eagleRepository: eagleRepository,
                   onReply: widget.onReply,
                   onDelete: widget.onDelete,
                   compact: true,
@@ -498,7 +553,7 @@ class _CommentTileState extends State<CommentTile> {
                 ),
               ),
             ),
-          if (_viewModel.getReplies.running)
+          if (viewModel.getReplies.running)
             const Padding(
               padding: EdgeInsets.only(top: 4),
               child: SizedBox(
@@ -516,7 +571,7 @@ class _CommentTileState extends State<CommentTile> {
                       if (!_isExpandedMoreReplies) {
                         setState(() => _isExpandedMoreReplies = true);
                       }
-                      if (moreRepliesCount > 0) _viewModel.getReplies.execute();
+                      if (moreRepliesCount > 0) viewModel.getReplies.execute();
                     },
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
@@ -544,10 +599,10 @@ class _CommentTileState extends State<CommentTile> {
                 ],
               ],
             ),
-          if (_viewModel.getReplies.error)
+          if (viewModel.getReplies.error)
             CenterErrorMessage(
-              errorMessage: _viewModel.getReplies.result.toString(),
-              onRetry: _viewModel.getReplies.execute,
+              errorMessage: viewModel.getReplies.result.toString(),
+              onRetry: viewModel.getReplies.execute,
             ),
         ],
       ),

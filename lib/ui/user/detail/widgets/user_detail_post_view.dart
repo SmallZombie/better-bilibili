@@ -1,3 +1,5 @@
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
@@ -10,8 +12,15 @@ const _orderLabels = ['全部', '视频'];
 
 class UserDetailPostView extends StatefulWidget {
   final UserDetailPostViewModel viewModel;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
 
-  const UserDetailPostView({super.key, required this.viewModel});
+  const UserDetailPostView({
+    super.key,
+    required this.viewModel,
+    required this.eagleConfig,
+    required this.eagleRepository,
+  });
 
   @override
   State<UserDetailPostView> createState() => _UserDetailPostViewState();
@@ -60,7 +69,11 @@ class _UserDetailPostViewState extends State<UserDetailPostView> with AutomaticK
               child: Row(spacing: 8.0, children: chips),
             ),
           ),
-          _PostListSliver(viewModel: widget.viewModel),
+          _PostListSliver(
+            viewModel: widget.viewModel,
+            eagleConfig: widget.eagleConfig,
+            eagleRepository: widget.eagleRepository,
+          ),
         ],
       ),
     );
@@ -69,8 +82,14 @@ class _UserDetailPostViewState extends State<UserDetailPostView> with AutomaticK
 
 class _PostListSliver extends StatelessWidget {
   final UserDetailPostViewModel viewModel;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
 
-  const _PostListSliver({required this.viewModel});
+  const _PostListSliver({
+    required this.viewModel,
+    required this.eagleConfig,
+    required this.eagleRepository,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +138,11 @@ class _PostListSliver extends StatelessWidget {
                 ),
                 child: ChangeNotifierProvider(
                   create: (context) => PostFeedTileViewModel(post: post, postRepository: context.read()),
-                  builder: (context, _) => PostFeedTile(viewModel: context.read()),
+                  builder: (context, _) => PostFeedTile(
+                    viewModel: context.read(),
+                    eagleConfig: eagleConfig,
+                    eagleRepository: eagleRepository,
+                  ),
                 ),
               );
             },

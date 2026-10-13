@@ -201,7 +201,11 @@ final GoRouter router = GoRouter(
                   biliBackgroundService: context.read(),
                   authRepository: context.read(),
                 ),
-                builder: (context, _) => PostView(viewModel: context.read()),
+                builder: (context, _) => PostView(
+                  viewModel: context.read(),
+                  eagleConfig: context.read(),
+                  eagleRepository: context.read(),
+                ),
               ),
             ),
           ],
@@ -322,7 +326,13 @@ final GoRouter router = GoRouter(
           bsbsbRepository: context.read(),
           bsbsbConfig: context.read(),
         ),
-        builder: (context, child) => VideoDetailScreen(viewModel: context.read()),
+        builder: (context, child) => VideoDetailScreen(
+          viewModel: context.read(),
+          appConfig: context.read(),
+          networkManager: context.read(),
+          eagleConfig: context.read(),
+          eagleRepository: context.read(),
+        ),
       ),
     ),
     GoRoute(
@@ -507,7 +517,13 @@ final GoRouter router = GoRouter(
           postId: state.pathParameters['postId']!,
           initCover: state.uri.queryParameters['initCover'],
         ),
-        builder: (context, _) => PostDetailScreen(viewModel: context.read()),
+        builder: (context, _) => PostDetailScreen(
+          viewModel: context.read(),
+          appConfig: context.read(),
+          networkManager: context.read(),
+          eagleConfig: context.read(),
+          eagleRepository: context.read(),
+        ),
       ),
     ),
     GoRoute(
@@ -528,7 +544,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: Routes.eagleSettings,
-      builder: (context, state) => const EagleSettingsScreen(),
+      builder: (context, state) => EagleSettingsScreen(config: context.read()),
     ),
   ],
 );

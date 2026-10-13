@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
@@ -12,8 +14,15 @@ import 'package:provider/provider.dart';
 
 class PostView extends StatefulWidget {
   final PostViewModel viewModel;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
 
-  const PostView({super.key, required this.viewModel});
+  const PostView({
+    super.key,
+    required this.viewModel,
+    required this.eagleConfig,
+    required this.eagleRepository,
+  });
 
   @override
   State<PostView> createState() => _PostViewState();
@@ -163,7 +172,11 @@ class _PostViewState extends State<PostView> {
                             ),
                             child: ChangeNotifierProvider(
                               create: (context) => PostFeedTileViewModel(postRepository: context.read(), post: posts[index]),
-                              builder: (context, child) => PostFeedTile(viewModel: context.read()),
+                              builder: (context, child) => PostFeedTile(
+                                viewModel: context.read(),
+                                eagleConfig: widget.eagleConfig,
+                                eagleRepository: widget.eagleRepository,
+                              ),
                             ),
                           );
                         },

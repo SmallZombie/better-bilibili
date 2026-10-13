@@ -21,24 +21,32 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
 
   BsbsbRepositoryRemote({required this.config});
 
+  Dio? _client;
+
   @override
   Dio getClient() {
+    if (_client != null) {
+      return _client!;
+    }
+
     final baseUrlsStr = config.baseUrls.value;
     final baseUrls = baseUrlsStr.split(',');
 
-    final dio = Dio(
+    final client = Dio(
       BaseOptions(
         baseUrl: baseUrls.first,
         headers: {'origin': kAppId, 'x-ext-version': kAppVersion},
       ),
     );
-    dio.interceptors.add(FallbackBaseUrlInterceptor(dio: dio, baseUrls: baseUrls));
+    client.interceptors.add(FallbackBaseUrlInterceptor(dio: client, baseUrls: baseUrls));
 
     if (kDebugMode) {
-      dio.interceptors.add(debugLoggerInterceptor);
+      client.interceptors.add(debugLoggerInterceptor);
     }
 
-    return dio;
+    _client = client;
+
+    return client;
   }
 
   @override

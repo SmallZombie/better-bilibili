@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/uploaded_image.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
@@ -18,9 +20,23 @@ import 'package:provider/provider.dart';
 
 class PostFeedTile extends StatelessWidget {
   final PostFeedTileViewModel viewModel;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
   final bool compact;
 
-  const PostFeedTile({super.key, this.compact = false, required this.viewModel});
+  const PostFeedTile({
+    super.key,
+    required this.viewModel,
+    required this.eagleConfig,
+    required this.eagleRepository,
+    this.compact = false,
+  });
+
+  String getSourceUrl() {
+    return eagleConfig.useExternalLinks.value
+        ? 'https://www.bilibili.com/opus/${viewModel.post.id}'
+        : 'bilibili://post/${viewModel.post.id}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +65,14 @@ class PostFeedTile extends StatelessWidget {
     }
 
     if (vm.post.images.isNotEmpty) {
-      children.add(_ImageGroup(images: vm.post.images));
+      children.add(
+        _ImageGroup(
+          images: vm.post.images,
+          eagleConfig: eagleConfig,
+          eagleRepository: eagleRepository,
+          getSourceUrl: getSourceUrl,
+        ),
+      );
     }
 
     if (vm.post.hashTag != null) {
@@ -153,7 +176,12 @@ class PostFeedTile extends StatelessWidget {
             ),
             child: ChangeNotifierProvider(
               create: (context) => PostFeedTileViewModel(postRepository: context.read(), post: vm.post.quotedPost!),
-              builder: (context, _) => PostFeedTile(viewModel: context.read(), compact: true),
+              builder: (context, _) => PostFeedTile(
+                viewModel: context.read(),
+                eagleConfig: eagleConfig,
+                eagleRepository: eagleRepository,
+                compact: true,
+              ),
             ),
           ),
         ),
@@ -326,11 +354,19 @@ class PostFeedTile extends StatelessWidget {
 
 class _ImageGroup extends StatelessWidget {
   final List<UploadedImage> images;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
+  final String Function() getSourceUrl;
 
   static const _gap = 4.0;
   static const _suffix = '@600h'; // @406h
 
-  const _ImageGroup({required this.images});
+  const _ImageGroup({
+    required this.images,
+    required this.eagleConfig,
+    required this.eagleRepository,
+    required this.getSourceUrl,
+  });
 
   String _getThumbUrl(String url) {
     return '$url$_suffix';
@@ -340,6 +376,17 @@ class _ImageGroup extends StatelessWidget {
     context.openImageViewer(
       images.map((v) => ImageViewerItem(thumbUrl: _getThumbUrl(v.src), url: v.src, width: v.width, height: v.height)).toList(),
       initialIndex: index,
+      actionsBuilder: (context, image, index, images) {
+        if (!eagleConfig.enable.value) return [];
+
+        return eagleRepository.imageViewerActionsBuilder(
+          context: context,
+          image: image,
+          index: index,
+          images: images,
+          sourceUrl: getSourceUrl(),
+        );
+      },
     );
   }
 

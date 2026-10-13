@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:better_bilibili/config/app_config.dart';
+import 'package:better_bilibili/config/eagle_config.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_panel/comment_panel_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_tile/comment_tile.dart';
@@ -17,11 +21,20 @@ import 'package:provider/provider.dart';
 
 class CommentPanel extends StatefulWidget {
   final CommentPanelViewModel viewModel;
+  final AppConfig appConfig;
+  final NetworkManager networkManager;
+  final EagleConfig eagleConfig;
+  final EagleRepository eagleRepository;
+
   final Function(int episodeIndex, Duration time)? onTapTime;
 
   const CommentPanel({
     super.key,
     required this.viewModel,
+    required this.appConfig,
+    required this.networkManager,
+    required this.eagleConfig,
+    required this.eagleRepository,
     this.onTapTime,
   });
 
@@ -127,7 +140,12 @@ class _CommentPanelState extends State<CommentPanel> with AutomaticKeepAliveClie
                     return ChangeNotifierProvider(
                       key: ValueKey('${comment.id}-${comment.replyCount}'),
                       create: (context) => CommentTileViewModel(commentRepository: context.read(), comment: comment),
-                      child: CommentTile(
+                      builder: (context, child) => CommentTile(
+                        viewModel: context.read(),
+                        appConfig: widget.appConfig,
+                        networkManager: widget.networkManager,
+                        eagleConfig: widget.eagleConfig,
+                        eagleRepository: widget.eagleRepository,
                         onReply: (target) => _onReply(target),
                         onDelete: _onDelete,
                         onTapTime: widget.onTapTime,

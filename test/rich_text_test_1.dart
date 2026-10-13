@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
@@ -97,32 +98,32 @@ class _RichTextTest1State extends State<RichTextTest1> {
                       CommentInnerLink(
                         rawText: 'BV1Zs411D7vo',
                         title: '【星尘V4官方试听曲】星愿StarWish',
-                        url: 'bilibili://video/BV1Zs411D7vo',
+                        url: '$kAppDeepLinkScheme://video/BV1Zs411D7vo',
                       ),
                       CommentInnerLink(
                         rawText: 'BV1Zx411G7G9',
                         title: '赛尔号“永远的神”，圣光联军的指引者——谱尼剧情解说',
-                        url: 'bilibili://video/BV1Zx411G7G9',
+                        url: '$kAppDeepLinkScheme://video/BV1Zx411G7G9',
                       ),
                       CommentInnerLink(
                         rawText: 'BV1ab411v7B1',
                         title: '【赛尔号剧情解说】跨越十年的决战：2018.6-2019.3全主线剧情回顾',
-                        url: 'bilibili://video/BV1ab411v7B1',
+                        url: '$kAppDeepLinkScheme://video/BV1ab411v7B1',
                       ),
                       CommentInnerLink(
                         rawText: 'BV1hk4y117kk',
                         title: '【Minus丨官方试听曲】零和Zero-Sum【SynthV side】',
-                        url: 'bilibili://video/BV1hk4y117kk',
+                        url: '$kAppDeepLinkScheme://video/BV1hk4y117kk',
                       ),
                       CommentInnerLink(
                         rawText: 'BV1nW41167pC',
                         title: '混沌教派的主宰，《赛尔号》顶级反派——索伦森',
-                        url: 'bilibili://video/BV1nW41167pC',
+                        url: '$kAppDeepLinkScheme://video/BV1nW41167pC',
                       ),
                       CommentInnerLink(
                         rawText: 'av24368882',
                         title: '【赛尔号剧情解说】尚未完结的故事：2009.6-2018.6全主线剧情回顾',
-                        url: 'bilibili://video/av24368882',
+                        url: '$kAppDeepLinkScheme://video/av24368882',
                       ),
                     ],
                   ),

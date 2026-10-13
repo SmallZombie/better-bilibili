@@ -20,6 +20,8 @@ import 'package:better_bilibili/data/repositories/bilibili/video_repository/vide
 import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository_login.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository_remote.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
+import 'package:better_bilibili/data/repositories/eagle/eagle_repository_remote.dart';
 import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/data/services/storage_service.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
@@ -80,6 +82,9 @@ List<SingleChildWidget> get providersOnline => [
   ),
   Provider(
     create: (context) => BsbsbRepositoryRemote(config: context.read()) as BsbsbRepository,
+  ),
+  Provider(
+    create: (context) => EagleRepositoryRemote(config: context.read()) as EagleRepository,
   ),
 
   ChangeNotifierProvider(
