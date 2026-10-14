@@ -87,16 +87,16 @@ class _BsbsbLayerState extends State<BsbsbLayer> {
   Color _getSegmentColor(SegmentCategoryEnum category) {
     return HexColor(switch (category) {
       .sponsor => controller.config.sponsorColor.value,
-      .selfpromo => controller.config.sponsorColor.value,
-      .exclusiveAccess => controller.config.sponsorColor.value,
-      .interaction => controller.config.sponsorColor.value,
-      .pointsOfInterest => controller.config.sponsorColor.value,
-      .intro => controller.config.sponsorColor.value,
-      .outro => controller.config.sponsorColor.value,
-      .preview => controller.config.sponsorColor.value,
-      .padding => controller.config.sponsorColor.value,
-      .filler => controller.config.sponsorColor.value,
-      .musicOfftopic => controller.config.sponsorColor.value,
+      .selfpromo => controller.config.selfpromoColor.value,
+      .exclusiveAccess => throw Exception('Unreachable branch'),
+      .interaction => controller.config.interactionColor.value,
+      .pointsOfInterest => controller.config.pointsOfInterestColor.value,
+      .intro => controller.config.introColor.value,
+      .outro => controller.config.outroColor.value,
+      .preview => controller.config.previewColor.value,
+      .padding => controller.config.paddingColor.value,
+      .filler => controller.config.fillerColor.value,
+      .musicOfftopic => controller.config.musicOfftopicColor.value,
     });
   }
 
@@ -130,9 +130,11 @@ class _BsbsbLayerState extends State<BsbsbLayer> {
           name: name,
           color: _getSegmentColor(i.category),
           onPreEnter:
-              (option == .askOnlyStart ? () => _ask('跳至$name开头?', i.start) : null) ??
-              (option == .askOnlyEnd ? () => _ask('跳至$name末尾?', i.end) : null),
-          onEnter: (option == .skipToStart ? () => _seek(i.start) : null) ?? (option == .skipToEnd ? () => _seek(i.end) : null),
+              (option == .askOnlyStart ? () => _ask('跳转至$name?', i.start) : null) ??
+              (option == .askOnlyEnd ? () => _ask('跳过$name?', i.end) : null),
+          onEnter:
+              (option == .skipToStart ? () => _seek('已跳至$name', i.start) : null) ??
+              (option == .skipToEnd ? () => _seek('已跳过$name', i.end) : null),
         ),
       );
     }
@@ -153,8 +155,21 @@ class _BsbsbLayerState extends State<BsbsbLayer> {
     );
   }
 
-  void _seek(Duration position) {
+  void _seek(String message, Duration position) {
+    final positionBak = widget.videoController.state.position;
     widget.videoController.seek(position);
+
+    widget.noticeController.show(
+      Notice(
+        content: Text(message),
+        duration: const Duration(seconds: 6),
+        action: '撤销',
+        onTap: (self) {
+          widget.noticeController.dismiss(self);
+          widget.videoController.seek(positionBak);
+        },
+      ),
+    );
   }
 
   @override

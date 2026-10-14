@@ -4,6 +4,8 @@ import 'package:better_bilibili/ui/article_detail/article_detail_screen.dart';
 import 'package:better_bilibili/ui/article_detail/article_detail_view_model.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/ui/auth/login/widgets/login_screen.dart';
+import 'package:better_bilibili/ui/bsbsb/leaderboard/leaderboard_screen.dart';
+import 'package:better_bilibili/ui/bsbsb/leaderboard/leaderboard_view_model.dart';
 import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_screen.dart';
 import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_view_model.dart';
 import 'package:better_bilibili/ui/chat/chat_shell.dart';
@@ -540,6 +542,13 @@ final GoRouter router = GoRouter(
         builder: (context, _) => BsbsbSettingsScreen(
           viewModel: context.read(),
         ),
+      ),
+    ),
+    GoRoute(
+      path: Routes.bsbsbLeaderboard,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => LeaderboardViewModel(bsbsbRepository: context.read()),
+        builder: (context, _) => LeaderboardScreen(viewModel: context.read()),
       ),
     ),
     GoRoute(

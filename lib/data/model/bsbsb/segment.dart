@@ -24,14 +24,19 @@ class Segment {
   });
 
   factory Segment.fromJson(Map<String, dynamic> json) {
+    // 返回的是 double 秒
+    final start = Duration(milliseconds: (json['segment'][0] * 1000).toInt());
+    Duration end = Duration(milliseconds: (json['segment'][1] * 1000).toInt());
+    // 为关注点这类首尾相同的标记加一点结束时间，否则不方便之后在进度条上显示
+    if (start == end) end += const Duration(seconds: 1);
+
     return Segment(
       id: json['UUID'] as String,
       episodeId: json['cid'] as String,
       category: SegmentCategoryEnum.fromString(json['category'] as String),
       actionType: json['actionType'] as String,
-      // 返回的是 double 秒
-      start: Duration(milliseconds: (json['segment'][0] * 1000).toInt()),
-      end: Duration(milliseconds: (json['segment'][1] * 1000).toInt()),
+      start: start,
+      end: end,
       videoDuration: Duration(milliseconds: (json['videoDuration'] * 1000).toInt()),
       locked: json['locked'] == 1,
       votes: json['votes'] as int,

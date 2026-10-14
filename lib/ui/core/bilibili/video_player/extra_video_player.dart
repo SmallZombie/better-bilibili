@@ -385,7 +385,7 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
         if (controller.state.rate >= 3.0) {
           return;
         }
-        _longPressSpeedUpTimer = Timer(const Duration(milliseconds: 500), () {
+        _longPressSpeedUpTimer = Timer(const Duration(milliseconds: 300), () {
           if (_currentPressedKey != .arrowRight) {
             return;
           }
@@ -405,12 +405,15 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
     _log.i('onKeyEvent KeyUpEvent: $event');
 
     _currentPressedKey = null;
+    _longPressSpeedUpTimer?.cancel();
 
     switch (event.logicalKey) {
       case .arrowRight:
         if (_restoreRate != null) {
           controller.setPlaybackRate(_restoreRate!);
           _restoreRate = null;
+        } else {
+          controller.seek(controller.state.position + const Duration(seconds: 5));
         }
     }
   }

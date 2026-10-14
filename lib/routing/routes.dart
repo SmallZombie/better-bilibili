@@ -52,6 +52,7 @@ abstract final class Routes {
   static const echoCave = '/echo_cave';
 
   static const bsbsbSettings = '/extension/bsbsb/settings';
+  static const bsbsbLeaderboard = '/extension/bsbsb/leaderboard';
 
   static const eagleSettings = '/extension/eagle/settings';
 

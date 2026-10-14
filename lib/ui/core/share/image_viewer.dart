@@ -1,7 +1,12 @@
 import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
+import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:pasteboard/pasteboard.dart';
 
 extension ImageViewer on BuildContext {
   /// [shouldUseOriginalQuality] 每次导航到新图片时被调用，
@@ -125,6 +130,26 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
     pageIndex = initialIndex;
 
     _defaultActions = [
+      ImageViewerAction(
+        name: '复制',
+        icon: Icons.copy,
+        onTap: () async {
+          final client = Dio();
+          try {
+            final resp = await client.get(images[pageIndex].url, options: Options(responseType: .bytes));
+            if (!mounted) return;
+
+            await Pasteboard.writeImage(Uint8List.fromList(resp.data as List<int>));
+            if (!mounted) return;
+
+            context.showInfo('已复制');
+          } on DioException catch (e) {
+            context.showError('复制失败: ${e.response?.statusCode ?? '?'}: ${e.message}');
+          } finally {
+            client.close();
+          }
+        },
+      ),
       ImageViewerAction(
         name: '保存到本地',
         icon: Icons.download,
@@ -260,6 +285,7 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
                     useHighQuality: _originalImageSet.contains(i),
                     controller: controller,
                     onClose: close,
+                    onSecondaryTap: _showMoreOptionsSheet,
                   ),
               ],
             ),
@@ -377,12 +403,14 @@ class _ImagePage extends StatefulWidget {
   final bool useHighQuality;
   final AnimationController controller;
   final VoidCallback onClose;
+  final VoidCallback onSecondaryTap;
 
   const _ImagePage({
     required this.image,
     required this.useHighQuality,
     required this.controller,
     required this.onClose,
+    required this.onSecondaryTap,
   });
 
   @override
@@ -461,6 +489,7 @@ class _ImagePageState extends State<_ImagePage> {
   final double _dragCloseDistance = 240.0;
 
   void _onPointerDown(PointerDownEvent event) {
+    if ((event.buttons & kSecondaryButton) != 0) return;
     if (_isZoomed) return;
 
     controller.stop();
@@ -472,7 +501,7 @@ class _ImagePageState extends State<_ImagePage> {
   }
 
   void _onPointerMove(PointerMoveEvent event) {
-    if (_isZoomed) return;
+    if (_isZoomed || !_dragging) return;
 
     setState(() {
       _dragOffset = _dragOffset += event.delta;
@@ -483,7 +512,7 @@ class _ImagePageState extends State<_ImagePage> {
   }
 
   void _onPointerUp(PointerUpEvent event) {
-    if (_isZoomed) return;
+    if (_isZoomed || !_dragging) return;
 
     if (_dragOffset.distance > _dragCloseDistance) {
       widget.onClose();
@@ -502,37 +531,41 @@ class _ImagePageState extends State<_ImagePage> {
       onPointerDown: _onPointerDown,
       onPointerMove: _onPointerMove,
       onPointerUp: _onPointerUp,
-      child: TweenAnimationBuilder<Offset>(
-        tween: Tween(
-          begin: _dragging ? .zero : _dragOffset,
-          end: _dragging ? _dragOffset : .zero,
-        ),
-        duration: _dragging ? .zero : const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        builder: (context, value, child) {
-          return Transform.translate(offset: value, child: child);
-        },
-        child: InteractiveViewer(
-          transformationController: transformationController,
-          minScale: 1.0,
-          maxScale: 5.0,
-          child: Center(
-            child: Hero(
-              tag: image.thumbUrl,
-              createRectTween: (begin, end) => _CurvedRectTween(
-                begin: begin,
-                end: end,
-                curve: Curves.easeOutCubic,
-              ),
-              child: Stack(
-                alignment: .center,
-                children: [
-                  ImageWapper(
-                    image: NetworkImage(_showHighQuality ? image.url : image.thumbUrl),
-                    fit: .contain,
-                  ),
-                  if (!_showHighQuality && useHighQuality) CircularProgressIndicator(),
-                ],
+      child: GestureDetector(
+        behavior: .translucent,
+        onSecondaryTap: widget.onSecondaryTap,
+        child: TweenAnimationBuilder<Offset>(
+          tween: Tween(
+            begin: _dragging ? .zero : _dragOffset,
+            end: _dragging ? _dragOffset : .zero,
+          ),
+          duration: _dragging ? .zero : const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          builder: (context, value, child) {
+            return Transform.translate(offset: value, child: child);
+          },
+          child: InteractiveViewer(
+            transformationController: transformationController,
+            minScale: 1.0,
+            maxScale: 5.0,
+            child: Center(
+              child: Hero(
+                tag: image.thumbUrl,
+                createRectTween: (begin, end) => _CurvedRectTween(
+                  begin: begin,
+                  end: end,
+                  curve: Curves.easeOutCubic,
+                ),
+                child: Stack(
+                  alignment: .center,
+                  children: [
+                    ImageWapper(
+                      image: NetworkImage(_showHighQuality ? image.url : image.thumbUrl),
+                      fit: .contain,
+                    ),
+                    if (!_showHighQuality && useHighQuality) CircularProgressIndicator(),
+                  ],
+                ),
               ),
             ),
           ),

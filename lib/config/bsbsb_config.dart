@@ -96,7 +96,11 @@ class BsbsbConfig {
   late final baseUrls = ConfigItem(
     box: box,
     key: 'baseUrl',
-    defaultValue: ['https://www.bsbsb.xyz/api', 'http://103.236.70.57:9876/api'].join(','),
+    defaultValue: [
+      'https://www.bsbsb.top/api',
+      'https://www.bsbsb.xyz/api',
+      'http://103.236.70.57:9876/api',
+    ].join(','),
   );
 }
 

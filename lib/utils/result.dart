@@ -50,3 +50,9 @@ final class Error<T> extends Result<T> {
   @override
   String toString() => 'Result<$T>.error($error)';
 }
+
+String getErrorFromResult(Result result) {
+  assert(result is Error);
+
+  return (result as Error).toString();
+}

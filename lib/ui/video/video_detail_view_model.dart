@@ -150,7 +150,10 @@ class VideoDetailViewModel extends SafeChangeNotifier {
       );
     }
 
-    if (result.video.collection != null && result.video.collection?.id != collectionController?.collection.id) {
+    if (result.video.collection == null) {
+      collectionController?.dispose();
+      collectionController = null;
+    } else if (result.video.collection?.id != collectionController?.collection.id) {
       collectionController?.dispose();
       collectionController = BiliCollectionController(
         collection: result.video.collection!,
@@ -159,9 +162,6 @@ class VideoDetailViewModel extends SafeChangeNotifier {
           switchVideo(event.id, event.episodeId, event.cover);
         },
       );
-    } else {
-      collectionController?.dispose();
-      collectionController = null;
     }
 
     if (result.recommendVideos.isNotEmpty) {

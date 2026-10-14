@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:better_bilibili/config/account_config.dart';
 import 'package:better_bilibili/data/interceptors/base_rate_limiter_intercrptor.dart';
-import 'package:better_bilibili/data/interceptors/bili_app_auth_interceptor.dart';
-import 'package:better_bilibili/data/interceptors/bili_web_auth_interceptor.dart';
+import 'package:better_bilibili/data/interceptors/bilibili/bili_app_auth_interceptor.dart';
+import 'package:better_bilibili/data/interceptors/bilibili/bili_web_auth_interceptor.dart';
 import 'package:better_bilibili/data/interceptors/debug_logger_interceptor.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_auth_web_api_service.dart';

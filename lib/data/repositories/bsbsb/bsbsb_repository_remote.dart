@@ -1,15 +1,20 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/config/constants.dart';
+import 'package:better_bilibili/data/interceptors/base_rate_limiter_intercrptor.dart';
 import 'package:better_bilibili/data/interceptors/debug_logger_interceptor.dart';
-import 'package:better_bilibili/data/interceptors/fallback_base_url_interceptor.dart';
+import 'package:better_bilibili/data/interceptors/base_url_fallback_interceptor.dart';
+import 'package:better_bilibili/data/model/bsbsb/leaderboard_entry.dart';
 import 'package:better_bilibili/data/model/bsbsb/segment.dart';
 import 'package:better_bilibili/data/model/bsbsb/user_info.dart';
 import 'package:better_bilibili/data/model/bsbsb/video.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/data/services/bsbsb/bsbsb_api_service.dart';
+import 'package:better_bilibili/data/services/bsbsb/model/get_leaderboard_request.dart';
 import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/duration_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -17,9 +22,25 @@ import 'package:flutter/foundation.dart';
 
 class BsbsbRepositoryRemote implements BsbsbRepository {
   final BsbsbConfig config;
-  late final BsbsbApiService bsbsbApiService = BsbsbApiService(getClient: getClient);
+  late final BsbsbApiService bsbsbApiService = BsbsbApiService(
+    getClient: getClient,
+    getPrivateId: getPrivateId,
+  );
 
-  BsbsbRepositoryRemote({required this.config});
+  late final StreamSubscription _subscription;
+
+  BsbsbRepositoryRemote({required this.config}) {
+    _subscription = config.baseUrls.stream.listen((_) => _disposeClient());
+  }
+
+  void dispose() {
+    _subscription.cancel();
+  }
+
+  void _disposeClient() {
+    _client?.close();
+    _client = null;
+  }
 
   Dio? _client;
 
@@ -29,16 +50,15 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
       return _client!;
     }
 
-    final baseUrlsStr = config.baseUrls.value;
-    final baseUrls = baseUrlsStr.split(',');
+    final baseUrls = config.baseUrls.value.split(',');
 
     final client = Dio(
       BaseOptions(
-        baseUrl: baseUrls.first,
         headers: {'origin': kAppId, 'x-ext-version': kAppVersion},
       ),
     );
-    client.interceptors.add(FallbackBaseUrlInterceptor(dio: client, baseUrls: baseUrls));
+    client.interceptors.add(BaseUrlFallbackInterceptor(dio: client, baseUrls: baseUrls));
+    client.interceptors.add(BaseRateLimiterInterceptor());
 
     if (kDebugMode) {
       client.interceptors.add(debugLoggerInterceptor);
@@ -47,6 +67,11 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
     _client = client;
 
     return client;
+  }
+
+  @override
+  Future<String> getPrivateId() {
+    return config.privateId.get();
   }
 
   @override
@@ -82,5 +107,31 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
       segmentsMap[segment.episodeId] = list;
     }
     return Result.ok(segmentsMap);
+  }
+
+  @override
+  Future<Result<void>> modifyUsername(String username) {
+    return bsbsbApiService.modifyUsername(username);
+  }
+
+  @override
+  Future<Result<List<LeaderboardEntry>>> getLeaderboard({
+    GetLeaderboardOrderEnum order = .submitCount,
+    GetLeaderboardTypeEnum type = .all,
+    int ps = 20,
+  }) {
+    return bsbsbApiService.getLeaderboard(order: order, type: type, ps: ps);
+  }
+
+  @override
+  Future<Result<int>> getMyLeaderboardRank(String username, Duration saveTime) async {
+    final result = await bsbsbApiService.getLeaderboard();
+    switch (result) {
+      case Ok(:final value):
+        final index = value.indexWhere((v) => v.username == username && v.saveTime.isCloseTo(saveTime));
+        return Result.ok(index);
+      case Error(:final error):
+        return Result.error(error);
+    }
   }
 }

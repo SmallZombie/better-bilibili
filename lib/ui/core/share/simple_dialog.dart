@@ -6,6 +6,7 @@ extension SimpleDialog on BuildContext {
     required String title,
     required String content,
     Color? confirmColor,
+    String? confirmText,
     bool canDismissible = false,
   }) async {
     final choice = await showDialog<bool>(
@@ -14,14 +15,17 @@ extension SimpleDialog on BuildContext {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(title),
-          content: Text(content),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Text(content),
+          ),
           actions: [
             TextButton(
               child: const Text('取消'),
               onPressed: () => context.pop(false),
             ),
             TextButton(
-              child: Text('确定', style: TextStyle(color: confirmColor)),
+              child: Text(confirmText ?? '确定', style: TextStyle(color: confirmColor)),
               onPressed: () => context.pop(true),
             ),
           ],
