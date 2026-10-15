@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
@@ -11,10 +12,12 @@ import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/l10n/generated/app_localizations.dart';
 import 'package:better_bilibili/routing/router.dart';
-import 'package:better_bilibili/routing/scheme_parser.dart';
+import 'package:better_bilibili/routing/deep_link_handler.dart';
+import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/app/app_title_bar.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/appearance/appearance_manager.dart';
+import 'package:better_bilibili/ui/core/share/router_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
@@ -64,6 +67,7 @@ void main() async {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
       size: Size(1635, 920),
+      minimumSize: Size(kMinWindowWidth, kMinWindowHeight),
       center: true,
       titleBarStyle: .hidden,
       windowButtonVisibility: false,
@@ -117,17 +121,28 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  @override
-  void initState() {
-    super.initState();
+  late final StreamSubscription _subscription;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final appLinks = AppLinks();
-      appLinks.uriLinkStream.listen((uri) {
-        debugPrint('appLinks: $uri');
-        router.push(schemeParser(uri.toString()));
-      });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final appLinks = AppLinks();
+    _subscription = appLinks.uriLinkStream.listen((uri) {
+      if (!mounted) return;
+      debugPrint('appLinks: $uri');
+
+      final cleanUri = deepLinkHandler(uri.toString());
+      if (cleanUri == Routes.home) context.popToRoot();
+      router.push(cleanUri);
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+
+    super.dispose();
   }
 
   @override
