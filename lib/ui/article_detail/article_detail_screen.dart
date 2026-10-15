@@ -15,18 +15,27 @@ class ArticleDetailScreen extends StatefulWidget {
 }
 
 class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
+  ArticleDetailViewModel get viewModel => widget.viewModel;
+
   @override
   void initState() {
     super.initState();
 
-    widget.viewModel.loadData.addListener(_onResult);
+    viewModel.loadData.addListener(_onResult);
+  }
+
+  @override
+  void dispose() {
+    viewModel.loadData.removeListener(_onResult);
+
+    super.dispose();
   }
 
   void _onResult() {
-    if (widget.viewModel.loadData.completed) {
+    if (viewModel.loadData.completed) {
       context.replace(
         Routes.buildPostDetail(
-          widget.viewModel.articleDetail!.postId,
+          viewModel.articleDetail!.postId,
           initCover: widget.cover,
         ),
       );
@@ -35,21 +44,21 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget body;
     if (widget.cover == null) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
+      body = const Center(child: CircularProgressIndicator());
     } else {
-      return Scaffold(
-        appBar: AppBar(),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: BiliImageWapper(
-            height: 400.0,
-            url: widget.cover!,
-            aspectRatio: 16 / 9,
-            borderRadius: BorderRadius.circular(16.0),
-          ),
+      body = Padding(
+        padding: const .all(16.0),
+        child: BiliImageWapper(
+          height: 400.0,
+          url: widget.cover!,
+          aspectRatio: 16 / 9,
+          borderRadius: .circular(16.0),
         ),
       );
     }
+
+    return Scaffold(appBar: AppBar(), body: body);
   }
 }

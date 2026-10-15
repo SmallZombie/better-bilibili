@@ -38,8 +38,6 @@ class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderSt
       controller.onTick(delta);
     });
 
-    _lastPlaying = !videoController.state.playing;
-
     subscriptions.addAll([
       videoController.stream.position.listen((position) {
         if (!mounted) return;
@@ -73,12 +71,12 @@ class _DanmakuLayerState extends State<DanmakuLayer> with SingleTickerProviderSt
 
     if (playing) {
       if (!_renderTicker.isActive) {
-        _lastTick = Duration.zero;
+        _lastTick = .zero;
         _renderTicker.start();
       }
     } else if (_renderTicker.isActive) {
       _renderTicker.stop();
-      _lastTick = Duration.zero;
+      _lastTick = .zero;
     }
   }
 

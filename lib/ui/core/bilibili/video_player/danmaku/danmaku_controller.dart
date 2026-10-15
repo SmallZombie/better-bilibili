@@ -205,6 +205,7 @@ class DanmakuController extends SafeChangeNotifier {
 
   void onVideoPositionChanged(Duration newPosition, {bool notify = true}) {
     _currentPosition = newPosition;
+    debugPrint('_state.viewPortSize=${_state.viewPortSize}');
     if (_state.viewPortSize == Size.zero) return;
 
     final time = newPosition.inMilliseconds;
