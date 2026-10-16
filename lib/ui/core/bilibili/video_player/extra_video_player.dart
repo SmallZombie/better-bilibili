@@ -380,7 +380,8 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
       case .space:
         controller.playOrPause();
       case .arrowLeft:
-        controller.seek(controller.state.position - const Duration(seconds: 5));
+        final position = controller.state.position - const Duration(seconds: 5);
+        controller.seek(position.isNegative ? .zero : position);
       case .arrowRight:
         if (controller.state.rate >= 3.0) {
           return;
@@ -413,7 +414,8 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
           controller.setPlaybackRate(_restoreRate!);
           _restoreRate = null;
         } else {
-          controller.seek(controller.state.position + const Duration(seconds: 5));
+          final position = controller.state.position + const Duration(seconds: 5);
+          controller.seek(position > controller.state.duration ? controller.state.duration : position);
         }
     }
   }

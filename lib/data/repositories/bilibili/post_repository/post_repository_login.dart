@@ -16,8 +16,8 @@ class PostRepositoryLogin implements PostRepository {
   PostRepositoryLogin({required this.authRepository});
 
   @override
-  Future<Result<dynamic>> getDetail({required String postId}) {
-    return postApiService.getDetail(postId: postId);
+  Future<Result<dynamic>> getDetail( String postId) {
+    return postApiService.getDetail(postId);
   }
 
   @override

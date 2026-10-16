@@ -29,7 +29,9 @@ abstract interface class CommentRepository {
     required BiliContentTypeEnum type,
   });
 
-  Future<Result<List<StickerPack>>> getStickerList({String webLocation = WebLocation.videoDetail});
+  Future<Result<List<StickerPack>>> getStickerList({
+    String webLocation = WebLocation.videoDetail,
+  });
 
   Future<Result<void>> delete({
     required String contextId,
@@ -59,7 +61,10 @@ abstract interface class CommentRepository {
     int ps = 10,
   });
 
-  Future<Result<List<ReportReasonItem>>> getReportReasons(BiliContentTypeEnum contentType, String contentId);
+  Future<Result<List<ReportReasonItem>>> getReportReasons({
+    required BiliContentTypeEnum contentType,
+    required String contentId,
+  });
 
   Future<Result<void>> report({
     required BiliContentTypeEnum contentType,

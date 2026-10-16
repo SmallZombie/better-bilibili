@@ -56,7 +56,7 @@ class SearchRepositoryLogin implements SearchRepository {
   }
 
   @override
-  Future<Result<List<String>>> getSuggestList({required String keyword}) {
-    return searchApiService.getSuggestList(keyword: keyword);
+  Future<Result<List<String>>> getSuggestList( String keyword) {
+    return searchApiService.getSuggestList(keyword);
   }
 }

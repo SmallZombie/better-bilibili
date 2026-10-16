@@ -1,5 +1,6 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_trending_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/search_response.dart';
+import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -10,6 +11,29 @@ class BiliSearchWebApiService {
   Future<Account> Function() getAccount;
 
   BiliSearchWebApiService({required this.getClient, required this.getAccount});
+
+  void _checkResponse(Response resp) {
+    if (resp.data['code'] != 0) {
+      throw BiliHttpException(resp.data['code'], resp.data['message']);
+    }
+  }
+
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
 
   /// 获取综合搜索结果，但不支持更多筛选条件，需要更多筛选条件请使用 [getSearchResultWithFilter]
   ///
@@ -27,105 +51,107 @@ class BiliSearchWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/wbi/search/all/v2',
-      options: Options(
-        headers: {
-          'Referer':
-              'https://search.bilibili.com/all?vt=45903040&keyword=${Uri.encodeComponent(keyword)}&from_source=webtop_search&spm_id_from=333.1007&search_source=5',
-        },
-      ),
-      queryParameters: buildWbiParams(
-        {
-          '__refresh__': true,
-          '_extra': '',
-          'context': '',
-          'page': pn,
-          'page_size': ps,
-          'order': '',
-          'pubtime_begin_s': '',
-          'pubtime_end_s': '',
-          'duration': '',
-          'from_source': '',
-          'from_spmid': '333.337',
-          'platform': 'pc',
-          // 此参数无作用，不传或无论传什么都会返回高亮的结果
-          'highlight': 1,
-          'single_column': 0,
-          'keyword': keyword,
-          'qv_id': generateQvId(),
-          'ad_resource': 5646,
-          'source_tag': 3,
-          'web_roll_page': 1,
-          'web_location': WebLocation.search,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/wbi/search/all/v2',
+        options: Options(
+          headers: {
+            'Referer':
+                'https://search.bilibili.com/all?keyword=${Uri.encodeComponent(keyword)}&from_source=webtop_search&spm_id_from=333.1007&search_source=5',
+          },
+        ),
+        queryParameters: buildWbiParams(
+          {
+            '__refresh__': true,
+            '_extra': '',
+            'context': '',
+            'page': pn,
+            'page_size': ps,
+            'order': '',
+            'pubtime_begin_s': '',
+            'pubtime_end_s': '',
+            'duration': '',
+            'from_source': '',
+            'from_spmid': '333.337',
+            'platform': 'pc',
+            // 此参数无作用，不传或无论传什么都会返回高亮的结果
+            'highlight': 1,
+            'single_column': 0,
+            'keyword': keyword,
+            'qv_id': generateQvId(),
+            'ad_resource': 5646,
+            'source_tag': 3,
+            'web_roll_page': 1,
+            'web_location': WebLocation.search,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+      _checkResponse(resp);
 
-    final List<dynamic> list = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'video')['data']) {
-      // 排除起飞推广
-      if (item['biz_data'] != null) continue;
+      final List<dynamic> list = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'video')['data']) {
+        // 排除起飞推广
+        if (item['biz_data'] != null) continue;
 
-      // 这里有可能出现直播间
-      if (item['type'] == 'live_room') {
-        list.add(SearchResultLive.fromJson(item));
-      } else {
-        list.add(SearchResultVideo.fromJson(item));
+        // 这里有可能出现直播间
+        if (item['type'] == 'live_room') {
+          list.add(SearchResultLive.fromJson(item));
+        } else {
+          list.add(SearchResultVideo.fromJson(item));
+        }
       }
-    }
 
-    final List<SearchResultSeries> series = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'media_bangumi')['data']) {
-      series.add(SearchResultSeries.fromJson(item));
-    }
+      final List<SearchResultSeries> series = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'media_bangumi')['data']) {
+        series.add(SearchResultSeries.fromJson(item));
+      }
 
-    final List<SearchResultMovie> movies = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'media_ft')['data']) {
-      movies.add(SearchResultMovie.fromJson(item));
-    }
+      final List<SearchResultMovie> movies = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'media_ft')['data']) {
+        movies.add(SearchResultMovie.fromJson(item));
+      }
 
-    final List<SearchResultUser> users = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'bili_user')['data']) {
-      users.add(SearchResultUser.fromJson(item));
-    }
+      final List<SearchResultUser> users = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'bili_user')['data']) {
+        users.add(SearchResultUser.fromJson(item));
+      }
 
-    final List<SearchResultGame> games = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'web_game')['data']) {
-      games.add(SearchResultGame.fromJson(item));
-    }
+      final List<SearchResultGame> games = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'web_game')['data']) {
+        games.add(SearchResultGame.fromJson(item));
+      }
 
-    final List<SearchResultEvent> events = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'activity')['data']) {
-      // 这个接口不知道为什么b站总是会返回一个 id 为 117664 的空活动回来
-      if (item['title'].isEmpty) continue;
-      events.add(SearchResultEvent.fromJson(item));
-    }
+      final List<SearchResultEvent> events = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'activity')['data']) {
+        // 这个接口不知道为什么b站总是会返回一个 id 为 117664 的空活动回来
+        if (item['title'].isEmpty) continue;
+        events.add(SearchResultEvent.fromJson(item));
+      }
 
-    // 横幅广告
-    final List<SearchResultBanner> banners = [];
-    for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'brand_ad')['data']) {
-      banners.add(SearchResultBanner.fromJson(item));
-    }
+      // 横幅广告
+      final List<SearchResultBanner> banners = [];
+      for (final item in (resp.data['data']['result'] as List).firstWhere((v) => v['result_type'] == 'brand_ad')['data']) {
+        banners.add(SearchResultBanner.fromJson(item));
+      }
 
-    return Result.ok(
-      SearchResponse(
-        total: resp.data['data']['numResults'],
-        list: list,
-        series: series,
-        movies: movies,
-        games: games,
-        users: users,
-        events: events,
-        banners: banners,
-      ),
-    );
+      return Result.ok(
+        SearchResponse(
+          total: resp.data['data']['numResults'],
+          list: list,
+          series: series,
+          movies: movies,
+          games: games,
+          users: users,
+          events: events,
+          banners: banners,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 按特定类型搜索，只能搜索单一分类下的内容，如果需要综合搜索请使用 [getSearchResult]
@@ -154,11 +180,11 @@ class BiliSearchWebApiService {
     int pn = 1,
     int ps = 20,
     required String keyword,
-    GetSearchResultWithFilterTypeEnum type = GetSearchResultWithFilterTypeEnum.video,
-    GetSearchResultWithFilterOrderEnum order = GetSearchResultWithFilterOrderEnum.auto,
+    GetSearchResultWithFilterTypeEnum type = .video,
+    GetSearchResultWithFilterOrderEnum order = .auto,
     GetSearchResultWithFilterDurationEnum? duration,
     int? categoryId,
-    GetSearchResultWithFilterUserTypeEnum userType = GetSearchResultWithFilterUserTypeEnum.all,
+    GetSearchResultWithFilterUserTypeEnum userType = .all,
     int releaseTimeStart = 0,
     int releaseTimeEnd = 0,
   }) async {
@@ -169,94 +195,96 @@ class BiliSearchWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    // 没写成变量的都是固定值
-    final params = {
-      'category_id': categoryId ?? '',
-      // video = 视频, media_bangumi = 番剧, media_ft = 影视, live = 直播, article = 专栏, bili_user = 用户
-      'search_type': type.value,
-      'ad_resource': 5654,
-      '__refresh__': true,
-      '_extra': '',
-      'context': '',
-      'page': pn,
-      'page_size': ps,
-      // 可选值(视频)：留空为综合, click = 播放, pubdate = 发布时间, dm = 弹幕, stow = 收藏
-      // 可选值(直播)：online = 综合排序, live_time = 最新开播
-      // 可选值(专栏)：留空为综合, totalrank = 综合, pubdate = 最新发布, click = 最多点击, attention = 最多喜欢, scores = 最多评论
-      // 可选值(用户)：留空为综合, fans = 粉丝数, level = 等级
-      'order': order.value,
-      'pubtime_begin_s': releaseTimeStart,
-      'pubtime_end_s': releaseTimeEnd,
-      'from_source': '',
-      'from_spmid': '333.337',
-      'platform': 'pc',
-      'highlight': 1,
-      'single_column': 0,
-      'keyword': keyword,
-      'qv_id': generateQvId(),
-      'source_tag': 3,
-      'gaia_vtoken': '',
-      'dynamic_offset': 0,
-      'web_roll_page': 1,
-      'web_location': WebLocation.search,
-    };
-    if (duration != null) {
-      params['duration'] = duration.value;
-    }
-    if (type == GetSearchResultWithFilterTypeEnum.user) {
-      // userType 可选值：0 = 全部, 1 = UP主用户, 2 = 普通用户, 3 = 认证用户
-      params['user_type'] = userType.value;
-      params['order_sort'] = (order == GetSearchResultWithFilterOrderEnum.fansAsc || order == GetSearchResultWithFilterOrderEnum.levelAsc)
-          ? 1
-          : 0;
-    }
+    try {
+      // 没写成变量的都是固定值
+      final params = {
+        'category_id': categoryId ?? '',
+        // video = 视频, media_bangumi = 番剧, media_ft = 影视, live = 直播, article = 专栏, bili_user = 用户
+        'search_type': type.value,
+        'ad_resource': 5654,
+        '__refresh__': true,
+        '_extra': '',
+        'context': '',
+        'page': pn,
+        'page_size': ps,
+        // 可选值(视频)：留空为综合, click = 播放, pubdate = 发布时间, dm = 弹幕, stow = 收藏
+        // 可选值(直播)：online = 综合排序, live_time = 最新开播
+        // 可选值(专栏)：留空为综合, totalrank = 综合, pubdate = 最新发布, click = 最多点击, attention = 最多喜欢, scores = 最多评论
+        // 可选值(用户)：留空为综合, fans = 粉丝数, level = 等级
+        'order': order.value,
+        'pubtime_begin_s': releaseTimeStart,
+        'pubtime_end_s': releaseTimeEnd,
+        'from_source': '',
+        'from_spmid': '333.337',
+        'platform': 'pc',
+        'highlight': 1,
+        'single_column': 0,
+        'keyword': keyword,
+        'qv_id': generateQvId(),
+        'source_tag': 3,
+        'gaia_vtoken': '',
+        'dynamic_offset': 0,
+        'web_roll_page': 1,
+        'web_location': WebLocation.search,
+      };
+      if (duration != null) {
+        params['duration'] = duration.value;
+      }
+      if (type == GetSearchResultWithFilterTypeEnum.user) {
+        // userType 可选值：0 = 全部, 1 = UP主用户, 2 = 普通用户, 3 = 认证用户
+        params['user_type'] = userType.value;
+        params['order_sort'] = (order == GetSearchResultWithFilterOrderEnum.fansAsc || order == GetSearchResultWithFilterOrderEnum.levelAsc)
+            ? 1
+            : 0;
+      }
 
-    final result = await client.get(
-      'https://api.bilibili.com/x/web-interface/wbi/search/type',
-      options: Options(
-        headers: {
-          'Referer':
-              'https://search.bilibili.com/video?keyword=${Uri.encodeComponent(keyword)}&from_source=webtop_search&spm_id_from=333.1007&search_source=5',
-        },
-      ),
-      queryParameters: buildWbiParams(params, account.wbiImgKey, account.wbiSubKey),
-    );
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/wbi/search/type',
+        options: Options(
+          headers: {
+            'Referer':
+                'https://search.bilibili.com/video?keyword=${Uri.encodeComponent(keyword)}&from_source=webtop_search&spm_id_from=333.1007&search_source=5',
+          },
+        ),
+        queryParameters: buildWbiParams(params, account.wbiImgKey, account.wbiSubKey),
+      );
 
-    if (result.data['code'] != 0) {
-      return Result.error(Exception('${result.data['code']}: ${result.data['message']}'));
-    }
+      _checkResponse(resp);
 
-    final List<dynamic> list = [];
-    // 直播的搜索结果这里是个对象 {live_room: [], live_user: []}
-    // 其余这里是个列表
-    if (result.data['data']['result'] is List) {
-      for (final item in result.data['data']['result']) {
-        // 纯广告
-        if (item['type'] == 'picture_ad_0' || item['type'] == 'video_ad_82') {
-          continue;
+      final List<dynamic> list = [];
+      // 直播的搜索结果这里是个对象 {live_room: [], live_user: []}
+      // 其余这里是个列表
+      if (resp.data['data']['result'] is List) {
+        for (final item in resp.data['data']['result']) {
+          // 纯广告
+          if (item['type'] == 'picture_ad_0' || item['type'] == 'video_ad_82') {
+            continue;
+          }
+
+          list.add(switch (item['type']) {
+            'video' => SearchResultVideo.fromJson(item),
+            'media_bangumi' => SearchResultSeries.fromJson(item),
+            'media_ft' => SearchResultMovie.fromJson(item),
+            'article' => SearchResultArticle.fromJson(item),
+            'bili_user' => SearchResultUser.fromJson(item),
+            _ => throw Exception('Invalid type: ${item['type']}'),
+          });
         }
+      } else {
+        for (final item in resp.data['data']['result']['live_room']) {
+          list.add(SearchResultLive.fromJson(item));
+        }
+      }
 
-        list.add(switch (item['type']) {
-          'video' => SearchResultVideo.fromJson(item),
-          'media_bangumi' => SearchResultSeries.fromJson(item),
-          'media_ft' => SearchResultMovie.fromJson(item),
-          'article' => SearchResultArticle.fromJson(item),
-          'bili_user' => SearchResultUser.fromJson(item),
-          _ => throw Exception('Invalid type: ${item['type']}'),
-        });
-      }
-    } else {
-      for (final item in result.data['data']['result']['live_room']) {
-        list.add(SearchResultLive.fromJson(item));
-      }
+      return Result.ok(
+        SearchResponseWithFilter(
+          total: resp.data['data']['numResults'] as int,
+          list: list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      SearchResponseWithFilter(
-        total: result.data['data']['numResults'] as int,
-        list: list,
-      ),
-    );
   }
 
   /// 获取热搜列表
@@ -264,76 +292,80 @@ class BiliSearchWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    // web端搜索框使用的结尾是这个，但这个接口不会返回置顶，
-    // 故使用完整榜单接口，还不用 wbi
-    // 'https://api.bilibili.com/x/web-interface/wbi/search/square',
-    final resp = await client.get(
-      // https://www.bilibili.com/blackboard/activity-trending-topic.html
-      'https://app.bilibili.com/x/v2/search/trending/ranking',
-      queryParameters: {
-        'csrf': account is LoginedAccount ? account.biliJct : '',
-        // 默认30，最大30
-        'limit': 30,
-      },
-    );
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    final List<Trending> list = [];
-    for (final item in resp.data['data']['top_list']) {
-      list.add(
-        Trending(
-          keyword: item['keyword'],
-          name: item['show_name'],
-          isPinned: true,
-        ),
+    try {
+      // web端搜索框使用的结尾是这个，但这个接口不会返回置顶，
+      // 故使用完整榜单接口，还不用 wbi
+      // 'https://api.bilibili.com/x/web-interface/wbi/search/square',
+      final resp = await client.get(
+        // https://www.bilibili.com/blackboard/activity-trending-topic.html
+        'https://app.bilibili.com/x/v2/search/trending/ranking',
+        queryParameters: {
+          'csrf': account is LoginedAccount ? account.biliJct : '',
+          // 默认30，最大30
+          'limit': 30,
+        },
       );
-    }
-    for (final item in resp.data['data']['list']) {
-      list.add(
-        Trending(
-          keyword: item['keyword'],
-          name: item['show_name'],
-          isPinned: false,
-        ),
-      );
-    }
 
-    return Result.ok(list);
+      _checkResponse(resp);
+
+      final List<Trending> list = [];
+      for (final item in resp.data['data']['top_list']) {
+        list.add(
+          Trending(
+            keyword: item['keyword'],
+            name: item['show_name'],
+            isPinned: true,
+          ),
+        );
+      }
+      for (final item in resp.data['data']['list']) {
+        list.add(
+          Trending(
+            keyword: item['keyword'],
+            name: item['show_name'],
+            isPinned: false,
+          ),
+        );
+      }
+
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 获取搜索建议
-  Future<Result<List<String>>> getSuggestList({required String keyword}) async {
+  Future<Result<List<String>>> getSuggestList( String keyword) async {
     assert(keyword.isNotEmpty);
 
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/suggest',
-      queryParameters: buildWbiParams(
-        {
-          'highlight': 0,
-          'term': keyword,
-          'spmid': WebLocation.home,
-          'web_location': WebLocation.home,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/suggest',
+        queryParameters: buildWbiParams(
+          {
+            'highlight': 0,
+            'term': keyword,
+            'spmid': WebLocation.home,
+            'web_location': WebLocation.home,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      final List<String> list = [];
+      for (final item in resp.data['data']['result']['tag']) {
+        list.add(item['value']);
+      }
+
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<String> list = [];
-    for (final item in resp.data['data']['result']['tag']) {
-      list.add(item['value']);
-    }
-
-    return Result.ok(list);
   }
 }

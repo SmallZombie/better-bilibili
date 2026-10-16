@@ -18,12 +18,7 @@ import 'package:better_bilibili/utils/result.dart';
 
 class VideoRepositoryMock implements VideoRepository {
   @override
-  Future<Result<void>> cancelNotInterested({
-    required String videoId,
-    required String userId,
-    required String reasonId,
-    required TrackingInfo trackingInfo,
-  }) {
+  Future<Result<void>> cancelNotInterested({required String videoId, required String userId, required String reasonId, required TrackingInfo trackingInfo}) {
     // TODO: implement cancelNotInterested
     throw UnimplementedError();
   }
@@ -47,12 +42,7 @@ class VideoRepositoryMock implements VideoRepository {
   }
 
   @override
-  Future<Result<List<Danmaku>>> getDanmakus({
-    required int index,
-    required String videoId,
-    required String episodeId,
-    required BiliContentTypeEnum type,
-  }) {
+  Future<Result<List<Danmaku>>> getDanmakus({required int index, required String videoId, required String episodeId, required BiliContentTypeEnum type}) {
     // TODO: implement getDanmakus
     throw UnimplementedError();
   }
@@ -64,7 +54,7 @@ class VideoRepositoryMock implements VideoRepository {
   }
 
   @override
-  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo({required String playlistId}) {
+  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo(String playlistId) {
     // TODO: implement getPlaylistInfo
     throw UnimplementedError();
   }
@@ -76,12 +66,7 @@ class VideoRepositoryMock implements VideoRepository {
   }
 
   @override
-  Future<Result<GetPlaylistVideosResponse>> getPlaylistVideos({
-    required String playlistId,
-    String? videoId,
-    GetPlaylistVideosDirectionEnum direction = GetPlaylistVideosDirectionEnum.after,
-    int ps = 20,
-  }) {
+  Future<Result<GetPlaylistVideosResponse>> getPlaylistVideos({required String playlistId, String? videoId, GetPlaylistVideosDirectionEnum direction = .after, int ps = 20}) {
     // TODO: implement getPlaylistVideos
     throw UnimplementedError();
   }
@@ -95,6 +80,18 @@ class VideoRepositoryMock implements VideoRepository {
   @override
   Future<Result<List<RecommendVideo>>> getRecommendVideosByCategory({required String categoryId, required int pn, int ps = 20}) {
     // TODO: implement getRecommendVideosByCategory
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Result<GetTimelinePreviewResponse>> getTimelinePreview({required String videoId, required String episodeId}) {
+    // TODO: implement getTimelinePreview
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Result<List<double>>> getTimelineWaveform({required String videoId, required String episodeId}) {
+    // TODO: implement getTimelineWaveform
     throw UnimplementedError();
   }
 
@@ -117,19 +114,13 @@ class VideoRepositoryMock implements VideoRepository {
   }
 
   @override
-  Future<Result<GetVideoDetailResponse>> getVideoDetail({required String videoId}) {
+  Future<Result<GetVideoDetailResponse>> getVideoDetail(String videoId) {
     // TODO: implement getVideoDetail
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetVideosWithUserIdResponse>> getVideosWithUser({
-    required String userId,
-    int pn = 1,
-    int ps = 25,
-    GetVideosWithUserTypeEnum type = .all,
-    GetVideosWithUserOrderEnum order = .releaseTimeDesc,
-  }) {
+  Future<Result<GetVideosWithUserIdResponse>> getVideosWithUser({required String userId, int pn = 1, int ps = 25, GetVideosWithUserTypeEnum type = .all, GetVideosWithUserOrderEnum order = .releaseTimeDesc}) {
     // TODO: implement getVideosWithUser
     throw UnimplementedError();
   }
@@ -141,36 +132,13 @@ class VideoRepositoryMock implements VideoRepository {
   }
 
   @override
-  Future<Result<void>> markNotInterested({
-    required String videoId,
-    required String userId,
-    required String reasonId,
-    required TrackingInfo trackingInfo,
-  }) {
+  Future<Result<void>> markNotInterested({required String videoId, required String userId, required String reasonId, required TrackingInfo trackingInfo}) {
     // TODO: implement markNotInterested
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> reportHistory({
-    required String videoId,
-    required String episodeId,
-    required int firstPlaybackTime,
-    required BiliContentTypeEnum contentType,
-    bool isDocumentary = false,
-    bool isGuochuang = false,
-    bool isTVSeries = false,
-    bool isVarietyShow = false,
-    required ReportHistoryActionTypeEnum actionType,
-    required int realPlaybackTime,
-    required int duration,
-    required int position,
-    required int maxPosition,
-    required int reportCounter,
-    required String playInfoSession,
-    required String playInfoId,
-    required String videoFileName,
-  }) {
+  Future<Result<void>> reportHistory({required String videoId, required String episodeId, required int firstPlaybackTime, required BiliContentTypeEnum contentType, bool isDocumentary = false, bool isGuochuang = false, bool isTVSeries = false, bool isVarietyShow = false, required ReportHistoryActionTypeEnum actionType, required int realPlaybackTime, required int duration, required int position, required int maxPosition, required int reportCounter, required String playInfoSession, required String playInfoId, required String videoFileName}) {
     // TODO: implement reportHistory
     throw UnimplementedError();
   }
@@ -178,18 +146,6 @@ class VideoRepositoryMock implements VideoRepository {
   @override
   Future<Result<void>> subscriptionCollection({required String collectionId, required bool subscription}) {
     // TODO: implement subscriptionCollection
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Result<GetTimelinePreviewResponse>> getTimelinePreview({required String videoId, required String episodeId}) {
-    // TODO: implement getVideoPreview
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Result<List<double>>> getTimelineWaveform({required String videoId, required String episodeId}) {
-    // TODO: implement getTimelineWaveform
     throw UnimplementedError();
   }
 }

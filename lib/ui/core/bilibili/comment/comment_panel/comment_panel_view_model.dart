@@ -91,7 +91,7 @@ class CommentPanelViewModel extends SafeChangeNotifier {
     _images[index] = image;
     notifyListeners();
 
-    final result = await _commonRepository.uploadImageForDynamic(filePath: image.localPath);
+    final result = await _commonRepository.uploadImageForDynamic( image.localPath);
     switch (result) {
       case Ok(:final value):
         _images[_images.indexOf(image)] = image.copyWith(status: .success, result: value);

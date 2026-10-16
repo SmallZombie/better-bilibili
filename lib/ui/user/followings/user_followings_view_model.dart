@@ -173,7 +173,7 @@ class UserFollowingsViewModel extends SafeChangeNotifier {
   GetUserStatsResponse? get stats => _stats;
 
   Future<Result<void>> _loadStats() async {
-    final result = await _userRepository.getUserStats(userId: userId);
+    final result = await _userRepository.getUserStats(userId);
     switch (result) {
       case Ok(:final value):
         _stats = value;
@@ -281,7 +281,7 @@ class UserFollowingsViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _deleteGroup(int index) async {
     final group = _groups[index];
-    final result = await _userRepository.deleteUserGroup(groupId: group.id);
+    final result = await _userRepository.deleteUserGroup(group.id);
     switch (result) {
       case Ok():
         _groups.removeAt(index);

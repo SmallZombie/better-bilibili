@@ -147,7 +147,7 @@ class MeViewModel extends SafeChangeNotifier {
       selfStatsResult as Result<GetSelfStatsResponse>,
     ] = await Future.wait([
       _userRepository.getSelfInfo(),
-      _userRepository.getUserInfo(userId: userId),
+      _userRepository.getUserInfo(userId),
       _userRepository.getSelfStats(),
     ]);
 
@@ -211,6 +211,8 @@ class MeViewModel extends SafeChangeNotifier {
   Future<Result<ContentData>> _getContentData() async {
     assert(_authRepository.hasLogin);
 
+    final account = await _authRepository.getAccount();
+
     final [
       watchHistoryResult,
       watchLaterResult,
@@ -218,7 +220,7 @@ class MeViewModel extends SafeChangeNotifier {
     ] = await Future.wait([
       _userRepository.getWatchHistory(),
       _userRepository.getWatchLater(),
-      _userRepository.getFavoritesList(),
+      _userRepository.getFavoritesList(userId: account.userId),
     ]);
 
     if (watchHistoryResult case Error()) {

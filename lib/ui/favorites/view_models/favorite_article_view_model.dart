@@ -51,7 +51,7 @@ class FavoriteArticleViewModel extends SafeChangeNotifier {
   late final Command1<void, String> deleteItem;
 
   Future<Result<void>> _deleteItem(String postId) async {
-    final result = await _userRepository.deleteFavoritePost(postId: postId);
+    final result = await _userRepository.deleteFavoritePost( postId);
     switch (result) {
       case Ok():
         reload();

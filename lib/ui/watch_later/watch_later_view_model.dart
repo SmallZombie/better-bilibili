@@ -264,7 +264,7 @@ class WatchLaterViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _deleteSelectedItems() async {
     final List<String> ids = _selectedItems.map((item) => _getItemId(item)).toList();
-    final result = await _userRepository.deleteVideosFromWatchLater(ids: ids);
+    final result = await _userRepository.deleteVideosFromWatchLater(ids);
     switch (result) {
       case Ok():
         _watchLater.removeWhere((item) => _selectedItems.contains(item));

@@ -325,7 +325,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _deleteSelectedItems() async {
     final ids = _selectedItems.map((v) => getItemId(v)).toList();
-    final result = await _userRepository.deleteWatchHistory(ids: ids);
+    final result = await _userRepository.deleteWatchHistory(ids);
     switch (result) {
       case Ok():
         _watchHistory.removeWhere(selectedItems.contains);

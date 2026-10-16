@@ -1,3 +1,4 @@
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_detail_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_simple_list_response.dart';
@@ -12,11 +13,10 @@ const _orderOptions = <GetFavoritesDetailOrderEnum>[
 ];
 
 class SearchFavoritesViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
-  SearchFavoritesViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  SearchFavoritesViewModel({required this.userRepository, required this.authRepository}) {
     loadAddFavorites = Command0(_loadAddFavorites)..execute();
     search = Command0(_searchFavorites);
   }
@@ -27,7 +27,8 @@ class SearchFavoritesViewModel extends SafeChangeNotifier {
   List<SimpleFavorites> get favorites => List.unmodifiable(_favorites);
 
   Future<Result<void>> _loadAddFavorites() async {
-    final result = await _userRepository.getFavoritesSimpleList();
+    final account = await authRepository.getAccount();
+    final result = await userRepository.getFavoritesSimpleList(userId: account.userId);
     switch (result) {
       case Ok(:final value):
         _favorites.addAll(value.list);
@@ -70,7 +71,7 @@ class SearchFavoritesViewModel extends SafeChangeNotifier {
   List<dynamic> get searchResult => List.unmodifiable(_searchResult);
 
   Future<Result<void>> _searchFavorites() async {
-    final result = await _userRepository.getFavoritesDetail(
+    final result = await userRepository.getFavoritesDetail(
       favoritesId: _selectedFavoritesId ?? _favorites.first.id,
       pn: _pn,
       keyword: _keyword,

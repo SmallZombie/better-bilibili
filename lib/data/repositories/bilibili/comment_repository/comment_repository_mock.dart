@@ -15,23 +15,13 @@ class CommentRepositoryMock implements CommentRepository {
   }
 
   @override
-  Future<Result<void>> dislike({
-    required String contextId,
-    required BiliContentTypeEnum type,
-    required String commentId,
-    required bool dislike,
-  }) {
+  Future<Result<void>> dislike({required String contextId, required BiliContentTypeEnum type, required String commentId, required bool dislike}) {
     // TODO: implement dislike
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetCommentListResponse>> getList({
-    required String id,
-    required BiliContentTypeEnum type,
-    String? cursor,
-    bool sort = false,
-  }) {
+  Future<Result<GetCommentListResponse>> getList({required String id, required BiliContentTypeEnum type, String? cursor, bool sort = false}) {
     // TODO: implement getList
     throw UnimplementedError();
   }
@@ -43,19 +33,13 @@ class CommentRepositoryMock implements CommentRepository {
   }
 
   @override
-  Future<Result<List<Comment>>> getReplies({
-    required String contextId,
-    required BiliContentTypeEnum type,
-    required String rootId,
-    int pn = 1,
-    int ps = 10,
-  }) {
+  Future<Result<List<Comment>>> getReplies({required String contextId, required BiliContentTypeEnum type, required String rootId, int pn = 1, int ps = 10}) {
     // TODO: implement getReplies
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<List<ReportReasonItem>>> getReportReasons(BiliContentTypeEnum contentType, String contentId) {
+  Future<Result<List<ReportReasonItem>>> getReportReasons({required BiliContentTypeEnum contentType, required String contentId}) {
     // TODO: implement getReportReasons
     throw UnimplementedError();
   }
@@ -73,27 +57,13 @@ class CommentRepositoryMock implements CommentRepository {
   }
 
   @override
-  Future<Result<Comment>> post({
-    required String contextId,
-    required BiliContentTypeEnum type,
-    required String content,
-    String? rootId,
-    String? parentId,
-    Map<String, String>? nicknameToUserId,
-    List<UploadedImage>? images,
-  }) {
+  Future<Result<Comment>> post({required String contextId, required BiliContentTypeEnum type, required String content, String? rootId, String? parentId, Map<String, String>? nicknameToUserId, List<UploadedImage>? images}) {
     // TODO: implement post
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> report({
-    required BiliContentTypeEnum contentType,
-    required String contentId,
-    required String commentId,
-    required int reasonId,
-    String? description,
-  }) {
+  Future<Result<void>> report({required BiliContentTypeEnum contentType, required String contentId, required String commentId, required int reasonId, String? description}) {
     // TODO: implement report
     throw UnimplementedError();
   }

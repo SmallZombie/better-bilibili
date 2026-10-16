@@ -64,7 +64,7 @@ class UserFansViewModel extends SafeChangeNotifier {
   late final Command1<void, String> deleteFan;
 
   Future<Result<void>> _deleteFan(String userId) async {
-    final result = await _userRepository.deleteFans(userId: userId);
+    final result = await _userRepository.deleteFans(userId);
     switch (result) {
       case Ok():
         _fans.removeWhere((fan) => fan.id == userId);

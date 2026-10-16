@@ -1605,7 +1605,7 @@ class _WatchLaterButtonState extends State<_WatchLaterButton> {
     setState(() => hasWatchLater = action);
 
     if (action) {
-      final result = await widget.userRepository.addVideoToWatchLater(videoId: widget.videoId);
+      final result = await widget.userRepository.addVideoToWatchLater(widget.videoId);
       switch (result) {
         case Ok():
           return result;
@@ -1614,7 +1614,7 @@ class _WatchLaterButtonState extends State<_WatchLaterButton> {
       }
       return result;
     } else {
-      final result = await widget.userRepository.deleteVideosFromWatchLater(ids: [widget.videoId]);
+      final result = await widget.userRepository.deleteVideosFromWatchLater([widget.videoId]);
       switch (result) {
         case Ok():
           return result;

@@ -4,6 +4,8 @@ import 'package:better_bilibili/data/services/bilibili/model/get_conversation.da
 import 'package:better_bilibili/data/services/bilibili/model/get_conversation_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_messages_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_unread_count_response.dart';
+import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
+import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart' as chat_model;
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
@@ -18,30 +20,60 @@ class BiliChatWebApiService {
 
   BiliChatWebApiService({required this.getClient, required this.getAccount});
 
+  void _checkResponse(Response resp) {
+    if (resp.data['code'] != 0) {
+      throw BiliHttpException(resp.data['code'], resp.data['message']);
+    }
+  }
+
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
+
   Future<Result<GetUnreadCountResponse>> getUnreadCount() async {
+    final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.vc.bilibili.com/session_svr/v1/session_svr/single_unread',
-      queryParameters: {
-        'unread_type': 0,
-        'show_dustbin': 1,
-        'build': 0,
-        'mobi_app': 'web',
-        'web_location': WebLocation.message,
-      },
-    );
+    try {
+      if (account is! LoginedAccount) {
+        throw const NotLoggedInException();
+      }
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      final resp = await client.get(
+        'https://api.vc.bilibili.com/session_svr/v1/session_svr/single_unread',
+        queryParameters: {
+          'unread_type': 0,
+          'show_dustbin': 1,
+          'build': 0,
+          'mobi_app': 'web',
+          'web_location': WebLocation.message,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetUnreadCountResponse(
+          followed: resp.data['data']['follow_unread'],
+          notFollowed: resp.data['data']['unfollow_unread'],
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetUnreadCountResponse(
-        followed: resp.data['data']['follow_unread'],
-        notFollowed: resp.data['data']['unfollow_unread'],
-      ),
-    );
   }
 
   chat_model.BaseMessage _parseMessage(dynamic obj, {List<Sticker>? stickers}) {
@@ -183,102 +215,108 @@ class BiliChatWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions',
-      queryParameters: buildWbiParams(
-        {
-          'session_type': type.value,
-          if (limit != null) ...{'size': limit},
-          'group_fold': foldGroup ? 1 : 0,
-          'unfollow_fold': foldNotFollowed ? 1 : 0,
-          'sort_rule': switch (type) {
-            .userAndSystem => 2,
-            _ => 1,
-          },
-          if (nextCursor != null) ...{'end_ts': nextCursor},
-          'build': 0,
-          'mobi_app': 'web',
-          'web_location': WebLocation.message,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    final sessionList = resp.data['data']['session_list'] as List;
-
-    final List<Conversation> result = [];
-    final Map<String, User> systemUsers = {};
-    for (final i in sessionList) {
-      final chat_model.ConversationType type = i['system_msg_type'] != 0
-          ? .system
-          : i['session_type'] == 2
-          ? .fansGroup
-          : .user;
-
-      late final String id;
-      if (type == .user) {
-        id = i['talker_id'].toString();
-      } else if (i['system_msg_type'] == 1) {
-        id = '#streamerHelper';
-        systemUsers['#streamerHelper'] = User(
-          id: '#streamerHelper',
-          avatar: i['account_info']['pic_url'],
-          nickname: i['account_info']['name'],
-        );
-      } else if (i['system_msg_type'] == 7) {
-        id = '#uploaderHelper';
-        systemUsers['#uploaderHelper'] = User(
-          id: '#uploaderHelper',
-          avatar: i['account_info']['pic_url'],
-          nickname: i['account_info']['name'],
-        );
-      } else if (i['system_msg_type'] == 8) {
-        id = '#support';
-        systemUsers['#support'] = User(
-          id: '#support',
-          avatar: i['account_info']['pic_url'],
-          nickname: i['account_info']['name'],
-        );
-      } else if (i['system_msg_type'] == 9) {
-        id = '#paymentCenter';
-        systemUsers['#paymentCenter'] = User(
-          id: '#paymentCenter',
-          avatar: i['account_info']['pic_url'],
-          nickname: i['account_info']['name'],
-        );
-      } else if (i['system_msg_type'] == 12) {
-        id = '#communityCenter';
-        systemUsers['#communityCenter'] = User(
-          id: '#communityCenter',
-          avatar: i['account_info']['pic_url'],
-          nickname: i['account_info']['name'],
-        );
-      } else {
-        throw Exception('Invaild conversation type:${i['session_type']} systemType:${i['system_msg_type']}');
+    try {
+      if (account is! LoginedAccount) {
+        throw const NotLoggedInException();
       }
 
-      result.add(
-        Conversation(
-          id: id,
-          type: type,
-          lastMessage: _parseMessage(i['last_msg']),
-          unreadCount: i['unread_count'] as int,
+      final resp = await client.get(
+        'https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions',
+        queryParameters: buildWbiParams(
+          {
+            'session_type': type.value,
+            if (limit != null) ...{'size': limit},
+            'group_fold': foldGroup ? 1 : 0,
+            'unfollow_fold': foldNotFollowed ? 1 : 0,
+            'sort_rule': switch (type) {
+              .userAndSystem => 2,
+              _ => 1,
+            },
+            if (nextCursor != null) ...{'end_ts': nextCursor},
+            'build': 0,
+            'mobi_app': 'web',
+            'web_location': WebLocation.message,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
         ),
       );
-    }
 
-    return Result.ok(
-      GetConversationResponse(
-        nextCursor: resp.data['data']['has_more'] == 1 ? sessionList.last['session_ts'].toString() : null,
-        data: result,
-        systemUsers: systemUsers,
-      ),
-    );
+      _checkResponse(resp);
+
+      final sessionList = resp.data['data']['session_list'] as List;
+
+      final List<Conversation> result = [];
+      final Map<String, User> systemUsers = {};
+      for (final i in sessionList) {
+        final chat_model.ConversationType type = i['system_msg_type'] != 0
+            ? .system
+            : i['session_type'] == 2
+            ? .fansGroup
+            : .user;
+
+        late final String id;
+        if (type == .user) {
+          id = i['talker_id'].toString();
+        } else if (i['system_msg_type'] == 1) {
+          id = '#streamerHelper';
+          systemUsers['#streamerHelper'] = User(
+            id: '#streamerHelper',
+            avatar: i['account_info']['pic_url'],
+            nickname: i['account_info']['name'],
+          );
+        } else if (i['system_msg_type'] == 7) {
+          id = '#uploaderHelper';
+          systemUsers['#uploaderHelper'] = User(
+            id: '#uploaderHelper',
+            avatar: i['account_info']['pic_url'],
+            nickname: i['account_info']['name'],
+          );
+        } else if (i['system_msg_type'] == 8) {
+          id = '#support';
+          systemUsers['#support'] = User(
+            id: '#support',
+            avatar: i['account_info']['pic_url'],
+            nickname: i['account_info']['name'],
+          );
+        } else if (i['system_msg_type'] == 9) {
+          id = '#paymentCenter';
+          systemUsers['#paymentCenter'] = User(
+            id: '#paymentCenter',
+            avatar: i['account_info']['pic_url'],
+            nickname: i['account_info']['name'],
+          );
+        } else if (i['system_msg_type'] == 12) {
+          id = '#communityCenter';
+          systemUsers['#communityCenter'] = User(
+            id: '#communityCenter',
+            avatar: i['account_info']['pic_url'],
+            nickname: i['account_info']['name'],
+          );
+        } else {
+          throw Exception('Invaild conversation type:${i['session_type']} systemType:${i['system_msg_type']}');
+        }
+
+        result.add(
+          Conversation(
+            id: id,
+            type: type,
+            lastMessage: _parseMessage(i['last_msg']),
+            unreadCount: i['unread_count'] as int,
+          ),
+        );
+      }
+
+      return Result.ok(
+        GetConversationResponse(
+          nextCursor: resp.data['data']['has_more'] == 1 ? sessionList.last['session_ts'].toString() : null,
+          data: result,
+          systemUsers: systemUsers,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   Future<Result<GetMessagesResponse>> getMessages({
@@ -291,56 +329,58 @@ class BiliChatWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs',
-      queryParameters: buildWbiParams(
-        {
-          'size': 20,
-          'session_type': 1,
-          'talker_id': conversationId,
-          if (messageId == null) ...{
-            'begin_seqno': '',
-            'end_seqno': '',
+    try {
+      final resp = await client.get(
+        'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs',
+        queryParameters: buildWbiParams(
+          {
+            'size': 20,
+            'session_type': 1,
+            'talker_id': conversationId,
+            if (messageId == null) ...{
+              'begin_seqno': '',
+              'end_seqno': '',
+            },
+            if (messageId != null) ...{
+              'end_seqno': messageId,
+            },
+            'sender_device_id': 1,
+            'build': 0,
+            'mobi_app': 'web',
+            'web_location': WebLocation.message,
           },
-          if (messageId != null) ...{
-            'end_seqno': messageId,
-          },
-          'sender_device_id': 1,
-          'build': 0,
-          'mobi_app': 'web',
-          'web_location': WebLocation.message,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    final List<Sticker> stickers = [];
-    for (final i in resp.data['data']?['e_infos'] ?? []) {
-      stickers.add(
-        Sticker(
-          id: '0',
-          packId: '0',
-          name: (i['text'] as String).substring(1, i['text'].length - 1),
-          code: i['text'],
-          url: i['url'],
-          thumbnail: '${i['url']}@40w_40h',
-          size: i['size'].toDouble() * 25,
+          account.wbiImgKey,
+          account.wbiSubKey,
         ),
       );
-    }
 
-    return Result.ok(
-      GetMessagesResponse(
-        hasMore: resp.data['data']['has_more'] == 1,
-        list: (resp.data['data']['messages'] as List).reversed.map((v) {
-          return _parseMessage(v, stickers: stickers);
-        }).toList(),
-      ),
-    );
+      _checkResponse(resp);
+
+      final List<Sticker> stickers = [];
+      for (final i in resp.data['data']?['e_infos'] ?? []) {
+        stickers.add(
+          Sticker(
+            id: '0',
+            packId: '0',
+            name: (i['text'] as String).substring(1, i['text'].length - 1),
+            code: i['text'],
+            url: i['url'],
+            thumbnail: '${i['url']}@40w_40h',
+            size: i['size'].toDouble() * 25,
+          ),
+        );
+      }
+
+      return Result.ok(
+        GetMessagesResponse(
+          hasMore: resp.data['data']['has_more'] == 1,
+          list: (resp.data['data']['messages'] as List).reversed.map((v) {
+            return _parseMessage(v, stickers: stickers);
+          }).toList(),
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 }

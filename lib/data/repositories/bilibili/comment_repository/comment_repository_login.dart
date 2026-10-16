@@ -103,8 +103,8 @@ class CommentRepositoryLogin implements CommentRepository {
   }
 
   @override
-  Future<Result<List<ReportReasonItem>>> getReportReasons(BiliContentTypeEnum contentType, String contentId) {
-    return commentApiService.getReportReasons(contentType, contentId);
+  Future<Result<List<ReportReasonItem>>> getReportReasons({required BiliContentTypeEnum contentType, required String contentId}) {
+    return commentApiService.getReportReasons(contentType: contentType, contentId: contentId);
   }
 
   @override

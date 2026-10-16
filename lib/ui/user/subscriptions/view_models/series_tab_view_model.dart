@@ -109,7 +109,7 @@ class SeriesTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> unsubscribe;
 
   Future<Result<void>> _unsubscribe(String seriesId) async {
-    final result = await _userRepository.unsubscribeSeries(seriesId: seriesId);
+    final result = await _userRepository.unsubscribeSeries(seriesId);
     switch (result) {
       case Ok():
         _series.removeWhere((v) => v.id == seriesId);

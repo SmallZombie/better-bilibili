@@ -9,13 +9,43 @@ import 'package:flutter/widgets.dart';
 
 class AuthRepositoryMock extends ChangeNotifier implements AuthRepository {
   @override
+  Future<void> createAccount(AccountBuilder builder) {
+    // TODO: implement createAccount
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Account> getAccount([String? userId]) {
+    // TODO: implement getAccount
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Account>> getAccounts() {
+    // TODO: implement getAccounts
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Dio> getClient({required ClientTypeEnum type, String? userId}) {
+    // TODO: implement getClient
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String> getCurrentAccountId() {
+    // TODO: implement getCurrentAccountId
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Result<GetLoginQrCodeResponse>> getLoginQrCode() {
     // TODO: implement getLoginQrCode
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus({required String key}) {
+  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus(String key) {
     // TODO: implement getQrCodeStatus
     throw UnimplementedError();
   }
@@ -27,16 +57,8 @@ class AuthRepositoryMock extends ChangeNotifier implements AuthRepository {
   }
 
   @override
-  Future<Account> getAccount([String? userId]) {
-    // TODO: implement getAccount
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Dio> getClient({required ClientTypeEnum type, String? userId}) {
-    // TODO: implement getClient
-    throw UnimplementedError();
-  }
+  // TODO: implement hasLogin
+  bool get hasLogin => throw UnimplementedError();
 
   @override
   Future<void> removeAccount(String accountId) {
@@ -51,30 +73,8 @@ class AuthRepositoryMock extends ChangeNotifier implements AuthRepository {
   }
 
   @override
-  Future<void> createAccount(AccountBuilder builder) {
-    // TODO: implement updateAndSaveAccount
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<Account>> getAccounts() {
-    // TODO: implement getAccounts
-    throw UnimplementedError();
-  }
-
-  @override
-  // TODO: implement hasLogin
-  bool get hasLogin => throw UnimplementedError();
-
-  @override
   Future<void> updateAccount(Account account) {
     // TODO: implement updateAccount
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<String> getCurrentAccountId() {
-    // TODO: implement getCurrentAccountId
     throw UnimplementedError();
   }
 }

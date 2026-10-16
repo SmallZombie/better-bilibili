@@ -123,14 +123,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     _createWithPlayInfo();
 
     if (config.mediaControl.value) {
-      _mediaSession = widget.mediaSessionController.createSession(
-        ExtraVideoPlayerMediaSessionAdapter(
-          player: controller.player,
-          mediaSessionData: widget.mediaSessionData,
-          playlistController: widget.playlistController,
-        ),
-      );
-      _mediaSession!.activate();
+      _onMediaControl(true);
     }
 
     if (widget.bsbsbConfig.enable.value) {
@@ -179,16 +172,11 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     }
 
     if (oldWidget.playlistController != widget.playlistController) {
+      _mediaSession?.deactivate();
+      _mediaSession = null;
+
       if (config.mediaControl.value) {
-        _mediaSession?.deactivate();
-        _mediaSession = widget.mediaSessionController.createSession(
-          ExtraVideoPlayerMediaSessionAdapter(
-            player: controller.player,
-            mediaSessionData: widget.mediaSessionData,
-            playlistController: widget.playlistController,
-          ),
-        );
-        _mediaSession!.activate();
+        _onMediaControl(true);
       }
     }
   }
@@ -271,6 +259,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
   void _onMediaControl(bool event) {
     if (event) {
+      debugPrint('_onMediaControl: ${widget.playlistController.hashCode}');
       _mediaSession ??= widget.mediaSessionController.createSession(
         ExtraVideoPlayerMediaSessionAdapter(
           player: controller.player,

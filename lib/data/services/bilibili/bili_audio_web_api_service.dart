@@ -1,4 +1,5 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_user_audios_response.dart';
+import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/utils/bili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
@@ -9,6 +10,29 @@ class BiliAudioWebApiService {
   Future<Account> Function() getAccount;
 
   BiliAudioWebApiService({required this.getClient, required this.getAccount});
+
+  void _checkResponse(Response resp) {
+    if (resp.data['code'] != 0) {
+      throw BiliHttpException(resp.data['code'], resp.data['message']);
+    }
+  }
+
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
 
   /// 获取用户发布的音频
   ///
@@ -24,26 +48,29 @@ class BiliAudioWebApiService {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/audio/music-service/web/song/upper',
-      queryParameters: {
-        'pn': pn,
-        'ps': ps,
-        'order': order.value,
-        'uid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/audio/music-service/web/song/upper',
+        queryParameters: {
+          'pn': pn,
+          'ps': ps,
+          'order': order.value,
+          'uid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetUserAudiosResponse(
+          list: (resp.data['data']['data'] as List).map((v) => GetUserAudiosItem.fromJson(v)).toList(),
+          total: resp.data['data']['totalSize'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetUserAudiosResponse(
-        list: (resp.data['data']['data'] as List).map((v) => GetUserAudiosItem.fromJson(v)).toList(),
-        total: resp.data['data']['totalSize'] as int,
-      ),
-    );
   }
 }

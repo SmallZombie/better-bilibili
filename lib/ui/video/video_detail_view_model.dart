@@ -112,7 +112,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   BiliPlaylistCoordinator? playlistCoordinator;
 
   Future<Result<GetVideoDetailResponse>> _getDetail() async {
-    final result = await videoRepository.getVideoDetail(videoId: videoId);
+    final result = await videoRepository.getVideoDetail(videoId);
     return result;
   }
 
@@ -215,7 +215,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   bool get hasFollowed => states?.hasFollowed ?? false;
 
   Future<Result<VideoInteraction>> _getVideoInteraction() async {
-    return userRepository.getVideoInteraction(videoId: videoId);
+    return userRepository.getVideoInteraction(videoId);
   }
 
   void _getVideoInteractionSuccess(VideoInteraction result) {

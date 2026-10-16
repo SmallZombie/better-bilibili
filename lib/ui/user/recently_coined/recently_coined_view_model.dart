@@ -21,7 +21,7 @@ class RecentlyCoinedViewModel extends SafeChangeNotifier {
   List<dynamic> get videos => List.unmodifiable(_videos);
 
   Future<Result<void>> _loadData() async {
-    final result = await _userRepository.getCoinedVideos(userId: userId);
+    final result = await _userRepository.getCoinedVideos(userId);
     switch (result) {
       case Ok(:final value):
         _videos.addAll(value);

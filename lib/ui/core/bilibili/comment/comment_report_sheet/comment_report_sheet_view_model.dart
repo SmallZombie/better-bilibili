@@ -18,7 +18,10 @@ class CommentReportSheetViewModel extends ChangeNotifier {
   List<ReportReasonItem> get reasonList => List.unmodifiable(_reasonList);
 
   Future<Result<void>> _getReasonList(BiliContentTypeEnum contentType, String contentId) async {
-    final result = await _commentRepository.getReportReasons(contentType, contentId);
+    final result = await _commentRepository.getReportReasons(
+      contentType: contentType,
+      contentId: contentId,
+    );
     switch (result) {
       case Ok(:final value):
         _reasonList.addAll(value);

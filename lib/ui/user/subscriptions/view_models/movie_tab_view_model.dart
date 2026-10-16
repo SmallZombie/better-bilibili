@@ -110,7 +110,7 @@ class MovieTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> unsubscribe;
 
   Future<Result<void>> _unsubscribe(String movieId) async {
-    final result = await _userRepository.unsubscribeMovie(movieId: movieId);
+    final result = await _userRepository.unsubscribeMovie(movieId);
     switch (result) {
       case Ok():
         _movies.removeWhere((v) => v.id == movieId);

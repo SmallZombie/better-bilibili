@@ -59,7 +59,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       _,
       _,
     ] = await Future.wait([
-      _userRepository.getUserProfileSettings(userId: userId),
+      _userRepository.getUserProfileSettings( userId),
       _loadPinnedVideos(),
       _loadVideos(),
       _loadArticles(),
@@ -97,7 +97,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   }
 
   Future<void> _loadPinnedVideos() async {
-    final result = await _userRepository.getUserPinnedVideos(userId: userId);
+    final result = await _userRepository.getUserPinnedVideos( userId);
     switch (result) {
       case Ok(:final value):
         _pinnedVideos.clear();
@@ -165,7 +165,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   Future<void> _loadSubscribedManga() async {}
 
   Future<void> _loadRecentlyLiked() async {
-    final result = await _userRepository.getLikedVideos(userId: userId);
+    final result = await _userRepository.getLikedVideos( userId);
     switch (result) {
       case Ok(:final value):
         _likedVideos.clear();
@@ -176,7 +176,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   }
 
   Future<void> _loadRecentlyCoind() async {
-    final result = await _userRepository.getCoinedVideos(userId: userId);
+    final result = await _userRepository.getCoinedVideos( userId);
     switch (result) {
       case Ok(:final value):
         _coindVideos.clear();

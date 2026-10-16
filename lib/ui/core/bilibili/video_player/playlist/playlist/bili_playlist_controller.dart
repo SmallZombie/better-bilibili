@@ -41,7 +41,7 @@ class BiliPlaylistController extends ChangeNotifier {
   String get currentVideoId => _currentVideoId;
 
   Future<Result<void>> _initLoad() async {
-    final result = await videoRepository.getPlaylistInfo(playlistId: playlistId);
+    final result = await videoRepository.getPlaylistInfo( playlistId);
     switch (result) {
       case Ok(:final value):
         _playlistInfo = value;

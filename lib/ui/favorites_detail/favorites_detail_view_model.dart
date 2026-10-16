@@ -182,7 +182,7 @@ class FavoritesDetailViewModel extends SafeChangeNotifier {
   late final Command0<void> clearInvalid;
 
   Future<Result<void>> _clearInvalid() async {
-    final result = await _userRepository.clearInvalidInFavorites(favoritesId: _favorites!.favoritesId);
+    final result = await _userRepository.clearInvalidInFavorites( _favorites!.favoritesId);
     switch (result) {
       case Ok():
         reload();
@@ -194,6 +194,6 @@ class FavoritesDetailViewModel extends SafeChangeNotifier {
   late final Command0<void> deleteFavorites;
 
   Future<Result<void>> _deleteFavorites() async {
-    return _userRepository.deleteFavorites(favoritesId: _favorites!.favoritesId);
+    return _userRepository.deleteFavorites( _favorites!.favoritesId);
   }
 }

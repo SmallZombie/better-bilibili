@@ -10,13 +10,14 @@ final _cvRegex = RegExp(r'(/?article/)cv(\d+)', caseSensitive: false);
 final _log = Logger(printer: ComposablePrefixPrinter(prefix: 'deepLinkHandler'));
 
 String deepLinkHandler(String uri) {
-  final prefix = '$kAppDeepLinkScheme:/';
-  if (!uri.startsWith(prefix)) {
+  if (!uri.startsWith('$kAppDeepLinkScheme:')) {
     _log.e('Invalid URI: $uri');
     return Routes.home;
   }
 
-  String content = uri.substring(prefix.length);
+  // 将任意数量的 "/" 处理为单个 "/"
+  // "bilibili:///////123/456" -> "/123/456"
+  String content = uri.replaceFirst(RegExp(r'^[^:]+:/+'), '/');
 
   try {
     // bv to av

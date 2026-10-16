@@ -20,13 +20,13 @@ class ArticleRepositoryMock implements ArticleRepository {
   }
 
   @override
-  Future<Result<ArticleCollection>> getCollectionDetail({required String collectionId}) {
+  Future<Result<ArticleCollection>> getCollectionDetail(String collectionId) {
     // TODO: implement getCollectionDetail
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<ArticleDetail>> getDetail({required String articleId}) {
+  Future<Result<ArticleDetail>> getDetail(String articleId) {
     // TODO: implement getDetail
     throw UnimplementedError();
   }
@@ -38,10 +38,7 @@ class ArticleRepositoryMock implements ArticleRepository {
   }
 
   @override
-  Future<Result<List<GetUserAnthologysItem>>> getUserAnthologys({
-    required String userId,
-    GetUserAnthologysOrderEnum order = .updateTimeDesc,
-  }) {
+  Future<Result<List<GetUserAnthologysItem>>> getUserAnthologys({required String userId, GetUserAnthologysOrderEnum order = .updateTimeDesc}) {
     // TODO: implement getUserAnthologys
     throw UnimplementedError();
   }

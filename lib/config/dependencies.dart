@@ -88,7 +88,10 @@ List<SingleChildWidget> get providersOnline => [
   ),
 
   ChangeNotifierProvider(
-    create: (context) => EditVideoInFavoriteFolderSheetViewModel(userRepository: context.read()),
+    create: (context) => EditVideoInFavoriteFolderSheetViewModel(
+      userRepository: context.read(),
+      authRepository: context.read(),
+    ),
   ),
   ChangeNotifierProvider(
     create: (context) => BiliBackgroundService(

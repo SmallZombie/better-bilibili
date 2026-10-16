@@ -22,7 +22,7 @@ class ArticleDetailViewModel extends SafeChangeNotifier {
   ArticleDetail? get articleDetail => _articleDetail;
 
   Future<Result<ArticleDetail>> _loadData() async {
-    final result = await _articleRepository.getDetail(articleId: articleId);
+    final result = await _articleRepository.getDetail( articleId);
     switch (result) {
       case Ok(:final value):
         _articleDetail = value;

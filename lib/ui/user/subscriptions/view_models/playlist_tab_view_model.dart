@@ -65,8 +65,8 @@ class PlaylistTabViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _unsubscribe(dynamic item) async {
     final result = switch (item) {
-      SubscribedFavorites() => _userRepository.unsubscribeFavorites(favoritesId: item.id),
-      SubscribedPlaylist() => _userRepository.unsubscribePlaylist(playlistId: item.id),
+      SubscribedFavorites() => _userRepository.unsubscribeFavorites(item.id),
+      SubscribedPlaylist() => _userRepository.unsubscribePlaylist(item.id),
       _ => throw Exception('Unknown item: $item'),
     };
 

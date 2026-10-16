@@ -44,7 +44,7 @@ class PostDetailViewModel extends SafeChangeNotifier {
   String? get collectionId => _collectionId;
 
   Future<Result<void>> _loadData() async {
-    final result = await _postRepository.getDetail(postId: postId);
+    final result = await _postRepository.getDetail( postId);
     return result;
   }
 
@@ -134,6 +134,6 @@ class PostDetailViewModel extends SafeChangeNotifier {
       return;
     }
 
-    _userRepository.reportArticleHistory(articleId: _postDetail!.commentId);
+    _userRepository.reportArticleHistory( _postDetail!.commentId);
   }
 }

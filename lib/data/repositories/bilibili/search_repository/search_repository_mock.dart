@@ -11,24 +11,13 @@ class SearchRepositoryMock implements SearchRepository {
   }
 
   @override
-  Future<Result<SearchResponseWithFilter>> getSearchResultWithFilter({
-    int pn = 1,
-    int ps = 20,
-    required String keyword,
-    GetSearchResultWithFilterTypeEnum type = GetSearchResultWithFilterTypeEnum.video,
-    GetSearchResultWithFilterOrderEnum order = GetSearchResultWithFilterOrderEnum.auto,
-    GetSearchResultWithFilterDurationEnum? duration,
-    int? categoryId,
-    GetSearchResultWithFilterUserTypeEnum userType = GetSearchResultWithFilterUserTypeEnum.all,
-    int releaseTimeStart = 0,
-    int releaseTimeEnd = 0,
-  }) {
+  Future<Result<SearchResponseWithFilter>> getSearchResultWithFilter({int pn = 1, int ps = 20, required String keyword, GetSearchResultWithFilterTypeEnum type = .video, GetSearchResultWithFilterOrderEnum order = .auto, GetSearchResultWithFilterDurationEnum? duration, int? categoryId, GetSearchResultWithFilterUserTypeEnum userType = .all, int releaseTimeStart = 0, int releaseTimeEnd = 0}) {
     // TODO: implement getSearchResultWithFilter
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<List<String>>> getSuggestList({required String keyword}) {
+  Future<Result<List<String>>> getSuggestList(String keyword) {
     // TODO: implement getSuggestList
     throw UnimplementedError();
   }

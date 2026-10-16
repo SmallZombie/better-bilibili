@@ -2,9 +2,11 @@ import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pasteboard/pasteboard.dart';
 
@@ -105,6 +107,8 @@ class _ImageViewerScreen extends StatefulWidget {
 }
 
 class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTickerProviderStateMixin {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'ImageViewerScreen'));
+
   List<ImageViewerItem> get images => widget.images;
   int get initialIndex => widget.initialIndex;
 
@@ -144,7 +148,9 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
 
             context.showInfo('已复制');
           } on DioException catch (e) {
-            context.showError('复制失败: ${e.response?.statusCode ?? '?'}: ${e.message}');
+            context.showError('复制失败: ${e.response == null ? '未知错误' : '${e.response!.statusCode} ${e.message}'}');
+          } catch (e, s) {
+            _log.e(e, stackTrace: s);
           } finally {
             client.close();
           }

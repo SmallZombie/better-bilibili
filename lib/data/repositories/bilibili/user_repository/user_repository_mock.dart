@@ -33,7 +33,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> addVideoToWatchLater({required String videoId}) {
+  Future<Result<void>> addVideoToWatchLater(String videoId) {
     // TODO: implement addVideoToWatchLater
     throw UnimplementedError();
   }
@@ -45,7 +45,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> clearInvalidInFavorites({required String favoritesId}) {
+  Future<Result<void>> clearInvalidInFavorites(String favoritesId) {
     // TODO: implement clearInvalidInFavorites
     throw UnimplementedError();
   }
@@ -69,11 +69,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> copyFavoritesVideos({
-    required List<String> ids,
-    required String sourceFavoritesId,
-    required String targetFavoritesId,
-  }) {
+  Future<Result<void>> copyFavoritesVideos({required List<String> ids, required String sourceFavoritesId, required String targetFavoritesId}) {
     // TODO: implement copyFavoritesVideos
     throw UnimplementedError();
   }
@@ -91,25 +87,25 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<UserGroup>> createUserGroup({required String name}) {
+  Future<Result<UserGroup>> createUserGroup(String name) {
     // TODO: implement createUserGroup
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> deleteFans({required String userId}) {
+  Future<Result<void>> deleteFans(String userId) {
     // TODO: implement deleteFans
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> deleteFavoritePost({required String postId}) {
+  Future<Result<void>> deleteFavoritePost(String postId) {
     // TODO: implement deleteFavoritePost
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> deleteFavorites({required String favoritesId}) {
+  Future<Result<void>> deleteFavorites(String favoritesId) {
     // TODO: implement deleteFavorites
     throw UnimplementedError();
   }
@@ -127,19 +123,19 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteUserGroup({required String groupId}) {
+  Future<Result<void>> deleteUserGroup(String groupId) {
     // TODO: implement deleteUserGroup
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> deleteVideosFromWatchLater({required List<String> ids}) {
+  Future<Result<void>> deleteVideosFromWatchLater(List<String> ids) {
     // TODO: implement deleteVideosFromWatchLater
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> deleteWatchHistory({required List<String> ids}) {
+  Future<Result<void>> deleteWatchHistory(List<String> ids) {
     // TODO: implement deleteWatchHistory
     throw UnimplementedError();
   }
@@ -151,13 +147,13 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<ArticleInteraction>> getArticleInteraction({required String articleId}) {
+  Future<Result<ArticleInteraction>> getArticleInteraction(String articleId) {
     // TODO: implement getArticleInteraction
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<List<dynamic>>> getCoinedVideos({String? userId}) {
+  Future<Result<List<dynamic>>> getCoinedVideos(String userId) {
     // TODO: implement getCoinedVideos
     throw UnimplementedError();
   }
@@ -175,37 +171,25 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<GetFavoritesDetailResponse>> getFavoritesDetail({
-    required String favoritesId,
-    int pn = 1,
-    int ps = 20,
-    GetFavoritesDetailOrderEnum order = GetFavoritesDetailOrderEnum.favoriteTimeDesc,
-    String? keyword,
-    GetFavoritesDetailScopeEnum scope = GetFavoritesDetailScopeEnum.local,
-  }) {
+  Future<Result<GetFavoritesDetailResponse>> getFavoritesDetail({required String favoritesId, int pn = 1, int ps = 20, GetFavoritesDetailOrderEnum order = .favoriteTimeDesc, String? keyword, GetFavoritesDetailScopeEnum scope = .local}) {
     // TODO: implement getFavoritesDetail
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetFavoritesResponse>> getFavoritesList({String? userId, int pn = 1, int ps = 20}) {
+  Future<Result<GetFavoritesResponse>> getFavoritesList({required String userId, int pn = 1, int ps = 20}) {
     // TODO: implement getFavoritesList
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetFavoritesSimpleListResponse>> getFavoritesSimpleList({String? userId, String? videoId}) {
+  Future<Result<GetFavoritesSimpleListResponse>> getFavoritesSimpleList({required String userId, String? videoId}) {
     // TODO: implement getFavoritesSimpleList
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetFollowingUsersResponse>> getFollowingUsers({
-    required String userId,
-    int pn = 1,
-    int ps = 24,
-    GetFollowingUsersOrderEnum order = GetFollowingUsersOrderEnum.followTimeDesc,
-  }) {
+  Future<Result<GetFollowingUsersResponse>> getFollowingUsers({required String userId, int pn = 1, int ps = 24, GetFollowingUsersOrderEnum order = .followTimeDesc}) {
     // TODO: implement getFollowingUsers
     throw UnimplementedError();
   }
@@ -217,7 +201,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<List<String>>> getGroupIdsWithUser({required String userId}) {
+  Future<Result<List<String>>> getGroupIdsWithUser(String userId) {
     // TODO: implement getGroupIdsWithUser
     throw UnimplementedError();
   }
@@ -229,8 +213,14 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<List<dynamic>>> getLikedVideos({String? userId}) {
+  Future<Result<List<dynamic>>> getLikedVideos(String userId) {
     // TODO: implement getLikedVideos
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> getLocalUserData(String userId, String key) {
+    // TODO: implement getLocalUserData
     throw UnimplementedError();
   }
 
@@ -259,23 +249,13 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<GetSubscribedMangaResponse>> getSubscribedManga({
-    int pn = 1,
-    int ps = 20,
-    GetSubscribedMangaOrderEnum order = GetSubscribedMangaOrderEnum.subscribeDesc,
-    bool waitFree = false,
-  }) {
+  Future<Result<GetSubscribedMangaResponse>> getSubscribedManga({int pn = 1, int ps = 20, GetSubscribedMangaOrderEnum order = .subscribeDesc, bool waitFree = false}) {
     // TODO: implement getSubscribedManga
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetSubscribedMovieResponse>> getSubscribedMovie({
-    String? userId,
-    int pn = 1,
-    int ps = 20,
-    GetSubscribedSeriesWatchStatusEnum watchStatus = GetSubscribedSeriesWatchStatusEnum.all,
-  }) {
+  Future<Result<GetSubscribedMovieResponse>> getSubscribedMovie({required String userId, int pn = 1, int ps = 20, GetSubscribedSeriesWatchStatusEnum watchStatus = .all}) {
     // TODO: implement getSubscribedMovie
     throw UnimplementedError();
   }
@@ -287,12 +267,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<GetSubscribedSeriesResponse>> getSubscribedSeries({
-    String? userId,
-    int pn = 1,
-    int ps = 20,
-    GetSubscribedSeriesWatchStatusEnum watchStatus = GetSubscribedSeriesWatchStatusEnum.all,
-  }) {
+  Future<Result<GetSubscribedSeriesResponse>> getSubscribedSeries({String? userId, int pn = 1, int ps = 20, GetSubscribedSeriesWatchStatusEnum watchStatus = .all}) {
     // TODO: implement getSubscribedSeries
     throw UnimplementedError();
   }
@@ -316,43 +291,43 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<GetUserCountersResponse>> getUserCounters({required String userId}) {
+  Future<Result<GetUserCountersResponse>> getUserCounters(String userId) {
     // TODO: implement getUserCounters
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetUserInfoResponse>> getUserInfo({required String userId}) {
+  Future<Result<GetUserInfoResponse>> getUserInfo(String userId) {
     // TODO: implement getUserInfo
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<List<PinnedVideo>>> getUserPinnedVideos({required String userId}) {
+  Future<Result<List<PinnedVideo>>> getUserPinnedVideos(String userId) {
     // TODO: implement getUserPinnedVideos
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings({required String userId}) {
+  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings(String userId) {
     // TODO: implement getUserProfileSettings
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetUserRelationResponse>> getUserRelation({required String userId}) {
+  Future<Result<GetUserRelationResponse>> getUserRelation(String userId) {
     // TODO: implement getUserRelation
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetUserStatsResponse>> getUserStats({required String userId}) {
+  Future<Result<GetUserStatsResponse>> getUserStats(String userId) {
     // TODO: implement getUserStats
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount({required String userId}) {
+  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount(String userId) {
     // TODO: implement getUserTotalLikeAndViewCount
     throw UnimplementedError();
   }
@@ -364,18 +339,13 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<VideoInteraction>> getVideoInteraction({required String videoId}) {
+  Future<Result<VideoInteraction>> getVideoInteraction(String videoId) {
     // TODO: implement getVideoInteraction
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetWatchHistoryResponse>> getWatchHistory({
-    int nextCursor = 0,
-    int viewAt = 0,
-    GetWatchHistoryTypeEnum type = GetWatchHistoryTypeEnum.all,
-    int ps = 20,
-  }) {
+  Future<Result<GetWatchHistoryResponse>> getWatchHistory({int nextCursor = 0, int viewAt = 0, GetWatchHistoryTypeEnum type = .all, int ps = 20}) {
     // TODO: implement getWatchHistory
     throw UnimplementedError();
   }
@@ -387,32 +357,13 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<GetWatchHistoryWithFilterResult>> getWatchHistoryWithFilter({
-    int pn = 1,
-    String keyword = '',
-    GetWatchHistoryWithFilterTypeEnum type = GetWatchHistoryWithFilterTypeEnum.all,
-    int minDuration = 0,
-    int maxDuration = 0,
-    int minUploadTime = 0,
-    int maxUploadTime = 0,
-    GetWatchHistoryWithFilterDeviceTypeEnum deviceType = GetWatchHistoryWithFilterDeviceTypeEnum.all,
-  }) {
+  Future<Result<GetWatchHistoryWithFilterResult>> getWatchHistoryWithFilter({int pn = 1, String keyword = '', GetWatchHistoryWithFilterTypeEnum type = .all, int minDuration = 0, int maxDuration = 0, int minUploadTime = 0, int maxUploadTime = 0, GetWatchHistoryWithFilterDeviceTypeEnum deviceType = .all}) {
     // TODO: implement getWatchHistoryWithFilter
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetWatchLaterResponse>> getWatchLater({
-    int pn = 1,
-    int ps = 20,
-    GetWatchLaterOrderEnum order = GetWatchLaterOrderEnum.addTimeDesc,
-    bool onlyUnwatched = false,
-    int? minAddTime,
-    int? maxAddTime,
-    int? minDuration,
-    int? maxDuration,
-    String? keyword,
-  }) {
+  Future<Result<GetWatchLaterResponse>> getWatchLater({int pn = 1, int ps = 20, GetWatchLaterOrderEnum order = .addTimeDesc, bool onlyUnwatched = false, int? minAddTime, int? maxAddTime, int? minDuration, int? maxDuration, String? keyword}) {
     // TODO: implement getWatchLater
     throw UnimplementedError();
   }
@@ -424,13 +375,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> modifyFavorites({
-    required String favoritesId,
-    required String name,
-    String? description,
-    bool isPrivate = false,
-    String? coverUrl,
-  }) {
+  Future<Result<void>> modifyFavorites({required String favoritesId, required String name, String? description, bool isPrivate = false, String? coverUrl}) {
     // TODO: implement modifyFavorites
     throw UnimplementedError();
   }
@@ -460,7 +405,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> modifyUserModuleSorting({required List<int> moduleSorting}) {
+  Future<Result<void>> modifyUserModuleSorting(List<int> moduleSorting) {
     // TODO: implement modifyUserModuleSorting
     throw UnimplementedError();
   }
@@ -472,11 +417,7 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> moveFavoritesVideos({
-    required List<String> ids,
-    required String sourceFavoritesId,
-    required String targetFavoritesId,
-  }) {
+  Future<Result<void>> moveFavoritesVideos({required List<String> ids, required String sourceFavoritesId, required String targetFavoritesId}) {
     // TODO: implement moveFavoritesVideos
     throw UnimplementedError();
   }
@@ -488,14 +429,26 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
+  Future<void> removeLocalUserData(String userId, String key) {
+    // TODO: implement removeLocalUserData
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Result<void>> reorderFavorites({required List<String> ids}) {
     // TODO: implement reorderFavorites
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> reportArticleHistory({required String articleId}) {
+  Future<Result<void>> reportArticleHistory(String articleId) {
     // TODO: implement reportArticleHistory
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> setLocalUserData(String userId, String key, String value) {
+    // TODO: implement setLocalUserData
     throw UnimplementedError();
   }
 
@@ -512,31 +465,31 @@ class UserRepositoryMock implements UserRepository {
   }
 
   @override
-  Future<Result<void>> unsubscribeFavorites({required String favoritesId}) {
+  Future<Result<void>> unsubscribeFavorites(String favoritesId) {
     // TODO: implement unsubscribeFavorites
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> unsubscribeManga({required List<String> mangaIds}) {
+  Future<Result<void>> unsubscribeManga(List<String> mangaIds) {
     // TODO: implement unsubscribeManga
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> unsubscribeMovie({required String movieId}) {
+  Future<Result<void>> unsubscribeMovie(String movieId) {
     // TODO: implement unsubscribeMovie
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> unsubscribePlaylist({required String playlistId}) {
+  Future<Result<void>> unsubscribePlaylist(String playlistId) {
     // TODO: implement unsubscribePlaylist
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<void>> unsubscribeSeries({required String seriesId}) {
+  Future<Result<void>> unsubscribeSeries(String seriesId) {
     // TODO: implement unsubscribeSeries
     throw UnimplementedError();
   }
@@ -544,24 +497,6 @@ class UserRepositoryMock implements UserRepository {
   @override
   Future<Result<void>> updateFavoritesVideo({required String videoId, List<String>? addIds, List<String>? deleteIds}) {
     // TODO: implement updateFavoritesVideo
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<String?> getLocalUserData(String userId, String key) {
-    // TODO: implement getLocalUserData
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> removeLocalUserData(String userId, String key) {
-    // TODO: implement removeLocalUserData
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> setLocalUserData(String userId, String key, String value) {
-    // TODO: implement setLocalUserData
     throw UnimplementedError();
   }
 }

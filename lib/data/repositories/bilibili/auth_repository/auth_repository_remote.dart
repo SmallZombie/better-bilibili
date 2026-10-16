@@ -336,8 +336,8 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   }
 
   @override
-  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus({required String key}) {
-    return authApiService.getQrCodeStatus(key: key);
+  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus( String key) {
+    return authApiService.getQrCodeStatus(key);
   }
 
   @override

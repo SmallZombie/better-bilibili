@@ -82,11 +82,10 @@ class _QrLoginViewState extends State<QrLoginView> {
         const SizedBox(height: 32),
         ListenableBuilder(
           listenable: Listenable.merge([_viewModel.getLoginQrCode, _viewModel.getQrCodeStatus]),
-          builder:
-              (context, child) => _buildStatusText(
-                Theme.of(context).colorScheme,
-                Theme.of(context).textTheme,
-              ),
+          builder: (context, child) => _buildStatusText(
+            Theme.of(context).colorScheme,
+            Theme.of(context).textTheme,
+          ),
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
@@ -108,41 +107,33 @@ class _QrLoginViewState extends State<QrLoginView> {
       text = '获取二维码失败：$error';
       icon = Icons.error_outline;
       color = Colors.red;
-    }
-
-    if (_viewModel.getQrCodeStatus.result case Error(:final error)) {
+    } else if (_viewModel.getQrCodeStatus.result case Error(:final error)) {
       text = '获取二维码状态失败：$error';
       icon = Icons.error_outline;
       color = Colors.red;
-    }
-
-    switch (_viewModel.qrCodeStatus) {
-      case QrCodeStatus.waiting:
-        text = '请使用 B 站客户端扫描二维码';
-        icon = Icons.qr_code_scanner;
-        color = colorScheme.primary;
-        break;
-      case QrCodeStatus.scanned:
-        text = '请在手机上确认登录';
-        icon = Icons.check_circle_outline;
-        color = Colors.orange;
-        break;
-      case QrCodeStatus.expired:
-        text = '二维码已过期';
-        icon = Icons.error_outline;
-        color = Colors.red;
-        break;
-      case QrCodeStatus.success:
-        text = '登录成功';
-        icon = Icons.check_circle_outline;
-        color = Colors.green;
-        break;
-      case null:
-        return const SizedBox.shrink();
+    } else if (_viewModel.qrCodeStatus == .waiting) {
+      text = '请使用 B 站客户端扫描二维码';
+      icon = Icons.qr_code_scanner;
+      color = colorScheme.primary;
+    } else if (_viewModel.qrCodeStatus == .scanned) {
+      text = '请在手机上确认登录';
+      icon = Icons.check_circle_outline;
+      color = Colors.orange;
+    } else if (_viewModel.qrCodeStatus == .expired) {
+      text = '二维码已过期';
+      icon = Icons.error_outline;
+      color = Colors.red;
+    } else if (_viewModel.qrCodeStatus == .success) {
+      text = '登录成功';
+      icon = Icons.check_circle_outline;
+      color = Colors.green;
+    } else {
+      text = '加载中';
+      icon = Icons.more_horiz;
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: .center,
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
@@ -150,7 +141,7 @@ class _QrLoginViewState extends State<QrLoginView> {
           child: Text(
             text,
             style: textTheme.bodyLarge?.copyWith(color: color),
-            textAlign: TextAlign.center,
+            textAlign: .center,
           ),
         ),
       ],

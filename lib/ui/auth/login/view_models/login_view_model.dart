@@ -70,7 +70,7 @@ class LoginViewModel extends SafeChangeNotifier {
   }
 
   Future<Result<GetQrCodeStatusResponse>> _getQrCodeStatus(String key) async {
-    final result = await _authRepository.getQrCodeStatus(key: key);
+    final result = await _authRepository.getQrCodeStatus( key);
     switch (result) {
       case Ok(:final value):
         _qrCodeStatus = value.status;

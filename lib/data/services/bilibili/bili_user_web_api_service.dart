@@ -24,6 +24,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_user_stats_resp
 import 'package:better_bilibili/data/services/bilibili/model/get_user_total_like_and_view_count_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_history.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_later.dart';
+import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
@@ -49,61 +50,90 @@ class BiliUserWebApiService {
     return account;
   }
 
-  Future<Result<GetUserInfoResponse>> getUserInfo({required String userId}) async {
+  void _checkResponse(Response resp) {
+    if (resp.data['code'] != 0) {
+      throw BiliHttpException(resp.data['code'], resp.data['message']);
+    }
+  }
+
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
+
+  Future<Result<GetUserInfoResponse>> getUserInfo(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
     final account = await getAccount();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/wbi/acc/info',
-      queryParameters: buildWbiParams(
-        {
-          'mid': userId,
-          'token': '',
-          'platform': 'web',
-          'web_location': WebLocation.userSpace_2,
-          // 此接口使用场景不存在回退元素，故此字段可以为空数组
-          'dm_img_list': '[]',
-          'dm_img_str': getDmImgStr(),
-          'dm_cover_img_str': getDmCoverImgStr(),
-          'dm_img_inter': getDmImgInter(
-            windowWidth: sometingOrElse(0.01, account.windowWidth ~/ 2, account.windowWidth),
-            windowHeight: sometingOrElse(0.01, account.windowHeight ~/ 2, account.windowHeight),
-          ),
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/wbi/acc/info',
+        queryParameters: buildWbiParams(
+          {
+            'mid': userId,
+            'token': '',
+            'platform': 'web',
+            'web_location': WebLocation.userSpace_2,
+            // 此接口使用场景不存在回退元素，故此字段可以为空数组
+            'dm_img_list': '[]',
+            'dm_img_str': getDmImgStr(),
+            'dm_cover_img_str': getDmCoverImgStr(),
+            'dm_img_inter': getDmImgInter(
+              windowWidth: sometingOrElse(0.01, account.windowWidth ~/ 2, account.windowWidth),
+              windowHeight: sometingOrElse(0.01, account.windowHeight ~/ 2, account.windowHeight),
+            ),
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(GetUserInfoResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(GetUserInfoResponse.fromJson(resp.data['data']));
   }
 
   Future<Result<GetSelfStatsResponse>> getSelfStats() async {
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/nav/stat',
-      queryParameters: {
-        'web_location': WebLocation.home,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/nav/stat',
+        queryParameters: {
+          'web_location': WebLocation.home,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetSelfStatsResponse(
+          dynamicCount: resp.data['data']['dynamic_count'],
+          followCount: resp.data['data']['following'],
+          fansCount: resp.data['data']['follower'],
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetSelfStatsResponse(
-        dynamicCount: resp.data['data']['dynamic_count'],
-        followCount: resp.data['data']['following'],
-        fansCount: resp.data['data']['follower'],
-      ),
-    );
   }
 
   /// 解析与观看列表有关接口的 data.list 响应
@@ -141,46 +171,50 @@ class BiliUserWebApiService {
   Future<Result<GetWatchHistoryResponse>> getWatchHistory({
     int nextCursor = 0,
     int viewAt = 0,
-    GetWatchHistoryTypeEnum type = GetWatchHistoryTypeEnum.all,
+    GetWatchHistoryTypeEnum type = .all,
     int ps = 20,
   }) async {
     assert(ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/history/cursor',
-      queryParameters: {
-        'max': nextCursor,
-        'view_at': viewAt,
-        // 这个字段在这里很迷
-        // 第一页时无论 type 是什么，都为空字符串
-        // 非第一页时如果 tpye = all 此值为 archive，否则此值等同于 type
-        'business': nextCursor == 0
-            ? ''
-            : type == GetWatchHistoryTypeEnum.all
-            ? 'archive'
-            : type.value,
-        'ps': ps,
-        'type': type.value,
-        'web_location': WebLocation.watchHistory,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/history/cursor',
+        queryParameters: {
+          'max': nextCursor,
+          'view_at': viewAt,
+          // 这个字段在这里很迷
+          // 第一页时无论 type 是什么，都为空字符串
+          // 非第一页时如果 tpye = all 此值为 archive，否则此值等同于 type
+          'business': nextCursor == 0
+              ? ''
+              : type == .all
+              ? 'archive'
+              : type.value,
+          'ps': ps,
+          'type': type.value,
+          'web_location': WebLocation.watchHistory,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final List<dynamic> list = _parseWatchHistoryResponse(resp.data['data']['list']);
+
+      return Result.ok(
+        GetWatchHistoryResponse(
+          list: list,
+          nextCursor: resp.data['data']['cursor']['max'] as int,
+          // 本来游标分页只要一个 next_cursor 就可以了
+          // 但这个接口返回了其他不知道干什么用的东西，也需要一并传入下一次请求
+          viewAt: resp.data['data']['cursor']['view_at'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<dynamic> list = _parseWatchHistoryResponse(resp.data['data']['list']);
-
-    return Result.ok(
-      GetWatchHistoryResponse(
-        list: list,
-        nextCursor: resp.data['data']['cursor']['max'] as int,
-        // 本来游标分页只要一个 next_cursor 就可以了
-        // 但这个接口返回了其他不知道干什么用的东西，也需要一并传入下一次请求
-        viewAt: resp.data['data']['cursor']['view_at'] as int,
-      ),
-    );
   }
 
   /// 获取观看历史，支持更多查询条件
@@ -200,126 +234,140 @@ class BiliUserWebApiService {
   Future<Result<GetWatchHistoryWithFilterResult>> getWatchHistoryWithFilter({
     int pn = 1,
     String keyword = '',
-    GetWatchHistoryWithFilterTypeEnum type = GetWatchHistoryWithFilterTypeEnum.all,
+    GetWatchHistoryWithFilterTypeEnum type = .all,
     int minDuration = 0,
     int maxDuration = 0,
     int minUploadTime = 0,
     int maxUploadTime = 0,
-    GetWatchHistoryWithFilterDeviceTypeEnum deviceType = GetWatchHistoryWithFilterDeviceTypeEnum.all,
+    GetWatchHistoryWithFilterDeviceTypeEnum deviceType = .all,
   }) async {
     assert(pn > 0);
     assert(minDuration >= 0 && maxDuration >= 0 && minUploadTime >= 0 && maxUploadTime >= 0);
 
     final client = await getClient();
-    final result = await client.get(
-      'https://api.bilibili.com/x/web-interface/history/search',
-      queryParameters: {
-        'pn': pn,
-        'keyword': keyword,
-        'business': type.value,
-        'add_time_start': minUploadTime,
-        'add_time_end': maxUploadTime,
-        'arc_max_duration': maxDuration,
-        'arc_min_duration': minDuration,
-        'device_type': deviceType.value,
-        'web_location': WebLocation.watchHistory,
-      },
-    );
 
-    if (result.data['code'] != 0) {
-      return Result.error(Exception('${result.data['code']}: ${result.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/history/search',
+        queryParameters: {
+          'pn': pn,
+          'keyword': keyword,
+          'business': type.value,
+          'add_time_start': minUploadTime,
+          'add_time_end': maxUploadTime,
+          'arc_max_duration': maxDuration,
+          'arc_min_duration': minDuration,
+          'device_type': deviceType.value,
+          'web_location': WebLocation.watchHistory,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final List<dynamic> list = _parseWatchHistoryResponse(resp.data['data']['list'] ?? []);
+
+      return Result.ok(
+        GetWatchHistoryWithFilterResult(
+          list: list,
+          hasMore: resp.data['data']['has_more'] as bool,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<dynamic> list = _parseWatchHistoryResponse(result.data['data']['list'] ?? []);
-
-    return Result.ok(
-      GetWatchHistoryWithFilterResult(
-        list: list,
-        hasMore: result.data['data']['has_more'] as bool,
-      ),
-    );
   }
 
   /// 获取观看历史配置，目前只有是否启用记录
   Future<Result<bool>> getWatchHistoryConfig() async {
     final client = await getClient();
-    final resp = await client.get('https://api.bilibili.com/x/v2/history/shadow');
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get('https://api.bilibili.com/x/v2/history/shadow');
+
+      _checkResponse(resp);
+
+      // 没错b站这个接口获取的是禁用状态，=true时为禁用
+      return Result.ok(resp.data['data'] == false);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    // 没错b站这个接口获取的是禁用状态，=true时为禁用
-    return Result.ok(resp.data['data'] == false);
   }
 
   /// 设置观看历史配置，目前只有是否启用记录
   Future<Result<void>> setWatchHistoryConfig({required bool enable}) async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/shadow/set',
-      options: Options(
-        contentType: 'application/x-www-form-urlencoded',
-      ),
-      data: {
-        'switch': enable == false,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/shadow/set',
+        options: Options(
+          contentType: 'application/x-www-form-urlencoded',
+        ),
+        data: {
+          'switch': enable == false,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 删除历史记录，支持批量删除
   ///
   /// id格式：`<type>_<id>`，type 详见 [GetWatchHistoryWithFilterTypeEnum.value]
-  Future<Result<void>> deleteWatchHistory({required List<String> ids}) async {
+  Future<Result<void>> deleteWatchHistory(List<String> ids) async {
     assert(ids.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/delete',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'kid': ids.join(','),
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/delete',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'kid': ids.join(','),
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 清除观看历史
   Future<Result<void>> clearWatchHistory() async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/clear',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'business': '',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/clear',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'business': '',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取稍后观看列表
@@ -331,7 +379,7 @@ class BiliUserWebApiService {
   Future<Result<GetWatchLaterResponse>> getWatchLater({
     int pn = 1,
     int ps = 20,
-    GetWatchLaterOrderEnum order = GetWatchLaterOrderEnum.addTimeDesc,
+    GetWatchLaterOrderEnum order = .addTimeDesc,
     bool onlyUnwatched = false,
     int? minAddTime,
     int? maxAddTime,
@@ -347,7 +395,7 @@ class BiliUserWebApiService {
       // 0 = 全部，2 = 已观看，是的没有未观看只有已观看
       'viewed': onlyUnwatched ? 2 : 0,
       'key': keyword ?? '',
-      'asc': order == GetWatchLaterOrderEnum.addTimeAsc,
+      'asc': order == .addTimeAsc,
       'need_split': true,
       'web_location': WebLocation.watchLater,
     };
@@ -362,59 +410,34 @@ class BiliUserWebApiService {
       params['arc_max_duration'] = maxDuration!;
     }
 
-    final account = await getAccount();
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/v2/history/toview/web',
-      queryParameters: buildWbiParams(params, account.wbiImgKey, account.wbiSubKey),
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/v2/history/toview/web',
+        queryParameters: buildWbiParams(params, account.wbiImgKey, account.wbiSubKey),
+      );
 
-    final List<dynamic> list = [];
-    for (final item in resp.data['data']['list']) {
-      if (item['is_pgc'] as bool) {
-        list.add(WatchLaterMovie.fromJson(item));
-      } else {
-        list.add(WatchLaterVideo.fromJson(item));
-      }
-    }
+      _checkResponse(resp);
 
-    return Result.ok(GetWatchLaterResponse(list: list, total: resp.data['data']['count'] as int));
-  }
-
-  /// 检查视频是否位于稍后观看
-  ///
-  /// 由于b站并没有直接实现此功能的接口，所以此函数实际使用 [getWatchLater] 来实现，
-  /// 且此接口只根据第一页搜索结果判断，如果视频名过于常见可能会导致本位于稍后观看的视频在此接口返回 false
-  Future<Result<bool>> isExistInWatchLater({required String id, required String title}) async {
-    assert(id.isNotEmpty);
-    assert(title.isNotEmpty);
-
-    final result = await getWatchLater(keyword: title);
-    switch (result) {
-      case Ok(:final value):
-        bool isExist = false;
-        for (final item in value.list) {
-          if (item is WatchLaterVideo) {
-            if (item.id == id && item.title == title) {
-              isExist = true;
-              break;
-            }
-          } else if (item is WatchLaterMovie) {
-            if (item.id == id && item.title == title) {
-              isExist = true;
-              break;
-            }
-          } else {
-            _log.w('Unknown item type: ${item.runtimeType}');
-          }
+      final List<dynamic> list = [];
+      for (final item in resp.data['data']['list']) {
+        if (item['is_pgc'] as bool) {
+          list.add(WatchLaterMovie.fromJson(item));
+        } else {
+          list.add(WatchLaterVideo.fromJson(item));
         }
-        return Result.ok(isExist);
-      case Error():
-        return Result.error(result.error);
+      }
+
+      return Result.ok(
+        GetWatchLaterResponse(
+          list: list,
+          total: resp.data['data']['count'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
   }
 
@@ -426,29 +449,31 @@ class BiliUserWebApiService {
     assert(ids.isNotEmpty);
     assert(targetFavoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/toview/copy',
-      queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-      data: FormData.fromMap(
-        {
-          'resources': ids.join(','),
-          'tar_media_id': targetFavoritesId,
-          'csrf': account.biliJct,
-        },
-        ListFormat.multi,
-        false,
-        generateBoundaryName(),
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/toview/copy',
+        queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
+        data: FormData.fromMap(
+          {
+            'resources': ids.join(','),
+            'tar_media_id': targetFavoritesId,
+            'csrf': account.biliJct,
+          },
+          ListFormat.multi,
+          false,
+          generateBoundaryName(),
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 将项目从稍后观看移动到收藏夹，支持批量操作
@@ -459,77 +484,83 @@ class BiliUserWebApiService {
     assert(ids.isNotEmpty);
     assert(targetFavoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/toview/move',
-      queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-      data: FormData.fromMap(
-        {
-          'resources': ids.join(','),
-          'tar_media_id': targetFavoritesId,
-          'csrf': account.biliJct,
-        },
-        ListFormat.multi,
-        false,
-        generateBoundaryName(),
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/toview/move',
+        queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
+        data: FormData.fromMap(
+          {
+            'resources': ids.join(','),
+            'tar_media_id': targetFavoritesId,
+            'csrf': account.biliJct,
+          },
+          ListFormat.multi,
+          false,
+          generateBoundaryName(),
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 清理稍后观看所有已看完内容
   Future<Result<void>> clearWatchedInWatchLater() async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/toview/clear',
-      queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-      data: FormData.fromMap(
-        {
-          'clean_type': 2,
-          'csrf': account.biliJct,
-        },
-        ListFormat.multi,
-        false,
-        generateBoundaryName(),
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/toview/clear',
+        queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
+        data: FormData.fromMap(
+          {
+            'clean_type': 2,
+            'csrf': account.biliJct,
+          },
+          ListFormat.multi,
+          false,
+          generateBoundaryName(),
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 添加视频到稍后观看
-  Future<Result<void>> addVideoToWatchLater({required String videoId}) async {
+  Future<Result<void>> addVideoToWatchLater(String videoId) async {
     assert(videoId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/toview/add',
-      data: FormData.fromMap({
-        'aid': videoId,
-        'csrf': account.biliJct,
-      }),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/toview/add',
+        data: FormData.fromMap({
+          'aid': videoId,
+          'csrf': account.biliJct,
+        }),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 从稍后观看中删除视频，支持批量操作
@@ -537,31 +568,33 @@ class BiliUserWebApiService {
   /// 与观看历史所使用的 id 不同，此处为常规 `videoId`
   ///
   /// 你可能会好奇番剧在这里是怎么处理的，详见开发文档 [B站番剧部分的工作原理]
-  Future<Result<void>> deleteVideosFromWatchLater({required List<String> ids}) async {
+  Future<Result<void>> deleteVideosFromWatchLater(List<String> ids) async {
     assert(ids.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/toview/v2/dels',
-      queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-      data: FormData.fromMap(
-        {
-          'resources': ids.join(','),
-          'csrf': account.biliJct,
-        },
-        ListFormat.multi,
-        false,
-        generateBoundaryName(),
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/toview/v2/dels',
+        queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
+        data: FormData.fromMap(
+          {
+            'resources': ids.join(','),
+            'csrf': account.biliJct,
+          },
+          ListFormat.multi,
+          false,
+          generateBoundaryName(),
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取收藏夹列表，此接口返回封面图，但不能一次性返回
@@ -570,46 +603,43 @@ class BiliUserWebApiService {
   ///
   /// 使用 ps+pn+total 分页
   Future<Result<GetFavoritesResponse>> getFavoritesList({
-    String? userId,
+    required String userId,
     int pn = 1,
     int ps = 20,
   }) async {
+    assert(userId.isNotEmpty);
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    String? uid = userId;
-    if (uid == null) {
-      final account = await getAccount();
-      uid = account.userId;
+
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/v3/fav/folder/created/list',
+        queryParameters: {
+          'up_mid': userId,
+          'pn': pn,
+          'ps': ps,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final List<Favorites> list = [];
+      for (final item in resp.data['data']['list']) {
+        list.add(Favorites.fromJson(item));
+      }
+
+      return Result.ok(
+        GetFavoritesResponse(
+          list: list,
+          total: resp.data['data']['count'] as int,
+          hasMore: resp.data['data']['has_more'] as bool,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-    assert(uid.isNotEmpty);
-
-    final resp = await client.get(
-      'https://api.bilibili.com/x/v3/fav/folder/created/list',
-      queryParameters: {
-        'up_mid': uid,
-        'pn': pn,
-        'ps': ps,
-        'web_location': WebLocation.userSpace,
-      },
-    );
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    final List<Favorites> list = [];
-    for (final item in resp.data['data']['list']) {
-      list.add(Favorites.fromJson(item));
-    }
-
-    return Result.ok(
-      GetFavoritesResponse(
-        list: list,
-        total: resp.data['data']['count'] as int,
-        hasMore: resp.data['data']['has_more'] as bool,
-      ),
-    );
   }
 
   /// 获取收藏夹列表，此接口不返回封面图，但可一次性返回全部
@@ -618,44 +648,44 @@ class BiliUserWebApiService {
   ///
   /// 携带 [videoId] 时会在第二个返回值中返回包含该视频的收藏夹 id
   Future<Result<GetFavoritesSimpleListResponse>> getFavoritesSimpleList({
-    String? userId,
+    required String userId,
     String? videoId,
   }) async {
+    assert(userId.isNotEmpty);
     final client = await getClient();
 
-    String? uid = userId;
-    if (userId == null) {
-      final account = await getAccount();
-      uid = account.userId;
-    }
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/v3/fav/folder/created/list-all',
+        queryParameters: {
+          'type': 2,
+          'rid': videoId ?? '',
+          'up_mid': userId,
+          'web_location': '333.788',
+        },
+      );
 
-    assert(uid != null && uid.isNotEmpty);
+      _checkResponse(resp);
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/v3/fav/folder/created/list-all',
-      queryParameters: {
-        'type': 2,
-        'rid': videoId ?? '',
-        'up_mid': uid,
-        'web_location': '333.788',
-      },
-    );
+      final List<SimpleFavorites> list = [];
+      final List<String> ids = [];
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    final List<SimpleFavorites> list = [];
-    final List<String> ids = [];
-
-    for (final item in resp.data['data']['list']) {
-      list.add(SimpleFavorites.fromJson(item));
-      if (item['fav_state'] == 1) {
-        ids.add(item['id'].toString());
+      for (final item in resp.data['data']['list']) {
+        list.add(SimpleFavorites.fromJson(item));
+        if (item['fav_state'] == 1) {
+          ids.add(item['id'].toString());
+        }
       }
-    }
 
-    return Result.ok(GetFavoritesSimpleListResponse(list: list, ids: ids));
+      return Result.ok(
+        GetFavoritesSimpleListResponse(
+          list: list,
+          ids: ids,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 创建收藏夹
@@ -667,26 +697,28 @@ class BiliUserWebApiService {
   }) async {
     assert(name.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/folder/add',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'title': name,
-        'intro': description,
-        'privacy': isPrivate ? 1 : 0,
-        'cover': coverUrl ?? '',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/folder/add',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'title': name,
+          'intro': description,
+          'privacy': isPrivate ? 1 : 0,
+          'cover': coverUrl ?? '',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(Favorites.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(Favorites.fromJson(resp.data['data']));
   }
 
   /// 修改收藏夹，必须带上全量的参数请求，而不是只携带修改过的参数
@@ -699,75 +731,81 @@ class BiliUserWebApiService {
   }) async {
     assert(favoritesId.isNotEmpty && name.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/folder/add',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'media_id': favoritesId,
-        'title': name,
-        'intro': description,
-        'privacy': isPrivate ? 1 : 0,
-        'cover': coverUrl ?? '',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/folder/add',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'media_id': favoritesId,
+          'title': name,
+          'intro': description,
+          'privacy': isPrivate ? 1 : 0,
+          'cover': coverUrl ?? '',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 删除收藏夹
-  Future<Result<void>> deleteFavorites({required String favoritesId}) async {
+  Future<Result<void>> deleteFavorites(String favoritesId) async {
     assert(favoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/folder/del',
-      options: Options(
-        contentType: 'multipart/form-data; boundary=${generateBoundaryName2()}',
-      ),
-      data: FormData.fromMap({
-        'media_ids': favoritesId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      }),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/folder/del',
+        options: Options(
+          contentType: 'multipart/form-data; boundary=${generateBoundaryName2()}',
+        ),
+        data: FormData.fromMap({
+          'media_ids': favoritesId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        }),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 重新排序收藏夹
   Future<Result<void>> reorderFavorites({
     required List<String> ids,
   }) async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/folder/sort',
-      queryParameters: {
-        'sort': ids.join(','),
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/folder/sort',
+        queryParameters: {
+          'sort': ids.join(','),
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取收藏夹详细信息及其内容列表
@@ -786,45 +824,53 @@ class BiliUserWebApiService {
     required String favoritesId,
     int pn = 1,
     int ps = 20,
-    GetFavoritesDetailOrderEnum order = GetFavoritesDetailOrderEnum.favoriteTimeDesc,
+    GetFavoritesDetailOrderEnum order = .favoriteTimeDesc,
     String? keyword,
-    GetFavoritesDetailScopeEnum scope = GetFavoritesDetailScopeEnum.local,
+    GetFavoritesDetailScopeEnum scope = .local,
   }) async {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/v3/fav/resource/list',
-      queryParameters: {
-        'media_id': favoritesId,
-        'pn': pn,
-        'ps': ps,
-        'keyword': keyword ?? '',
-        'order': order.value,
-        // 为1时为在全部收藏夹中搜索
-        'type': scope.value,
-        'tid': 0,
-        'platform': 'web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/v3/fav/resource/list',
+        queryParameters: {
+          'media_id': favoritesId,
+          'pn': pn,
+          'ps': ps,
+          'keyword': keyword ?? '',
+          'order': order.value,
+          // 为1时为在全部收藏夹中搜索
+          'type': scope.value,
+          'tid': 0,
+          'platform': 'web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    final List<dynamic> list = [];
-    for (final item in resp.data['data']['medias'] ?? []) {
-      if (item['ugc'] != null) {
-        // 视频
-        list.add(FavoritesVideo.fromJson(item));
-      } else {
-        // 番剧
-        list.add(FavoritesMovie.fromJson(item));
+      _checkResponse(resp);
+
+      final List<dynamic> list = [];
+      for (final item in resp.data['data']['medias'] ?? []) {
+        if (item['ugc'] != null) {
+          // 视频
+          list.add(FavoritesVideo.fromJson(item));
+        } else {
+          // 番剧
+          list.add(FavoritesMovie.fromJson(item));
+        }
       }
-    }
 
-    return Result.ok(GetFavoritesDetailResponse.fromJson(resp.data['data'], list));
+      return Result.ok(
+        GetFavoritesDetailResponse.fromJson(
+          resp.data['data'],
+          list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 将收藏夹内容复制到另一个收藏夹
@@ -841,27 +887,29 @@ class BiliUserWebApiService {
     assert(ids.isNotEmpty);
     assert(sourceFavoritesId.isNotEmpty && targetFavoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/resource/copy',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'resources': ids.join(','),
-        'src_media_id': sourceFavoritesId,
-        'tar_media_id': targetFavoritesId,
-        'mid': account.userId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/resource/copy',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'resources': ids.join(','),
+          'src_media_id': sourceFavoritesId,
+          'tar_media_id': targetFavoritesId,
+          'mid': account.userId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 将收藏夹内容移动到另一个收藏夹
@@ -878,27 +926,29 @@ class BiliUserWebApiService {
     assert(ids.isNotEmpty);
     assert(sourceFavoritesId.isNotEmpty && targetFavoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/resource/move',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'resources': ids.join(','),
-        'src_media_id': sourceFavoritesId,
-        'tar_media_id': targetFavoritesId,
-        'mid': account.userId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/resource/move',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'resources': ids.join(','),
+          'src_media_id': sourceFavoritesId,
+          'tar_media_id': targetFavoritesId,
+          'mid': account.userId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 从收藏夹中删除内容
@@ -911,47 +961,51 @@ class BiliUserWebApiService {
     required String favoritesId,
     required List<String> ids,
   }) async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/resource/batch-del',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'resources': ids.join(','),
-        'media_id': favoritesId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/resource/batch-del',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'resources': ids.join(','),
+          'media_id': favoritesId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 清理收藏夹所有失效内容
-  Future<Result<void>> clearInvalidInFavorites({required String favoritesId}) async {
-    final account = await _getLoginedAccount();
+  Future<Result<void>> clearInvalidInFavorites(String favoritesId) async {
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/resource/clean',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'media_id': favoritesId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/resource/clean',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'media_id': favoritesId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 按指定收藏夹添加或删除内容
@@ -965,30 +1019,32 @@ class BiliUserWebApiService {
     assert(videoId.isNotEmpty);
     assert((addIds?.isNotEmpty ?? false) || (deleteIds?.isNotEmpty ?? false));
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/resource/deal',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'rid': videoId,
-        'type': 2,
-        'add_media_ids': addIds?.join(',') ?? '',
-        'del_media_ids': deleteIds?.join(',') ?? '',
-        'platform': 'web',
-        'from_spmid': '',
-        'spmid': '333.788.0.0',
-        'statistics': '{"appId":100,"platform":5}',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/resource/deal',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'rid': videoId,
+          'type': 2,
+          'add_media_ids': addIds?.join(',') ?? '',
+          'del_media_ids': deleteIds?.join(',') ?? '',
+          'platform': 'web',
+          'from_spmid': '',
+          'spmid': '333.788.0.0',
+          'statistics': '{"appId":100,"platform":5}',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取收藏文章列表，与收藏夹不同，文章无法获取他人收藏，B站就是这样设计的
@@ -1001,62 +1057,68 @@ class BiliUserWebApiService {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      // 目前新版接口是下面这个，但新接口只有 content，没有 title，也没有失效内容，故使用老接口
-      // 'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/feed/fav',
-      'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/favlist',
-      queryParameters: {
-        'page': pn,
-        'page_size': ps,
-        'timezone_offset': '-480',
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        // 目前新版接口是下面这个，但新接口只有 content，没有 title，也没有失效内容，故使用老接口
+        // 'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/feed/fav',
+        'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/favlist',
+        queryParameters: {
+          'page': pn,
+          'page_size': ps,
+          'timezone_offset': '-480',
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final list = (resp.data['data']['items'] as List).map((v) => FavoriteArticle.fromJson(v));
+      return Result.ok(
+        GetFavoriteArticlesResponse(
+          total: resp.data['data']['total'] as int,
+          hasMore: resp.data['data']['has_more'] as bool,
+          list: list.toList(),
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final list = (resp.data['data']['items'] as List).map((v) => FavoriteArticle.fromJson(v));
-    return Result.ok(
-      GetFavoriteArticlesResponse(
-        total: resp.data['data']['total'] as int,
-        hasMore: resp.data['data']['has_more'] as bool,
-        list: list.toList(),
-      ),
-    );
   }
 
   /// 删除收藏的动态
   ///
   /// 不支持批量，虽然B站APP端支持但我扒不出来接口
-  Future<Result<void>> deleteFavoritePost({required String postId}) async {
+  Future<Result<void>> deleteFavoritePost(String postId) async {
     assert(postId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/community/cosmo/interface/simple_action',
-      options: Options(contentType: 'application/json'),
-      queryParameters: {
-        'csrf': account.biliJct,
-      },
-      data: jsonEncode({
-        'meta': {'spmid': '333.999.0.0', 'from': 'unknown'},
-        'entity': {
-          'object_id_str': postId,
-          'type': {'biz': 2},
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/community/cosmo/interface/simple_action',
+        options: Options(contentType: 'application/json'),
+        queryParameters: {
+          'csrf': account.biliJct,
         },
-        'action': 4,
-      }),
-    );
+        data: jsonEncode({
+          'meta': {'spmid': '333.999.0.0', 'from': 'unknown'},
+          'entity': {
+            'object_id_str': postId,
+            'type': {'biz': 2},
+          },
+          'action': 4,
+        }),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取所有订阅的收藏和播放列表
@@ -1074,84 +1136,90 @@ class BiliUserWebApiService {
 
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/v3/fav/folder/collected/list',
-      queryParameters: {
-        'pn': pn,
-        'ps': ps,
-        'up_mid': userId,
-        'platform': 'web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/v3/fav/folder/collected/list',
+        queryParameters: {
+          'pn': pn,
+          'ps': ps,
+          'up_mid': userId,
+          'platform': 'web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+      _checkResponse(resp);
 
-    final List<dynamic> list = [];
-    for (final item in resp.data['data']['list']) {
-      if (item['type'] == 11) {
-        list.add(SubscribedFavorites.fromJson(item));
-      } else if (item['type'] == 21) {
-        list.add(SubscribedPlaylist.fromJson(item));
-      } else {
-        throw Exception('Unknown type: ${item['type']}');
+      final List<dynamic> list = [];
+      for (final item in resp.data['data']['list']) {
+        if (item['type'] == 11) {
+          list.add(SubscribedFavorites.fromJson(item));
+        } else if (item['type'] == 21) {
+          list.add(SubscribedPlaylist.fromJson(item));
+        } else {
+          throw Exception('Unknown type: ${item['type']}');
+        }
       }
-    }
 
-    return Result.ok(
-      GetSubscribedPlaylistsResponse(
-        total: resp.data['data']['count'] as int,
-        hasMore: resp.data['data']['has_more'] as bool,
-        list: list,
-      ),
-    );
+      return Result.ok(
+        GetSubscribedPlaylistsResponse(
+          total: resp.data['data']['count'] as int,
+          hasMore: resp.data['data']['has_more'] as bool,
+          list: list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 退订收藏夹
-  Future<Result<void>> unsubscribeFavorites({required String favoritesId}) async {
+  Future<Result<void>> unsubscribeFavorites(String favoritesId) async {
     assert(favoritesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/folder/unfav',
-      queryParameters: {
-        'media_id': favoritesId,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/folder/unfav',
+        queryParameters: {
+          'media_id': favoritesId,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 退订播放列表
-  Future<Result<void>> unsubscribePlaylist({required String playlistId}) async {
+  Future<Result<void>> unsubscribePlaylist(String playlistId) async {
     assert(playlistId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v3/fav/season/unfav',
-      queryParameters: {
-        'season_id': playlistId,
-        'platform': 'web',
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v3/fav/season/unfav',
+        queryParameters: {
+          'season_id': playlistId,
+          'platform': 'web',
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取所有订阅的剧集
@@ -1161,46 +1229,48 @@ class BiliUserWebApiService {
     String? userId,
     int pn = 1,
     int ps = 20,
-    GetSubscribedSeriesWatchStatusEnum watchStatus = GetSubscribedSeriesWatchStatusEnum.all,
+    GetSubscribedSeriesWatchStatusEnum watchStatus = .all,
   }) async {
     assert(userId == null || userId.isNotEmpty);
     assert(pn > 0 && ps > 0);
 
-    final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/bangumi/follow/list',
-      queryParameters: buildWbiParams(
-        {
-          'vmid': userId ?? account.userId,
-          'type': 1,
-          'pn': pn,
-          'ps': ps,
-          'playform': 'web',
-          'follow_status': watchStatus.value,
-          'web_location': WebLocation.userSpace,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/bangumi/follow/list',
+        queryParameters: buildWbiParams(
+          {
+            'vmid': userId ?? account.userId,
+            'type': 1,
+            'pn': pn,
+            'ps': ps,
+            'playform': 'web',
+            'follow_status': watchStatus.value,
+            'web_location': WebLocation.userSpace,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      final List<SubscribedSeries> list = [];
+      for (final item in resp.data['data']['list']) {
+        list.add(SubscribedSeries.fromJson(item));
+      }
+
+      return Result.ok(
+        GetSubscribedSeriesResponse(
+          total: resp.data['data']['total'] as int,
+          list: list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<SubscribedSeries> list = [];
-    for (final item in resp.data['data']['list']) {
-      list.add(SubscribedSeries.fromJson(item));
-    }
-
-    return Result.ok(
-      GetSubscribedSeriesResponse(
-        total: resp.data['data']['total'] as int,
-        list: list,
-      ),
-    );
   }
 
   /// 修改订阅剧集的观看状态
@@ -1210,95 +1280,101 @@ class BiliUserWebApiService {
   }) async {
     assert(seriesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/pgc/web/follow/status/update',
-      queryParameters: {
-        'season_id': seriesId,
-        'status': watchStatus.value,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/pgc/web/follow/status/update',
+        queryParameters: {
+          'season_id': seriesId,
+          'status': watchStatus.value,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 退订剧集
-  Future<Result<void>> unsubscribeSeries({required String seriesId}) async {
+  Future<Result<void>> unsubscribeSeries(String seriesId) async {
     assert(seriesId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/pgc/web/follow/del',
-      queryParameters: {
-        'season_id': seriesId,
-        'season_type': 1,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/pgc/web/follow/del',
+        queryParameters: {
+          'season_id': seriesId,
+          'season_type': 1,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取所有订阅的电影
   ///
   /// 使用 pn+ps+total 分页
   Future<Result<GetSubscribedMovieResponse>> getSubscribedMovie({
-    String? userId,
+    required String userId,
     int pn = 1,
     int ps = 20,
-    GetSubscribedSeriesWatchStatusEnum watchStatus = GetSubscribedSeriesWatchStatusEnum.all,
+    GetSubscribedSeriesWatchStatusEnum watchStatus = .all,
   }) async {
-    assert(userId == null || userId.isNotEmpty);
+    assert(userId.isNotEmpty);
     assert(pn > 0 && ps > 0);
 
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/bangumi/follow/list',
-      queryParameters: buildWbiParams(
-        {
-          'vmid': userId ?? account.userId,
-          'type': 2,
-          'pn': pn,
-          'ps': ps,
-          'playform': 'web',
-          'follow_status': watchStatus.value,
-          'web_location': WebLocation.userSpace,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/bangumi/follow/list',
+        queryParameters: buildWbiParams(
+          {
+            'vmid': userId,
+            'type': 2,
+            'pn': pn,
+            'ps': ps,
+            'playform': 'web',
+            'follow_status': watchStatus.value,
+            'web_location': WebLocation.userSpace,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      final List<SubscribedMovie> list = [];
+      for (final item in resp.data['data']['list']) {
+        list.add(SubscribedMovie.fromJson(item));
+      }
+
+      return Result.ok(
+        GetSubscribedMovieResponse(
+          total: resp.data['data']['total'] as int,
+          list: list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<SubscribedMovie> list = [];
-    for (final item in resp.data['data']['list']) {
-      list.add(SubscribedMovie.fromJson(item));
-    }
-
-    return Result.ok(
-      GetSubscribedMovieResponse(
-        total: resp.data['data']['total'] as int,
-        list: list,
-      ),
-    );
   }
 
   /// 修改订阅电影的观看状态
@@ -1308,46 +1384,50 @@ class BiliUserWebApiService {
   }) async {
     assert(movieId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/pgc/web/follow/status/update',
-      queryParameters: {
-        'season_id': movieId,
-        'status': watchStatus.value,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/pgc/web/follow/status/update',
+        queryParameters: {
+          'season_id': movieId,
+          'status': watchStatus.value,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 退订电影
-  Future<Result<void>> unsubscribeMovie({required String movieId}) async {
+  Future<Result<void>> unsubscribeMovie(String movieId) async {
     assert(movieId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/pgc/web/follow/del',
-      queryParameters: {
-        'season_id': movieId,
-        'season_type': 2,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/pgc/web/follow/del',
+        queryParameters: {
+          'season_id': movieId,
+          'season_type': 2,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取订阅的漫画
@@ -1365,103 +1445,115 @@ class BiliUserWebApiService {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.post(
-      'https://manga.bilibili.com/twirp/bookshelf.v1.Bookshelf/ListFavorite',
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8',
+
+    try {
+      await _getLoginedAccount();
+      final resp = await client.post(
+        'https://manga.bilibili.com/twirp/bookshelf.v1.Bookshelf/ListFavorite',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json;charset=UTF-8',
+          },
+        ),
+        queryParameters: {
+          'device': 'pc',
+          'platform': 'web',
+          // 这俩什么玩意懒得研究了
+          'nov': 27,
+          'a': 810,
         },
-      ),
-      queryParameters: {
-        'device': 'pc',
-        'platform': 'web',
-        // 这俩什么玩意懒得研究了
-        'nov': 27,
-        'a': 810,
-      },
-      data: jsonEncode({
-        'page_num': pn,
-        'page_size': ps,
-        'order': GetSubscribedMangaOrderEnum.subscribeDesc.value,
-        // 这个在网页端叫 "完成等免"，不知道是什么先做了再说
-        'wait_free': waitFree ? 1 : 0,
-      }),
-    );
+        data: jsonEncode({
+          'page_num': pn,
+          'page_size': ps,
+          'order': GetSubscribedMangaOrderEnum.subscribeDesc.value,
+          // 这个在网页端叫 "完成等免"，不知道是什么先做了再说
+          'wait_free': waitFree ? 1 : 0,
+        }),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      final List<SubscribedManga> list = [];
+      for (final item in resp.data['data']) {
+        list.add(SubscribedManga.fromJson(item));
+      }
+
+      return Result.ok(
+        GetSubscribedMangaResponse(
+          hasMore: list.isNotEmpty,
+          list: list,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<SubscribedManga> list = [];
-    for (final item in resp.data['data']) {
-      list.add(SubscribedManga.fromJson(item));
-    }
-
-    return Result.ok(
-      GetSubscribedMangaResponse(
-        hasMore: list.isNotEmpty,
-        list: list,
-      ),
-    );
   }
 
   /// 退订漫画，支持批量
-  Future<Result<void>> unsubscribeManga({required List<String> mangaIds}) async {
+  Future<Result<void>> unsubscribeManga(List<String> mangaIds) async {
     assert(mangaIds.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.post(
-      'https://manga.bilibili.com/twirp/bookshelf.v1.Bookshelf/DeleteFavorite',
-      queryParameters: {
-        'device': 'pc',
-        'platform': 'web',
-        'nov': 27,
-        'a': 810,
-      },
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8',
+
+    try {
+      await _getLoginedAccount();
+      final resp = await client.post(
+        'https://manga.bilibili.com/twirp/bookshelf.v1.Bookshelf/DeleteFavorite',
+        queryParameters: {
+          'device': 'pc',
+          'platform': 'web',
+          'nov': 27,
+          'a': 810,
         },
-      ),
-      data: jsonEncode({
-        'comic_ids': mangaIds.join(','),
-      }),
-    );
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json;charset=UTF-8',
+          },
+        ),
+        data: jsonEncode({
+          'comic_ids': mangaIds.join(','),
+        }),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取对视频的互动信息
-  Future<Result<VideoInteraction>> getVideoInteraction({required String videoId}) async {
+  Future<Result<VideoInteraction>> getVideoInteraction(String videoId) async {
     assert(videoId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/archive/relation',
-      queryParameters: {
-        'aid': videoId,
-        'bvid': av2bv(videoId),
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/archive/relation',
+        queryParameters: {
+          'aid': videoId,
+          'bvid': av2bv(videoId),
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        VideoInteraction(
+          hasLiked: resp.data['data']['like'],
+          hasDisliked: resp.data['data']['dislike'],
+          hasFavorited: resp.data['data']['favorite'],
+          coinCount: resp.data['data']['coin'],
+          hasFollowed: resp.data['data']['attention'],
+          isSubscribedCollection: resp.data['data']['season_fav'],
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      VideoInteraction(
-        hasLiked: resp.data['data']['like'],
-        hasDisliked: resp.data['data']['dislike'],
-        hasFavorited: resp.data['data']['favorite'],
-        coinCount: resp.data['data']['coin'],
-        hasFollowed: resp.data['data']['attention'],
-        isSubscribedCollection: resp.data['data']['season_fav'],
-      ),
-    );
   }
 
   /// 关注/取消关注用户
@@ -1471,31 +1563,33 @@ class BiliUserWebApiService {
   }) async {
     assert(userId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/modify',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {'statistics': '{"appId":100,"platform":5}'},
-      data: {
-        // 此函数模拟从用户主页关注/取消关注用户，如果需要模拟从其他地方关注，比如视频详情页，需要成套替换下面的参数！
-        'fid': userId,
-        'act': follow ? 1 : 2,
-        're_src': 11,
-        'gaia_source': 'main_web',
-        'spmid': WebLocation.userSpace,
-        'extend_content': '{"entity":"user","entity_id":$userId}',
-        'is_from_frontend_component': true,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/modify',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {'statistics': '{"appId":100,"platform":5}'},
+        data: {
+          // 此函数模拟从用户主页关注/取消关注用户，如果需要模拟从其他地方关注，比如视频详情页，需要成套替换下面的参数！
+          'fid': userId,
+          'act': follow ? 1 : 2,
+          're_src': 11,
+          'gaia_source': 'main_web',
+          'spmid': WebLocation.userSpace,
+          'extend_content': '{"entity":"user","entity_id":$userId}',
+          'is_from_frontend_component': true,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取用户最后点赞的20个视频
@@ -1503,41 +1597,42 @@ class BiliUserWebApiService {
   /// 未传入 [userId] 则获取当前登录用户的点赞视频
   ///
   /// 返回值可能为 [LikedVideo] | [LikedMovie] | [LikedSeries]
-  Future<Result<List<dynamic>>> getLikedVideos({String? userId}) async {
-    assert(userId == null || userId.isNotEmpty);
-
-    final uid = switch (userId) {
-      null => (await getAccount()).userId,
-      _ => userId,
-    };
+  Future<Result<List<dynamic>>> getLikedVideos(String userId) async {
+    assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/like/video',
-      queryParameters: {'vmid': uid, 'web_location': WebLocation.userSpace},
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/like/video',
+        queryParameters: {
+          'vmid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    final List<dynamic> list = [];
-    for (final item in resp.data['data']['list']) {
-      if (item['resource_type'] == 'ugc') {
-        // 视频
-        list.add(LikedVideo.fromJson(item));
-      } else if (item['redirect_url'].contains('?theme=movie')) {
-        // 电影
-        list.add(LikedMovie.fromJson(item));
-      } else if (item['resource_type'] == 'ogv') {
-        // 剧集
-        list.add(LikedSeries.fromJson(item));
-      } else {
-        _log.w('Unknown resource type: ${item['resource_type']}');
+      _checkResponse(resp);
+
+      final List<dynamic> list = [];
+      for (final item in resp.data['data']['list']) {
+        if (item['resource_type'] == 'ugc') {
+          // 视频
+          list.add(LikedVideo.fromJson(item));
+        } else if (item['redirect_url'].contains('?theme=movie')) {
+          // 电影
+          list.add(LikedMovie.fromJson(item));
+        } else if (item['resource_type'] == 'ogv') {
+          // 剧集
+          list.add(LikedSeries.fromJson(item));
+        } else {
+          _log.w('Unknown resource type: ${item['resource_type']}');
+        }
       }
-    }
 
-    return Result.ok(list);
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 获取用户最后投币的20个视频
@@ -1545,184 +1640,202 @@ class BiliUserWebApiService {
   /// 未传入 [userId] 则获取当前登录用户的投币视频
   ///
   /// 返回值可能为 [LikedVideo] | [LikedMovie] | [LikedSeries]
-  Future<Result<List<dynamic>>> getCoinedVideos({String? userId}) async {
-    assert(userId == null || userId.isNotEmpty);
-
-    final uid = switch (userId) {
-      null => (await getAccount()).userId,
-      _ => userId,
-    };
+  Future<Result<List<dynamic>>> getCoinedVideos(String userId) async {
+    assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/coin/video',
-      queryParameters: {'vmid': uid, 'web_location': WebLocation.userSpace},
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/coin/video',
+        queryParameters: {
+          'vmid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    final List<dynamic> list = [];
-    for (final item in resp.data['data']) {
-      if (item['resource_type'] == 'ugc') {
-        // 视频
-        list.add(LikedVideo.fromJson(item));
-      } else if (item['redirect_url'].contains('?theme=movie')) {
-        // 电影
-        list.add(LikedMovie.fromJson(item));
-      } else if (item['resource_type'] == 'ogv') {
-        // 剧集
-        list.add(LikedSeries.fromJson(item));
-      } else {
-        _log.w('Unknown resource type: ${item['resource_type']}');
+      _checkResponse(resp);
+
+      final List<dynamic> list = [];
+      for (final item in resp.data['data']) {
+        if (item['resource_type'] == 'ugc') {
+          // 视频
+          list.add(LikedVideo.fromJson(item));
+        } else if (item['redirect_url'].contains('?theme=movie')) {
+          // 电影
+          list.add(LikedMovie.fromJson(item));
+        } else if (item['resource_type'] == 'ogv') {
+          // 剧集
+          list.add(LikedSeries.fromJson(item));
+        } else {
+          _log.w('Unknown resource type: ${item['resource_type']}');
+        }
       }
-    }
 
-    return Result.ok(list);
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   /// 获取对文章的互动信息
-  Future<Result<ArticleInteraction>> getArticleInteraction({required String articleId}) async {
+  Future<Result<ArticleInteraction>> getArticleInteraction(String articleId) async {
     assert(articleId.isNotEmpty);
 
-    final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/article/viewinfo',
-      queryParameters: buildWbiParams(
-        {
-          'id': articleId,
-          'mobi_app': 'pc',
-          'from': 'web',
-          'gaia_source': 'main_web',
-          'web_location': WebLocation.articleDetail,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/article/viewinfo',
+        queryParameters: buildWbiParams(
+          {
+            'id': articleId,
+            'mobi_app': 'pc',
+            'from': 'web',
+            'gaia_source': 'main_web',
+            'web_location': WebLocation.articleDetail,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    // if (resp.data['code'] == -404) {
-    //   throw NotFoundException();
-    // }
+      _checkResponse(resp);
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      return Result.ok(
+        ArticleInteraction(
+          hasLiked: resp.data['data']['like'] == 1,
+          hasFavorited: resp.data['data']['favorite'],
+          hasFollowed: resp.data['data']['attention'],
+          coinCount: resp.data['data']['coin'],
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      ArticleInteraction(
-        hasLiked: resp.data['data']['like'] == 1,
-        hasFavorited: resp.data['data']['favorite'],
-        hasFollowed: resp.data['data']['attention'],
-        coinCount: resp.data['data']['coin'],
-      ),
-    );
   }
 
-  Future<Result<void>> reportArticleHistory({required String articleId}) async {
+  Future<Result<void>> reportArticleHistory(String articleId) async {
     assert(articleId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/v2/history/report',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'aid': articleId,
-        'type': 5,
-        'dt': 2,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/v2/history/report',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'aid': articleId,
+          'type': 5,
+          'dt': 2,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   Future<Result<int>> getUnreadPostCount() async {
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/dynamic/entrance',
-      queryParameters: {
-        'alltype_offset': 0,
-        'video_offset': 0,
-        'article_offset': 0,
-        'web_location': WebLocation.home,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/dynamic/entrance',
+        queryParameters: {
+          'alltype_offset': 0,
+          'video_offset': 0,
+          'article_offset': 0,
+          'web_location': WebLocation.home,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(resp.data['data']['update_info']['item']['count'] as int);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(resp.data['data']['update_info']['item']['count'] as int);
   }
 
   /// 创建用户组
   ///
   /// 创建成功返回新创建的用户组
-  Future<Result<UserGroup>> createUserGroup({required String name}) async {
+  Future<Result<UserGroup>> createUserGroup(String name) async {
     assert(name.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/tag/create',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
-      data: {
-        'tag': name,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/tag/create',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
+        data: {
+          'tag': name,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(
+        UserGroup(
+          id: resp.data['data']['tagid'].toString(),
+          name: name,
+          count: 0,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      UserGroup(
-        id: resp.data['data']['tagid'].toString(),
-        name: name,
-        count: 0,
-      ),
-    );
   }
 
   /// 获取全部用户组
   Future<Result<List<UserGroup>>> getGroupList() async {
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/tags',
-      queryParameters: {
-        // 开不开没区别，不知道有什么用
-        'only_master': false,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/tags',
+        queryParameters: {
+          // 开不开没区别，不知道有什么用
+          'only_master': false,
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    final List<UserGroup> list = [];
-    for (final item in resp.data['data']) {
-      list.add(UserGroup(id: item['tagid'].toString(), name: item['name'], count: item['count']));
+      _checkResponse(resp);
+
+      final List<UserGroup> list = [];
+      for (final item in resp.data['data']) {
+        list.add(
+          UserGroup(
+            id: item['tagid'].toString(),
+            name: item['name'],
+            count: item['count'],
+          ),
+        );
+      }
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
     }
-    return Result.ok(list);
   }
 
-  /// 获取指定用户组内的用户
+  /// 获取用户组内的用户
   ///
-  /// [groupId] 为 0 时返回未在任何分组内的用户，为 -10 时返回特别关注用户，为 -20 时返回悄悄关注用户
+  /// [groupId] 为 0 时返回未在任何分组内的用户，
+  /// -10 为返回特别关注用户，
+  /// -20 为返回悄悄关注用户
   ///
   /// 使用 pn+ps 分页，此接口不返回 total，需要自行提前调用 [getGroupList] 获取总数然后自行计算
   Future<Result<List<FollowingUser>>> getUsersInGroup({
@@ -1733,96 +1846,100 @@ class BiliUserWebApiService {
     assert(groupId.isNotEmpty);
     assert(pn > 0 && ps > 0);
 
-    final account = await getAccount();
     final client = await getClient();
 
-    late final List<dynamic> data;
-
     if (groupId == '-20') {
-      final resp = await client.get(
-        'https://api.bilibili.com/x/relation/whispers',
-        queryParameters: {
-          'pn': pn,
-          'ps': ps,
-          'web_location': WebLocation.userSpace,
-        },
-      );
+      try {
+        await _getLoginedAccount();
+        final resp = await client.get(
+          'https://api.bilibili.com/x/relation/whispers',
+          queryParameters: {
+            'pn': pn,
+            'ps': ps,
+            'web_location': WebLocation.userSpace,
+          },
+        );
 
-      if (resp.data['code'] != 0) {
-        return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+        _checkResponse(resp);
+
+        return Result.ok((resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList());
+      } catch (e) {
+        return _handleError(e);
       }
-
-      data = resp.data['data']['list'] as List;
     } else {
-      final resp = await client.get(
-        'https://api.bilibili.com/x/relation/tag',
-        queryParameters: {
-          'tagid': groupId,
-          'pn': pn,
-          'ps': ps,
-          'mid': account.userId,
-          'web_location': WebLocation.userSpace,
-        },
-      );
+      try {
+        final account = await _getLoginedAccount();
+        final resp = await client.get(
+          'https://api.bilibili.com/x/relation/tag',
+          queryParameters: {
+            'tagid': groupId,
+            'pn': pn,
+            'ps': ps,
+            'mid': account.userId,
+            'web_location': WebLocation.userSpace,
+          },
+        );
 
-      if (resp.data['code'] != 0) {
-        return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+        _checkResponse(resp);
+
+        return Result.ok((resp.data['data'] as List).map((v) => FollowingUser.fromJson(v)).toList());
+      } catch (e) {
+        return _handleError(e);
       }
-
-      data = resp.data['data'] as List;
     }
-
-    return Result.ok(data.map((v) => FollowingUser.fromJson(v)).toList());
   }
 
-  /// 获取指定用户正在关注的用户，非当前用户只能获取前100人，此后列表为空
+  /// 获取用户正在关注的用户，非当前用户只能获取前100人，此后列表为空
   ///
   /// 使用 pn+ps+total 分页
   Future<Result<GetFollowingUsersResponse>> getFollowingUsers({
     required String userId,
     int pn = 1,
     int ps = 24, // ps 对齐网页端默认 24
-    GetFollowingUsersOrderEnum order = GetFollowingUsersOrderEnum.followTimeDesc,
+    GetFollowingUsersOrderEnum order = .followTimeDesc,
   }) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/followings',
-      queryParameters: {
-        'order': switch (order) {
-          .followTimeAsc => 'asc',
-          .viewTimeAsc => 'asc',
-          .followTimeDesc => 'desc',
-          .viewTimeDesc => 'desc',
-        },
-        'order_type': switch (order) {
-          .followTimeAsc => '',
-          .followTimeDesc => '',
-          .viewTimeAsc => 'attention',
-          .viewTimeDesc => 'attention',
-        },
-        'vmid': userId,
-        'pn': pn,
-        'ps': ps,
-        'gaia_source': 'main_web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/followings',
+        queryParameters: {
+          'order': switch (order) {
+            .followTimeAsc => 'asc',
+            .viewTimeAsc => 'asc',
+            .followTimeDesc => 'desc',
+            .viewTimeDesc => 'desc',
+          },
+          'order_type': switch (order) {
+            .followTimeAsc => '',
+            .followTimeDesc => '',
+            .viewTimeAsc => 'attention',
+            .viewTimeDesc => 'attention',
+          },
+          'vmid': userId,
+          'pn': pn,
+          'ps': ps,
+          'gaia_source': 'main_web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetFollowingUsersResponse(
+          list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
+          total: resp.data['data']['total'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetFollowingUsersResponse(
-        list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
-        total: resp.data['data']['total'] as int,
-      ),
-    );
   }
 
-  /// 在正在关注的用户中搜索
+  /// 在关注的用户中搜索
   ///
   /// 使用 pn+ps+total 分页
   Future<Result<GetFollowingUsersResponse>> getFollowingUsersWithKeyword({
@@ -1836,54 +1953,59 @@ class BiliUserWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/followings/search',
-      queryParameters: {
-        // 虽然有排序相关的参数，但实际上这些参数没有效果
-        'order': 'desc',
-        'order_type': '',
-        // 虽然有这个参数，但实测在非当前登录账户的关注列表搜索时均返回 `{"code":22115,"message":"用户已设置隐私","ttl":1}`
-        'vmid': account.userId,
-        'pn': pn,
-        'ps': ps,
-        'name': keyword,
-        'gaia_source': 'main_web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/followings/search',
+        queryParameters: {
+          // 虽然有排序相关的参数，但实际上这些参数没有效果
+          'order': 'desc',
+          'order_type': '',
+          // 虽然有这个参数，但实测在非当前登录账户的关注列表搜索时均返回 `{"code":22115,"message":"用户已设置隐私","ttl":1}`
+          'vmid': account.userId,
+          'pn': pn,
+          'ps': ps,
+          'name': keyword,
+          'gaia_source': 'main_web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetFollowingUsersResponse(
+          list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
+          total: resp.data['data']['total'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetFollowingUsersResponse(
-        list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
-        total: resp.data['data']['total'] as int,
-      ),
-    );
   }
 
-  /// 获取指定用户所在的全部用户组
-  Future<Result<List<String>>> getGroupIdsWithUser({required String userId}) async {
+  /// 获取用户所在的全部用户组
+  Future<Result<List<String>>> getGroupIdsWithUser(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation',
-      queryParameters: {
-        'fid': userId,
-        'web_location': WebLocation.userSpace,
-        'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation',
+        queryParameters: {
+          'fid': userId,
+          'web_location': WebLocation.userSpace,
+          'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
+        },
+      );
+
+      _checkResponse(resp);
+
+      if (resp.data['data']['tag'] == null) return Result.ok(const []);
+      return Result.ok((resp.data['data']['tag'] as List).map((v) => v.toString()).toList());
+    } catch (e) {
+      return _handleError(e);
     }
-
-    if (resp.data['data']['tag'] == null) return Result.ok(const []);
-    return Result.ok((resp.data['data']['tag'] as List).map((v) => v.toString()).toList());
   }
 
   /// 设置指定用户到指定组
@@ -1895,76 +2017,85 @@ class BiliUserWebApiService {
   }) async {
     assert(userIds.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/tags/addUsers',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
-      data: {
-        'fids': userIds.join(','),
-        'tagids': groupIds == null || groupIds.isEmpty ? 0 : groupIds.join(','),
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/tags/addUsers',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
+        data: {
+          'fids': userIds.join(','),
+          'tagids': groupIds == null || groupIds.isEmpty ? 0 : groupIds.join(','),
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
-  Future<Result<void>> modifyUserGroup({required String groupId, required String name}) async {
+  Future<Result<void>> modifyUserGroup({
+    required String groupId,
+    required String name,
+  }) async {
     assert(groupId.isNotEmpty);
     assert(name.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/tag/update',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
-      data: {
-        'tagid': groupId,
-        'name': name,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/tag/update',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
+        data: {
+          'tagid': groupId,
+          'name': name,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
-  Future<Result<void>> deleteUserGroup({required String groupId}) async {
+  Future<Result<void>> deleteUserGroup(String groupId) async {
     assert(groupId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/tag/del',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
-      data: {
-        'tagid': groupId,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/tag/del',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
+        data: {
+          'tagid': groupId,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
-  /// 使用关键词获取指定用户的粉丝，非当前用户只能获取前100人，此后列表为空
+  /// 获取用户的粉丝，非当前用户只能获取前100人，此后列表为空
   ///
   /// 使用 pn+ps+total 分页
   Future<Result<GetFansResponse>> getFans({
@@ -1976,93 +2107,103 @@ class BiliUserWebApiService {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/fans',
-      queryParameters: {
-        'pn': pn,
-        'ps': ps,
-        'vmid': userId,
-        'gaia_source': 'main_web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/fans',
+        queryParameters: {
+          'pn': pn,
+          'ps': ps,
+          'vmid': userId,
+          'gaia_source': 'main_web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetFansResponse(
+          list: (resp.data['data']['list'] as List).map((v) => FanUser.fromJson(v)).toList(),
+          total: resp.data['data']['total'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetFansResponse(
-        list: (resp.data['data']['list'] as List).map((v) => FanUser.fromJson(v)).toList(),
-        total: resp.data['data']['total'] as int,
-      ),
-    );
   }
 
   /// 删除粉丝
-  Future<Result<void>> deleteFans({required String userId}) async {
+  Future<Result<void>> deleteFans(String userId) async {
     assert(userId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/modify',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {
-        'statistics': '{"appId":100,"platform":5}',
-        'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
-      },
-      data: {
-        'fid': userId,
-        'act': 7,
-        're_src': 11,
-        'gaia_source': 'web_main',
-        'spmid': WebLocation.userSpace,
-        'extend_content': '{"entity":"user","entity_id":$userId}',
-        'is_from_frontend_component': true,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/modify',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {
+          'statistics': '{"appId":100,"platform":5}',
+          'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
+        },
+        data: {
+          'fid': userId,
+          'act': 7,
+          're_src': 11,
+          'gaia_source': 'web_main',
+          'spmid': WebLocation.userSpace,
+          'extend_content': '{"entity":"user","entity_id":$userId}',
+          'is_from_frontend_component': true,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 屏蔽/取消屏蔽用户
-  Future<Result<void>> blockUser({required String userId, required bool block}) async {
+  Future<Result<void>> blockUser({
+    required String userId,
+    required bool block,
+  }) async {
     assert(userId.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/relation/modify',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      queryParameters: {
-        'statistics': '{"appId":100,"platform":5}',
-        'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
-      },
-      data: {
-        'fid': userId,
-        'act': block ? 5 : 6,
-        're_src': 11,
-        'gaia_source': 'web_main',
-        'spmid': WebLocation.userSpace,
-        'extend_content': '{"entity":"user","entity_id":$userId}',
-        'is_from_frontend_component': true,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/relation/modify',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        queryParameters: {
+          'statistics': '{"appId":100,"platform":5}',
+          'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
+        },
+        data: {
+          'fid': userId,
+          'act': block ? 5 : 6,
+          're_src': 11,
+          'gaia_source': 'web_main',
+          'spmid': WebLocation.userSpace,
+          'extend_content': '{"entity":"user","entity_id":$userId}',
+          'is_from_frontend_component': true,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取与另一位用户一同关注的用户
@@ -2079,109 +2220,125 @@ class BiliUserWebApiService {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/same/followings',
-      queryParameters: {
-        'pn': pn,
-        'ps': ps,
-        'vmid': userId,
-        'gaia_source': 'main_web',
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/same/followings',
+        queryParameters: {
+          'pn': pn,
+          'ps': ps,
+          'vmid': userId,
+          'gaia_source': 'main_web',
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetFollowingUsersResponse(
+          list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
+          total: resp.data['data']['total'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetFollowingUsersResponse(
-        list: (resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList(),
-        total: resp.data['data']['total'] as int,
-      ),
-    );
   }
 
   /// 获取指定用户的关注、悄悄关注、粉丝、屏蔽用户数
   ///
   /// 屏蔽用户数和悄悄关注数只有当前登录账户能获取到，其他情况均为 0
-  Future<Result<GetUserStatsResponse>> getUserStats({required String userId}) async {
+  Future<Result<GetUserStatsResponse>> getUserStats(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/relation/stat',
-      queryParameters: {
-        'vmid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/relation/stat',
+        queryParameters: {
+          'vmid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(GetUserStatsResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(GetUserStatsResponse.fromJson(resp.data['data']));
   }
 
   /// 获取用户总获赞和总播放
-  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount({required String userId}) async {
+  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/upstat',
-      queryParameters: {
-        'mid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/upstat',
+        queryParameters: {
+          'mid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(GetUserTotalLikeAndViewCountResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(GetUserTotalLikeAndViewCountResponse.fromJson(resp.data['data']));
   }
 
   /// 获取用户置顶视频
-  Future<Result<List<PinnedVideo>>> getUserPinnedVideos({required String userId}) async {
+  Future<Result<List<PinnedVideo>>> getUserPinnedVideos(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/masterpiece',
-      queryParameters: {
-        'vmid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/masterpiece',
+        queryParameters: {
+          'vmid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok((resp.data['data'] as List).map((v) => PinnedVideo.fromJson(v)).toList());
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok((resp.data['data'] as List).map((v) => PinnedVideo.fromJson(v)).toList());
   }
 
   /// 获取用户个人空间隐私设置和模块顺序
-  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings({required String userId}) async {
+  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/setting',
-      queryParameters: {
-        'mid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/setting',
+        queryParameters: {
+          'mid': userId,
+          'web_location': WebLocation.userSpace,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(GetUserProfileSettingsResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(GetUserProfileSettingsResponse.fromJson(resp.data['data']));
   }
 
   /// 修改隐私设置，只能一次修改一个字段
@@ -2189,24 +2346,26 @@ class BiliUserWebApiService {
     required UserPrivacySettingsEnum field,
     required bool value,
   }) async {
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/space/setting',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'field': field.value,
-        'value': value,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/space/setting',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'field': field.value,
+          'value': value,
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 修改个人空间模块排序
@@ -2214,194 +2373,219 @@ class BiliUserWebApiService {
   /// [moduleSorting] 模块 ID 列表，顺序即为排序顺序
   ///
   /// 默认排序为 `1,10,5,3,7,8,2,9,26,25,22,23,21,6,4`
-  Future<Result<void>> modifyUserModuleSorting({required List<int> moduleSorting}) async {
+  Future<Result<void>> modifyUserModuleSorting(List<int> moduleSorting) async {
     assert(moduleSorting.isNotEmpty);
 
-    final account = await _getLoginedAccount();
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/space/index/order/modify',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'index_order': moduleSorting.join(','),
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/space/index/order/modify',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'index_order': moduleSorting.join(','),
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 修改个人标签，注意需要带上所有标签，留空则清空所有标签
-  Future<Result<void>> modifyTags({List<String>? tags = const []}) async {
-    final account = await _getLoginedAccount();
+  Future<Result<void>> modifyTags(List<String>? tags) async {
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/space/acc/tags/set',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'tags': tags == null ? '' : tags.join(','),
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.post(
+        'https://api.bilibili.com/x/space/acc/tags/set',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'tags': tags == null ? '' : tags.join(','),
+          'csrf': account.biliJct,
+        },
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取用户的视频、文章、音频数量
-  Future<Result<GetUserCountersResponse>> getUserCounters({required String userId}) async {
+  Future<Result<GetUserCountersResponse>> getUserCounters(String userId) async {
     assert(userId.isNotEmpty);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/navnum',
-      queryParameters: {
-        'mid': userId,
-        'web_location': WebLocation.userSpace,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    return Result.ok(GetUserCountersResponse.fromJson(resp.data['data']));
-  }
-
-  /// 获取自身与另一个用户的关系
-  Future<Result<GetUserRelationResponse>> getUserRelation({required String userId}) async {
-    final account = await getAccount();
-    final client = await getClient();
-
-    final resp = await client.get(
-      'https://api.bilibili.com/x/space/wbi/acc/relation',
-      queryParameters: buildWbiParams(
-        {
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/navnum',
+        queryParameters: {
           'mid': userId,
           'web_location': WebLocation.userSpace,
         },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(GetUserCountersResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
+  }
 
-    return Result.ok(GetUserRelationResponse.fromJson(resp.data['data']));
+  /// 获取自身与另一个用户的关系
+  Future<Result<GetUserRelationResponse>> getUserRelation(String userId) async {
+    assert(userId.isNotEmpty);
+
+    final client = await getClient();
+
+    try {
+      final account = await _getLoginedAccount();
+      final resp = await client.get(
+        'https://api.bilibili.com/x/space/wbi/acc/relation',
+        queryParameters: buildWbiParams(
+          {
+            'mid': userId,
+            'web_location': WebLocation.userSpace,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(GetUserRelationResponse.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
+    }
   }
 
   Future<Result<GetUserCardResponse>> getUserCard(String userId) async {
+    assert(userId.isNotEmpty);
+
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/web-interface/card',
-      queryParameters: {
-        'mid': userId,
-        'photo': 1,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/web-interface/card',
+        queryParameters: {
+          'mid': userId,
+          'photo': 1,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final card = resp.data['data']['card'];
+
+      return Result.ok(
+        GetUserCardResponse(
+          id: userId,
+          nickname: card['name'],
+          avatar: card['face'],
+          avatarFrame: AvatarFrame.fromJson(card['pendant']),
+          banner: resp.data['data']['space']['l_img'],
+          description: card['sign'],
+          level: card['is_senior_member'] == 1 ? 7 : card['level_info']['current_level'],
+          videoCount: resp.data['data']['archive_count'] as int,
+          fansCount: resp.data['data']['follower'] as int,
+          followCount: card['friend'] as int,
+          likeCount: resp.data['data']['like_num'] as int,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final card = resp.data['data']['card'];
-
-    return Result.ok(
-      GetUserCardResponse(
-        id: userId,
-        nickname: card['name'],
-        avatar: card['face'],
-        avatarFrame: AvatarFrame.fromJson(card['pendant']),
-        banner: resp.data['data']['space']['l_img'],
-        description: card['sign'],
-        level: card['is_senior_member'] == 1 ? 7 : card['level_info']['current_level'],
-        videoCount: resp.data['data']['archive_count'] as int,
-        fansCount: resp.data['data']['follower'] as int,
-        followCount: card['friend'] as int,
-        likeCount: resp.data['data']['like_num'] as int,
-      ),
-    );
   }
 
   Future<Result<Map<String, User>>> getUserCards(List<String> userIds) async {
+    assert(userIds.isNotEmpty);
+
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/polymer/pc-electron/v1/user/cards',
-      queryParameters: {
-        'uids': userIds.join(','),
-        'build': 0,
-        'mobi_app': 'web',
-        'web_location': WebLocation.message,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/polymer/pc-electron/v1/user/cards',
+        queryParameters: {
+          'uids': userIds.join(','),
+          'build': 0,
+          'mobi_app': 'web',
+          'web_location': WebLocation.message,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final Map<String, User> users = {};
+      for (final i in (resp.data['data'] as Map<String, dynamic>).entries) {
+        users[i.key] = User(id: i.value['mid'], nickname: i.value['name'], avatar: i.value['face']);
+      }
+
+      return Result.ok(users);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final Map<String, User> users = {};
-    for (final i in (resp.data['data'] as Map<String, dynamic>).entries) {
-      users[i.key] = User(id: i.value['mid'], nickname: i.value['name'], avatar: i.value['face']);
-    }
-
-    return Result.ok(users);
   }
 
   /// 获取账户基本信息，等同于 nav，
   /// 此处的 [getSelfInfo] 必须登录，未登录时使用 [BiliAuthApiService.getWbiInfo]
   Future<Result<GetSelfInfoLogginResponse>> getSelfInfo() async {
     final client = await getClient();
-    final result = await client.get('https://api.bilibili.com/x/web-interface/nav');
 
-    if (result.data['code'] != 0) {
-      return Result.error(Exception('${result.data['code']}: ${result.data['message']}'));
+    try {
+      await _getLoginedAccount();
+      final resp = await client.get('https://api.bilibili.com/x/web-interface/nav');
+
+      _checkResponse(resp);
+
+      final avatarFrame = resp.data['data']['pendant']['image_enhance'] as String;
+      return Result.ok(
+        GetSelfInfoLogginResponse(
+          nickname: resp.data['data']['uname'],
+          avatar: resp.data['data']['face'],
+          uid: resp.data['data']['mid'].toString(),
+          avatarFrame: avatarFrame.isEmpty ? null : avatarFrame,
+          level: SelfLevel(
+            // is_senior_member == 1 为硬核会员
+            currentLevel: resp.data['data']['is_senior_member'] == 1 ? 7 : resp.data['data']['level_info']['current_level'],
+            currentXp: resp.data['data']['level_info']['current_exp'],
+            maxXp: resp.data['data']['level_info']['current_min'],
+          ),
+          vip: UserVip(
+            type: resp.data['data']['vipType'] == 2
+                ? UserVipType.year
+                : resp.data['data']['vipType'] == 1
+                ? UserVipType.normal
+                : UserVipType.none,
+            expiredAt: resp.data['data']['vipDueDate'],
+            labelImage: resp.data['data']['vip']['label']['img_label_uri_hans_static'],
+          ),
+          wallet: UserWallet(
+            coin: resp.data['data']['money'].toDouble(),
+            bcoin: resp.data['data']['wallet']['bcoin_balance'].toDouble(),
+          ),
+          // 信誉值 (节操) 详见开发文档信誉值部分
+          creditScore: resp.data['data']['moral'],
+          // 风纪委员 (disciplinary committee member)
+          isDCM: resp.data['data']['is_jury'],
+          // WBI 签名相关
+          wbiImgKey: resp.data['data']['wbi_img']['img_url'].split('/').last.split('.').first,
+          wbiSubKey: resp.data['data']['wbi_img']['sub_url'].split('/').last.split('.').first,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final avatarFrame = result.data['data']['pendant']['image_enhance'] as String;
-    return Result.ok(
-      GetSelfInfoLogginResponse(
-        nickname: result.data['data']['uname'],
-        avatar: result.data['data']['face'],
-        uid: result.data['data']['mid'].toString(),
-        avatarFrame: avatarFrame.isEmpty ? null : avatarFrame,
-        level: SelfLevel(
-          // is_senior_member == 1 为硬核会员
-          currentLevel: result.data['data']['is_senior_member'] == 1 ? 7 : result.data['data']['level_info']['current_level'],
-          currentXp: result.data['data']['level_info']['current_exp'],
-          maxXp: result.data['data']['level_info']['current_min'],
-        ),
-        vip: UserVip(
-          type: result.data['data']['vipType'] == 2
-              ? UserVipType.year
-              : result.data['data']['vipType'] == 1
-              ? UserVipType.normal
-              : UserVipType.none,
-          expiredAt: result.data['data']['vipDueDate'],
-          labelImage: result.data['data']['vip']['label']['img_label_uri_hans_static'],
-        ),
-        wallet: UserWallet(
-          coin: result.data['data']['money'].toDouble(),
-          bcoin: result.data['data']['wallet']['bcoin_balance'].toDouble(),
-        ),
-        // 信誉值 (节操) 详见开发文档信誉值部分
-        creditScore: result.data['data']['moral'],
-        // 风纪委员 (disciplinary committee member)
-        isDCM: result.data['data']['is_jury'],
-        // WBI 签名相关
-        wbiImgKey: result.data['data']['wbi_img']['img_url'].split('/').last.split('.').first,
-        wbiSubKey: result.data['data']['wbi_img']['sub_url'].split('/').last.split('.').first,
-      ),
-    );
   }
 }

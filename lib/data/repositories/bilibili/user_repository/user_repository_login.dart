@@ -26,9 +26,13 @@ import 'package:better_bilibili/data/services/bilibili/model/get_user_total_like
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_history.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_watch_later.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
+import 'package:logger/logger.dart';
 
 class UserRepositoryLogin implements UserRepository {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'UserRepositoryLogin'));
+
   final AuthRepository authRepository;
   late final BiliUserWebApiService userApiService = BiliUserWebApiService(
     getClient: () => authRepository.getClient(type: .web),
@@ -39,8 +43,8 @@ class UserRepositoryLogin implements UserRepository {
   UserRepositoryLogin({required this.authRepository, required this.accountConfig});
 
   @override
-  Future<Result<GetUserInfoResponse>> getUserInfo({required String userId}) async {
-    return userApiService.getUserInfo(userId: userId);
+  Future<Result<GetUserInfoResponse>> getUserInfo(String userId) async {
+    return userApiService.getUserInfo(userId);
   }
 
   @override
@@ -97,8 +101,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteWatchHistory({required List<String> ids}) async {
-    return userApiService.deleteWatchHistory(ids: ids);
+  Future<Result<void>> deleteWatchHistory(List<String> ids) async {
+    return userApiService.deleteWatchHistory(ids);
   }
 
   @override
@@ -132,8 +136,37 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
+  /// 检查视频是否位于稍后观看
+  ///
+  /// 由于b站并没有直接实现此功能的接口，所以此函数实际使用 [getWatchLater] 来实现，
+  /// 且此接口只根据第一页搜索结果判断，如果视频名过于常见可能会导致本位于稍后观看的视频在此接口返回 false
   Future<Result<bool>> isExistInWatchLater({required String id, required String title}) async {
-    return userApiService.isExistInWatchLater(id: id, title: title);
+    assert(id.isNotEmpty);
+    assert(title.isNotEmpty);
+
+    final result = await getWatchLater(keyword: title);
+    switch (result) {
+      case Ok(:final value):
+        bool isExist = false;
+        for (final item in value.list) {
+          if (item is WatchLaterVideo) {
+            if (item.id == id && item.title == title) {
+              isExist = true;
+              break;
+            }
+          } else if (item is WatchLaterMovie) {
+            if (item.id == id && item.title == title) {
+              isExist = true;
+              break;
+            }
+          } else {
+            _log.w('Unknown item type: ${item.runtimeType}');
+          }
+        }
+        return Result.ok(isExist);
+      case Error():
+        return Result.error(result.error);
+    }
   }
 
   @override
@@ -164,18 +197,18 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> addVideoToWatchLater({required String videoId}) async {
-    return userApiService.addVideoToWatchLater(videoId: videoId);
+  Future<Result<void>> addVideoToWatchLater( String videoId) async {
+    return userApiService.addVideoToWatchLater( videoId);
   }
 
   @override
-  Future<Result<void>> deleteVideosFromWatchLater({required List<String> ids}) async {
-    return userApiService.deleteVideosFromWatchLater(ids: ids);
+  Future<Result<void>> deleteVideosFromWatchLater( List<String> ids) async {
+    return userApiService.deleteVideosFromWatchLater(ids);
   }
 
   @override
-  Future<Result<GetFavoritesResponse>> getFavoritesList({
-    String? userId,
+Future<Result<GetFavoritesResponse>> getFavoritesList({
+    required String userId,
     int pn = 1,
     int ps = 20,
   }) async {
@@ -184,7 +217,7 @@ class UserRepositoryLogin implements UserRepository {
 
   @override
   Future<Result<GetFavoritesSimpleListResponse>> getFavoritesSimpleList({
-    String? userId,
+    required String userId,
     String? videoId,
   }) async {
     return userApiService.getFavoritesSimpleList(userId: userId, videoId: videoId);
@@ -223,8 +256,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteFavorites({required String favoritesId}) async {
-    return userApiService.deleteFavorites(favoritesId: favoritesId);
+  Future<Result<void>> deleteFavorites( String favoritesId) async {
+    return userApiService.deleteFavorites( favoritesId);
   }
 
   @override
@@ -288,8 +321,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> clearInvalidInFavorites({required String favoritesId}) async {
-    return userApiService.clearInvalidInFavorites(favoritesId: favoritesId);
+  Future<Result<void>> clearInvalidInFavorites( String favoritesId) async {
+    return userApiService.clearInvalidInFavorites( favoritesId);
   }
 
   @override
@@ -314,8 +347,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteFavoritePost({required String postId}) async {
-    return userApiService.deleteFavoritePost(postId: postId);
+  Future<Result<void>> deleteFavoritePost( String postId) async {
+    return userApiService.deleteFavoritePost( postId);
   }
 
   @override
@@ -328,13 +361,13 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> unsubscribeFavorites({required String favoritesId}) async {
-    return userApiService.unsubscribeFavorites(favoritesId: favoritesId);
+  Future<Result<void>> unsubscribeFavorites( String favoritesId) async {
+    return userApiService.unsubscribeFavorites(favoritesId);
   }
 
   @override
-  Future<Result<void>> unsubscribePlaylist({required String playlistId}) async {
-    return userApiService.unsubscribePlaylist(playlistId: playlistId);
+  Future<Result<void>> unsubscribePlaylist( String playlistId) async {
+    return userApiService.unsubscribePlaylist(playlistId);
   }
 
   @override
@@ -356,13 +389,13 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> unsubscribeSeries({required String seriesId}) async {
-    return userApiService.unsubscribeSeries(seriesId: seriesId);
+  Future<Result<void>> unsubscribeSeries(String seriesId) async {
+    return userApiService.unsubscribeSeries( seriesId);
   }
 
   @override
   Future<Result<GetSubscribedMovieResponse>> getSubscribedMovie({
-    String? userId,
+    required String userId,
     int pn = 1,
     int ps = 20,
     GetSubscribedSeriesWatchStatusEnum watchStatus = GetSubscribedSeriesWatchStatusEnum.all,
@@ -379,8 +412,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> unsubscribeMovie({required String movieId}) async {
-    return userApiService.unsubscribeMovie(movieId: movieId);
+  Future<Result<void>> unsubscribeMovie( String movieId) async {
+    return userApiService.unsubscribeMovie( movieId);
   }
 
   @override
@@ -394,13 +427,13 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> unsubscribeManga({required List<String> mangaIds}) async {
-    return userApiService.unsubscribeManga(mangaIds: mangaIds);
+  Future<Result<void>> unsubscribeManga( List<String> mangaIds) async {
+    return userApiService.unsubscribeManga(mangaIds);
   }
 
   @override
-  Future<Result<VideoInteraction>> getVideoInteraction({required String videoId}) async {
-    return userApiService.getVideoInteraction(videoId: videoId);
+  Future<Result<VideoInteraction>> getVideoInteraction( String videoId) async {
+    return userApiService.getVideoInteraction(videoId);
   }
 
   Future<List<String>> _getSearchHistory() async {
@@ -448,23 +481,23 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<List<dynamic>>> getLikedVideos({String? userId}) async {
-    return userApiService.getLikedVideos(userId: userId);
+  Future<Result<List<dynamic>>> getLikedVideos(String userId) async {
+    return userApiService.getLikedVideos(userId);
   }
 
   @override
-  Future<Result<List<dynamic>>> getCoinedVideos({String? userId}) async {
-    return userApiService.getCoinedVideos(userId: userId);
+  Future<Result<List<dynamic>>> getCoinedVideos(String userId) async {
+    return userApiService.getCoinedVideos(userId);
   }
 
   @override
-  Future<Result<ArticleInteraction>> getArticleInteraction({required String articleId}) async {
-    return userApiService.getArticleInteraction(articleId: articleId);
+  Future<Result<ArticleInteraction>> getArticleInteraction( String articleId) async {
+    return userApiService.getArticleInteraction(articleId);
   }
 
   @override
-  Future<Result<void>> reportArticleHistory({required String articleId}) async {
-    return userApiService.reportArticleHistory(articleId: articleId);
+  Future<Result<void>> reportArticleHistory( String articleId) async {
+    return userApiService.reportArticleHistory(articleId);
   }
 
   @override
@@ -473,8 +506,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<UserGroup>> createUserGroup({required String name}) async {
-    return userApiService.createUserGroup(name: name);
+  Future<Result<UserGroup>> createUserGroup( String name) async {
+    return userApiService.createUserGroup(name);
   }
 
   @override
@@ -520,8 +553,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<List<String>>> getGroupIdsWithUser({required String userId}) async {
-    return userApiService.getGroupIdsWithUser(userId: userId);
+  Future<Result<List<String>>> getGroupIdsWithUser( String userId) async {
+    return userApiService.getGroupIdsWithUser( userId);
   }
 
   @override
@@ -538,8 +571,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteUserGroup({required String groupId}) async {
-    return userApiService.deleteUserGroup(groupId: groupId);
+  Future<Result<void>> deleteUserGroup( String groupId) async {
+    return userApiService.deleteUserGroup( groupId);
   }
 
   @override
@@ -552,8 +585,8 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> deleteFans({required String userId}) async {
-    return userApiService.deleteFans(userId: userId);
+  Future<Result<void>> deleteFans( String userId) async {
+    return userApiService.deleteFans(userId);
   }
 
   @override
@@ -571,23 +604,23 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<GetUserStatsResponse>> getUserStats({required String userId}) async {
-    return userApiService.getUserStats(userId: userId);
+  Future<Result<GetUserStatsResponse>> getUserStats( String userId) async {
+    return userApiService.getUserStats(userId);
   }
 
   @override
-  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount({required String userId}) async {
-    return userApiService.getUserTotalLikeAndViewCount(userId: userId);
+  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount( String userId) async {
+    return userApiService.getUserTotalLikeAndViewCount(userId);
   }
 
   @override
-  Future<Result<List<PinnedVideo>>> getUserPinnedVideos({required String userId}) async {
-    return userApiService.getUserPinnedVideos(userId: userId);
+  Future<Result<List<PinnedVideo>>> getUserPinnedVideos( String userId) async {
+    return userApiService.getUserPinnedVideos(userId);
   }
 
   @override
-  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings({required String userId}) async {
-    return userApiService.getUserProfileSettings(userId: userId);
+  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings( String userId) async {
+    return userApiService.getUserProfileSettings(userId);
   }
 
   @override
@@ -599,23 +632,23 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> modifyUserModuleSorting({required List<int> moduleSorting}) async {
-    return userApiService.modifyUserModuleSorting(moduleSorting: moduleSorting);
+  Future<Result<void>> modifyUserModuleSorting( List<int> moduleSorting) async {
+    return userApiService.modifyUserModuleSorting(moduleSorting);
   }
 
   @override
   Future<Result<void>> modifyTags({List<String>? tags = const []}) async {
-    return userApiService.modifyTags(tags: tags);
+    return userApiService.modifyTags(tags);
   }
 
   @override
-  Future<Result<GetUserCountersResponse>> getUserCounters({required String userId}) async {
-    return userApiService.getUserCounters(userId: userId);
+  Future<Result<GetUserCountersResponse>> getUserCounters( String userId) async {
+    return userApiService.getUserCounters(userId);
   }
 
   @override
-  Future<Result<GetUserRelationResponse>> getUserRelation({required String userId}) async {
-    return userApiService.getUserRelation(userId: userId);
+  Future<Result<GetUserRelationResponse>> getUserRelation( String userId) async {
+    return userApiService.getUserRelation( userId);
   }
 
   @override

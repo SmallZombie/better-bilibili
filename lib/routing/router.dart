@@ -360,6 +360,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) => ChangeNotifierProvider(
         create: (_) => FavoritesTabViewModel(
           userRepository: context.read(),
+          authRepository: context.read(),
         ),
         child: const FavoritesScreen(),
       ),
@@ -369,6 +370,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) => ChangeNotifierProvider(
         create: (_) => SearchFavoritesViewModel(
           userRepository: context.read(),
+          authRepository: context.read(),
         ),
         child: SearchFavoritesScreen(initFavoritesId: state.uri.queryParameters['favoritesId']),
       ),

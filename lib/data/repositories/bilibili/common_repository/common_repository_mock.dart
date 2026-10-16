@@ -4,13 +4,13 @@ import 'package:better_bilibili/utils/result.dart';
 
 class CommonRepositoryMock implements CommonRepository {
   @override
-  Future<Result<UploadedImage>> uploadImageForDynamic({required String filePath}) {
+  Future<Result<UploadedImage>> uploadImageForDynamic(String filePath) {
     // TODO: implement uploadImageForDynamic
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<String>> uploadImageForFavorites({required String filePath}) {
+  Future<Result<String>> uploadImageForFavorites(String filePath) {
     // TODO: implement uploadImageForFavorites
     throw UnimplementedError();
   }

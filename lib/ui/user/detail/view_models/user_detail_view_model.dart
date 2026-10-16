@@ -50,11 +50,11 @@ class UserDetailViewModel extends SafeChangeNotifier {
       userCountersResult,
       userRelationResult,
     ] = await Future.wait([
-      _userRepository.getUserInfo(userId: userId),
-      _userRepository.getUserStats(userId: userId),
-      _userRepository.getUserTotalLikeAndViewCount(userId: userId),
-      _userRepository.getUserCounters(userId: userId),
-      _userRepository.getUserRelation(userId: userId),
+      _userRepository.getUserInfo(userId),
+      _userRepository.getUserStats(userId),
+      _userRepository.getUserTotalLikeAndViewCount(userId),
+      _userRepository.getUserCounters(userId),
+      _userRepository.getUserRelation(userId),
     ]);
 
     if (userInfoResult case Error()) {

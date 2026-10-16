@@ -17,7 +17,7 @@ import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/app/app_title_bar.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/appearance/appearance_manager.dart';
-import 'package:better_bilibili/ui/core/share/router_helper.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
@@ -121,6 +121,8 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'App'));
+
   late final StreamSubscription _subscription;
 
   @override
@@ -130,11 +132,17 @@ class _AppState extends State<App> {
     final appLinks = AppLinks();
     _subscription = appLinks.uriLinkStream.listen((uri) {
       if (!mounted) return;
-      debugPrint('appLinks: $uri');
 
       final cleanUri = deepLinkHandler(uri.toString());
-      if (cleanUri == Routes.home) context.popToRoot();
-      router.push(cleanUri);
+      _log.i('onAppLink: "$uri" -> "$cleanUri');
+
+      if (cleanUri == Routes.home) {
+        while (router.canPop()) {
+          router.pop();
+        }
+      } else {
+        router.push(cleanUri);
+      }
     });
   }
 

@@ -11,13 +11,13 @@ abstract interface class ArticleRepository {
     int ps = 20,
   });
 
-  Future<Result<ArticleDetail>> getDetail({required String articleId});
+  Future<Result<ArticleDetail>> getDetail(String articleId);
 
   Future<Result<void>> like({required String articleId, required bool like});
 
   Future<Result<void>> favorite({required String articleId, required bool favorite});
 
-  Future<Result<ArticleCollection>> getCollectionDetail({required String collectionId});
+  Future<Result<ArticleCollection>> getCollectionDetail(String collectionId);
 
   Future<Result<GetArticlesWithUserResponse>> getArticlesWithUser({
     required String userId,

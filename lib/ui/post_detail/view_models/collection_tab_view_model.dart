@@ -22,7 +22,7 @@ class CollectionTabViewModel extends SafeChangeNotifier {
   ArticleCollection? get collection => _collection;
 
   Future<Result<void>> _getCollection() async {
-    final result = await _articleRepository.getCollectionDetail(collectionId: collectionId);
+    final result = await _articleRepository.getCollectionDetail( collectionId);
     switch (result) {
       case Ok(:final value):
         _collection = value;

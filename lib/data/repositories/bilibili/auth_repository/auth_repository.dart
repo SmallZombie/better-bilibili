@@ -18,7 +18,7 @@ abstract interface class AuthRepository implements Listenable {
   Future<List<Account>> getAccounts();
 
   Future<Result<GetLoginQrCodeResponse>> getLoginQrCode();
-  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus({required String key});
+  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus(String key);
   Future<Result<GetSelfInfoResponse>> getSelfInfo();
 }
 

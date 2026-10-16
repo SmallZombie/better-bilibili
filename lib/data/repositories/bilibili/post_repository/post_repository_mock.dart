@@ -18,18 +18,13 @@ class PostRepositoryMock implements PostRepository {
   }
 
   @override
-  Future<Result<dynamic>> getDetail({required String postId}) {
+  Future<Result<dynamic>> getDetail(String postId) {
     // TODO: implement getDetail
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetPostListResponse>> getList({
-    int pn = 1,
-    String? offset,
-    GetPostListTypeEnum type = GetPostListTypeEnum.all,
-    String? userId,
-  }) {
+  Future<Result<GetPostListResponse>> getList({int pn = 1, String? offset, GetPostListTypeEnum type = GetPostListTypeEnum.all, String? userId}) {
     // TODO: implement getList
     throw UnimplementedError();
   }

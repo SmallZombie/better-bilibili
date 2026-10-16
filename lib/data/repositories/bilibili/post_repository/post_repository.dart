@@ -4,7 +4,7 @@ import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/utils/result.dart';
 
 abstract interface class PostRepository {
-  Future<Result<dynamic>> getDetail({required String postId});
+  Future<Result<dynamic>> getDetail(String postId);
 
   Future<Result<void>> like({required String postId, required bool like});
 

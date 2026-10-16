@@ -1,3 +1,4 @@
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_simple_list_response.dart';
@@ -6,11 +7,10 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class EditVideoInFavoriteFolderSheetViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
-  EditVideoInFavoriteFolderSheetViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  EditVideoInFavoriteFolderSheetViewModel({required this.userRepository, required this.authRepository}) {
     getFavorites = Command1<void, String?>((videoId) => _getFavorites(videoId));
     createFavorites = Command1<void, CreateFavoritesRequest>((favorites) => _createFavorites(favorites));
   }
@@ -23,7 +23,8 @@ class EditVideoInFavoriteFolderSheetViewModel extends SafeChangeNotifier {
   late final Command1<void, String?> getFavorites;
 
   Future<Result<void>> _getFavorites(String? videoId) async {
-    final result = await _userRepository.getFavoritesSimpleList(videoId: videoId);
+    final account = await authRepository.getAccount();
+    final result = await userRepository.getFavoritesSimpleList(userId: account.userId, videoId: videoId);
     switch (result) {
       case Ok(:final value):
         _favorites.clear();
@@ -39,7 +40,7 @@ class EditVideoInFavoriteFolderSheetViewModel extends SafeChangeNotifier {
   late final Command1<void, CreateFavoritesRequest> createFavorites;
 
   Future<Result<Favorites>> _createFavorites(CreateFavoritesRequest favorites) async {
-    return _userRepository.createFavorites(
+    return userRepository.createFavorites(
       name: favorites.name,
       description: favorites.description,
       isPrivate: favorites.isPrivate,

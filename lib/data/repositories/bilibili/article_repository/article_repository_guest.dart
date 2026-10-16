@@ -27,8 +27,8 @@ class ArticleRepositoryLogin implements ArticleRepository {
   }
 
   @override
-  Future<Result<ArticleDetail>> getDetail({required String articleId}) {
-    return articleApiService.getDetail(articleId: articleId);
+  Future<Result<ArticleDetail>> getDetail( String articleId) {
+    return articleApiService.getDetail(articleId);
   }
 
   @override
@@ -42,8 +42,8 @@ class ArticleRepositoryLogin implements ArticleRepository {
   }
 
   @override
-  Future<Result<ArticleCollection>> getCollectionDetail({required String collectionId}) {
-    return articleApiService.getCollectionDetail(collectionId: collectionId);
+  Future<Result<ArticleCollection>> getCollectionDetail( String collectionId) {
+    return articleApiService.getCollectionDetail(collectionId);
   }
 
   @override

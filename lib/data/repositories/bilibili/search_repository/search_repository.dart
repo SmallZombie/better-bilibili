@@ -13,16 +13,16 @@ abstract interface class SearchRepository {
     int pn = 1,
     int ps = 20,
     required String keyword,
-    GetSearchResultWithFilterTypeEnum type = GetSearchResultWithFilterTypeEnum.video,
-    GetSearchResultWithFilterOrderEnum order = GetSearchResultWithFilterOrderEnum.auto,
+    GetSearchResultWithFilterTypeEnum type = .video,
+    GetSearchResultWithFilterOrderEnum order = .auto,
     GetSearchResultWithFilterDurationEnum? duration,
     int? categoryId,
-    GetSearchResultWithFilterUserTypeEnum userType = GetSearchResultWithFilterUserTypeEnum.all,
+    GetSearchResultWithFilterUserTypeEnum userType = .all,
     int releaseTimeStart = 0,
     int releaseTimeEnd = 0,
   });
 
   Future<Result<List<Trending>>> getTrendingList();
 
-  Future<Result<List<String>>> getSuggestList({required String keyword});
+  Future<Result<List<String>>> getSuggestList(String keyword);
 }

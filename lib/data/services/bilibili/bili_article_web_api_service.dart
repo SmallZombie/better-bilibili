@@ -3,6 +3,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_article_detail_
 import 'package:better_bilibili/data/services/bilibili/model/get_articles_with_user_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_article_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_anthologys_response.dart';
+import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/utils/bili/bili_util.dart';
@@ -15,6 +16,29 @@ class BiliArticleWebApiService {
 
   BiliArticleWebApiService({required this.getClient, required this.getAccount});
 
+  void _checkResponse(Response resp) {
+    if (resp.data['code'] != 0) {
+      throw BiliHttpException(resp.data['code'], resp.data['message']);
+    }
+  }
+
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
+
   /// 注意此接口并不总是遵循 ps
   Future<Result<List<RecommendArticle>>> getRecommendedList({
     int pn = 1,
@@ -23,54 +47,59 @@ class BiliArticleWebApiService {
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
-    final resp = await client.get(
-      'https://api.bilibili.com/x/article/recommends',
-      queryParameters: {
-        'cid': 0,
-        'pn': pn,
-        'ps': ps,
-        'aids': '',
-        'sort': 0,
-        'web_location': WebLocation.articleHome,
-      },
-    );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/article/recommends',
+        queryParameters: {
+          'cid': 0,
+          'pn': pn,
+          'ps': ps,
+          'aids': '',
+          'sort': 0,
+          'web_location': WebLocation.articleHome,
+        },
+      );
+
+      _checkResponse(resp);
+
+      final List<RecommendArticle> list = [];
+      for (final item in resp.data['data']) {
+        list.add(RecommendArticle.fromJson(item));
+      }
+
+      return Result.ok(list);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    final List<RecommendArticle> list = [];
-    for (final item in resp.data['data']) {
-      list.add(RecommendArticle.fromJson(item));
-    }
-
-    return Result.ok(list);
   }
 
-  Future<Result<ArticleDetail>> getDetail({required String articleId}) async {
+  Future<Result<ArticleDetail>> getDetail( String articleId) async {
     assert(articleId.isNotEmpty);
 
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/article/view',
-      queryParameters: buildWbiParams(
-        {
-          'id': articleId,
-          'gaia_source': 'main_web',
-          'web_location': WebLocation.articleDetail,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/article/view',
+        queryParameters: buildWbiParams(
+          {
+            'id': articleId,
+            'gaia_source': 'main_web',
+            'web_location': WebLocation.articleDetail,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(ArticleDetail.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(ArticleDetail.fromJson(resp.data['data']));
   }
 
   Future<Result<void>> like({
@@ -80,37 +109,39 @@ class BiliArticleWebApiService {
     assert(articleId.isNotEmpty);
 
     final account = await getAccount();
-    if (account is! LoginedAccount) {
-      throw const NotLoggedInException();
-    }
-
     final client = await getClient();
 
-    final resp = await client.post(
-      'https://api.bilibili.com/x/article/like',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'id': articleId,
-        'type': like ? 1 : 2,
-        'csrf': account.biliJct,
-      },
-    );
+    try {
+      if (account is! LoginedAccount) {
+        throw const NotLoggedInException();
+      }
 
-    // 当想要赞但本就已赞时返回 65006 已赞过
-    if (resp.data['code'] == 65006 && like) {
+      final resp = await client.post(
+        'https://api.bilibili.com/x/article/like',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'id': articleId,
+          'type': like ? 1 : 2,
+          'csrf': account.biliJct,
+        },
+      );
+
+      // 当想要赞但本就已赞时返回 65006 已赞过
+      if (resp.data['code'] == 65006 && like) {
+        return Result.ok(null);
+      }
+
+      // 当想要取消赞但本就未赞时返回 65504 未点赞过
+      if (resp.data['code'] == 65004 && !like) {
+        return Result.ok(null);
+      }
+
+      _checkResponse(resp);
+
       return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    // 当想要取消赞但本就未赞时返回 65504 未点赞过
-    if (resp.data['code'] == 65004 && !like) {
-      return Result.ok(null);
-    }
-
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
-    }
-
-    return Result.ok(null);
   }
 
   Future<Result<void>> favorite({
@@ -120,55 +151,59 @@ class BiliArticleWebApiService {
     assert(articleId.isNotEmpty);
 
     final account = await getAccount();
-    if (account is! LoginedAccount) {
-      throw const NotLoggedInException();
-    }
-
     final client = await getClient();
 
-    final resp = await client.post(
-      favorite ? 'https://api.bilibili.com/x/article/favorites/add' : 'https://api.bilibili.com/x/article/favorites/del',
-      options: Options(contentType: 'application/x-www-form-urlencoded'),
-      data: {
-        'csrf': account.biliJct,
-        'id': articleId,
-      },
-    );
+    try {
+      if (account is! LoginedAccount) {
+        throw const NotLoggedInException();
+      }
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      final resp = await client.post(
+        favorite ? 'https://api.bilibili.com/x/article/favorites/add' : 'https://api.bilibili.com/x/article/favorites/del',
+        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        data: {
+          'csrf': account.biliJct,
+          'id': articleId,
+        },
+      );
+
+      _checkResponse(resp);
+
+      return Result.ok(null);
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(null);
   }
 
   /// 获取文集详细信息及文章列表，此接口可一次性返回全部文章
-  Future<Result<ArticleCollection>> getCollectionDetail({required String collectionId}) async {
+  Future<Result<ArticleCollection>> getCollectionDetail( String collectionId) async {
     assert(collectionId.isNotEmpty);
 
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      // 还有一个接口也能拿到文集详细信息，但相比这个接口少了作者和总字数信息
-      // `https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/detail/collection`
-      'https://api.bilibili.com/x/article/list/articles',
-      queryParameters: buildWbiParams(
-        {
-          'id': collectionId,
-          'gaia_source': 'main_web',
-          'web_location': WebLocation.articleDetail,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        // 还有一个接口也能拿到文集详细信息，但相比这个接口少了作者和总字数信息
+        // `https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/detail/collection`
+        'https://api.bilibili.com/x/article/list/articles',
+        queryParameters: buildWbiParams(
+          {
+            'id': collectionId,
+            'gaia_source': 'main_web',
+            'web_location': WebLocation.articleDetail,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(ArticleCollection.fromJson(resp.data['data']));
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(ArticleCollection.fromJson(resp.data['data']));
   }
 
   /// 获取指定用户的文章列表
@@ -189,38 +224,40 @@ class BiliArticleWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      // 新接口每个 item 不算 jumpurl 就只给 4 个字段
-      // 有些还没封面 cover
-      // 要是充电视频还会没有 stat
-      // 我真没招了
-      'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/feed/space',
-      // 旧接口，此接口无法返回充电专栏，只能用新接口
-      // 'https://api.bilibili.com/x/space/wbi/article',
-      queryParameters: buildWbiParams(
-        {
-          'host_mid': userId,
-          'page': pn,
-          'offset': offset ?? '',
-          'type': 'article',
-          'web_location': WebLocation.userSpace,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        // 新接口每个 item 不算 jumpurl 就只给 4 个字段
+        // 有些还没封面 cover
+        // 要是充电视频还会没有 stat
+        // 我真没招了
+        'https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/feed/space',
+        // 旧接口，此接口无法返回充电专栏，只能用新接口
+        // 'https://api.bilibili.com/x/space/wbi/article',
+        queryParameters: buildWbiParams(
+          {
+            'host_mid': userId,
+            'page': pn,
+            'offset': offset ?? '',
+            'type': 'article',
+            'web_location': WebLocation.userSpace,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok(
+        GetArticlesWithUserResponse(
+          list: (resp.data['data']['items'] as List).map((v) => GetArticlesWithUserItem.fromJson(v)).toList(),
+          hasMore: resp.data['data']['has_more'] as bool,
+          offset: resp.data['data']['offset'].isEmpty ? null : resp.data['data']['offset'] as String,
+        ),
+      );
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok(
-      GetArticlesWithUserResponse(
-        list: (resp.data['data']['items'] as List).map((v) => GetArticlesWithUserItem.fromJson(v)).toList(),
-        hasMore: resp.data['data']['has_more'] as bool,
-        offset: resp.data['data']['offset'].isEmpty ? null : resp.data['data']['offset'] as String,
-      ),
-    );
   }
 
   /// 获取用户创建的全部文集
@@ -233,23 +270,25 @@ class BiliArticleWebApiService {
     final account = await getAccount();
     final client = await getClient();
 
-    final resp = await client.get(
-      'https://api.bilibili.com/x/article/up/lists',
-      queryParameters: buildWbiParams(
-        {
-          'mid': userId,
-          'sort': order.value,
-          'web_location': WebLocation.userSpace,
-        },
-        account.wbiImgKey,
-        account.wbiSubKey,
-      ),
-    );
+    try {
+      final resp = await client.get(
+        'https://api.bilibili.com/x/article/up/lists',
+        queryParameters: buildWbiParams(
+          {
+            'mid': userId,
+            'sort': order.value,
+            'web_location': WebLocation.userSpace,
+          },
+          account.wbiImgKey,
+          account.wbiSubKey,
+        ),
+      );
 
-    if (resp.data['code'] != 0) {
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+      _checkResponse(resp);
+
+      return Result.ok((resp.data['data']['lists'] as List).map((v) => GetUserAnthologysItem.fromJson(v)).toList());
+    } catch (e) {
+      return _handleError(e);
     }
-
-    return Result.ok((resp.data['data']['lists'] as List).map((v) => GetUserAnthologysItem.fromJson(v)).toList());
   }
 }

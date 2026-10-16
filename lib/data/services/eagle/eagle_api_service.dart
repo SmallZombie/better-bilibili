@@ -9,22 +9,40 @@ class EagleApiService {
 
   const EagleApiService({required this.getClient});
 
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
+    }
+  }
+
   Future<Result<List<Folder>>> getRecentFolderList() async {
     final client = await getClient();
+
     try {
       final resp = await client.get('/api/folder/listRecent');
 
       return Result.ok((resp.data['data'] as List).map((e) => Folder.fromJson(e)).toList());
-    } on DioException catch (e) {
-      final resp = e.response;
-      if (resp == null) {
-        return Result.error(Exception('Unknown error: ${e.message}'));
-      }
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    } catch (e) {
+      return _handleError(e);
     }
   }
 
-  Future<Result<void>> saveImage({required String imageUrl, required String sourceUrl, required String name}) async {
+  Future<Result<void>> saveImage({
+    required String imageUrl,
+    required String sourceUrl,
+    required String name,
+  }) async {
     final client = await getClient();
 
     try {
@@ -43,12 +61,8 @@ class EagleApiService {
       );
 
       return Result.ok(null);
-    } on DioException catch (e) {
-      final resp = e.response;
-      if (resp == null) {
-        return Result.error(Exception('Unknown error: ${e.message}'));
-      }
-      return Result.error(Exception('${resp.data['code']}: ${resp.data['message']}'));
+    } catch (e) {
+      return _handleError(e);
     }
   }
 }

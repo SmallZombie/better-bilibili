@@ -1,3 +1,4 @@
+import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_favorites_response.dart';
 import 'package:better_bilibili/utils/command.dart';
@@ -5,11 +6,10 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class FavoritesTabViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
-  FavoritesTabViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  FavoritesTabViewModel({required this.userRepository, required this.authRepository}) {
     loadFavorites = Command0(_loadFavorites);
     deleteFavorites = Command1<void, String>((favoritesId) => _deleteFavorites(favoritesId));
   }
@@ -35,7 +35,8 @@ class FavoritesTabViewModel extends SafeChangeNotifier {
   }
 
   Future<Result<void>> _loadFavorites() async {
-    final result = await _userRepository.getFavoritesList(pn: _pn);
+    final account = await authRepository.getAccount();
+    final result = await userRepository.getFavoritesList(userId:account.userId, pn: _pn);
     switch (result) {
       case Ok(:final value):
         _favorites.addAll(value.list);
@@ -49,7 +50,7 @@ class FavoritesTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> deleteFavorites;
 
   Future<Result<void>> _deleteFavorites(String favoritesId) async {
-    final result = await _userRepository.deleteFavorites(favoritesId: favoritesId);
+    final result = await userRepository.deleteFavorites( favoritesId);
     switch (result) {
       case Ok():
         reload();

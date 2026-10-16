@@ -27,7 +27,7 @@ abstract interface class VideoRepository {
     int ps = 20,
   });
 
-  Future<Result<GetVideoDetailResponse>> getVideoDetail({required String videoId});
+  Future<Result<GetVideoDetailResponse>> getVideoDetail(String videoId);
 
   Future<Result<PlayInfo>> getPlayInfo({required String videoId, required String episodeId});
 
@@ -35,12 +35,12 @@ abstract interface class VideoRepository {
 
   Future<Result<void>> coin({required String videoId, required int count, required int playTime});
 
-  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo({required String playlistId});
+  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo(String playlistId);
 
   Future<Result<GetPlaylistVideosResponse>> getPlaylistVideos({
     required String playlistId,
     String? videoId,
-    GetPlaylistVideosDirectionEnum direction = GetPlaylistVideosDirectionEnum.after,
+    GetPlaylistVideosDirectionEnum direction = .after,
     int ps = 20,
   });
 
@@ -127,7 +127,13 @@ abstract interface class VideoRepository {
     required TrackingInfo trackingInfo,
   });
 
-  Future<Result<GetTimelinePreviewResponse>> getTimelinePreview({required String videoId, required String episodeId});
+  Future<Result<GetTimelinePreviewResponse>> getTimelinePreview({
+    required String videoId,
+    required String episodeId,
+  });
 
-  Future<Result<List<double>>> getTimelineWaveform({required String videoId, required String episodeId});
+  Future<Result<List<double>>> getTimelineWaveform({
+    required String videoId,
+    required String episodeId,
+  });
 }

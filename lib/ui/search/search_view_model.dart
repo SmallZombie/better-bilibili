@@ -178,7 +178,7 @@ class SearchViewModel extends SafeChangeNotifier {
 
   Future<void> getSuggestions() async {
     final id = ++latestSuggestionsId;
-    final result = await _searchRepository.getSuggestList(keyword: keyword);
+    final result = await _searchRepository.getSuggestList( keyword);
 
     if (id != latestSuggestionsId) return;
 

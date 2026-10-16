@@ -18,7 +18,7 @@ class UserDialogViewModel extends SafeChangeNotifier {
   late final Command1<UserGroup, String> createGroup;
 
   Future<Result<UserGroup>> _createGroup(String name) async {
-    final result = await _userRepository.createUserGroup(name: name);
+    final result = await _userRepository.createUserGroup( name);
     return result;
   }
 

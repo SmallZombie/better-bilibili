@@ -88,7 +88,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
         controller: _tabBarController,
         children: [
           ChangeNotifierProvider(
-            create: (context) => FavoritesTabViewModel(userRepository: context.read()),
+            create: (context) => FavoritesTabViewModel(
+              userRepository: context.read(),
+              authRepository: context.read(),
+            ),
             child: const FavoritesTabView(),
           ),
           ChangeNotifierProvider(

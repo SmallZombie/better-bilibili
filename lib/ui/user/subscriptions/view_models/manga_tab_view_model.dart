@@ -58,7 +58,7 @@ class MangaTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> unsubscribe;
 
   Future<Result<void>> _unsubscribe(String mangaId) async {
-    final result = await _userRepository.unsubscribeManga(mangaIds: [mangaId]);
+    final result = await _userRepository.unsubscribeManga([mangaId]);
     switch (result) {
       case Ok():
         _mangas.removeWhere((v) => v.id == mangaId);

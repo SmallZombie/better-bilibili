@@ -11,12 +11,21 @@ class BsbsbApiService {
 
   const BsbsbApiService({required this.getClient, required this.getPrivateId});
 
-  Result<T> _handleError<T>(DioException error) {
-    final resp = error.response;
-    if (resp == null) {
-      return Result.error(Exception('Unknown error: ${error.message}'));
+  Result<T> _handleError<T>(Object error) {
+    if (error is DioException) {
+      final resp = error.response;
+      if (resp == null) {
+        return Result.error(Exception('Unknown error: ${error.message}'));
+      }
+      return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
+    } else if (error is Exception) {
+      return Result.error(error);
+    } else if (error is Error) {
+      return Result.error(error.error);
+    } else {
+      assert(false, 'What did you throw?');
+      return Result.error(Exception('Unknown error'));
     }
-    return Result.error(Exception('${resp.statusCode}: ${resp.data}'));
   }
 
   Future<Result<UserInfo>> getUserInfo(String publicUserId) async {
@@ -32,7 +41,7 @@ class BsbsbApiService {
       );
 
       return Result.ok(UserInfo.fromJson(resp.data));
-    } on DioException catch (e) {
+    } catch (e) {
       return _handleError(e);
     }
   }
@@ -43,7 +52,7 @@ class BsbsbApiService {
     try {
       final resp = await client.get('/skipSegments/$bvidHashPrefix');
       return Result.ok((resp.data as List).map((e) => Video.fromJson(e)).toList());
-    } on DioException catch (e) {
+    } catch (e) {
       return _handleError(e);
     }
   }
@@ -61,7 +70,7 @@ class BsbsbApiService {
         },
       );
       return Result.ok(null);
-    } on DioException catch (e) {
+    } catch (e) {
       return _handleError(e);
     }
   }
@@ -111,7 +120,7 @@ class BsbsbApiService {
       }
 
       return Result.ok(result);
-    } on DioException catch (e) {
+    } catch (e) {
       return _handleError(e);
     }
   }
