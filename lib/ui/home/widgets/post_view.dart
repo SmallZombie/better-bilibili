@@ -1,9 +1,11 @@
 import 'dart:ui';
 
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
@@ -14,14 +16,18 @@ import 'package:provider/provider.dart';
 
 class PostView extends StatefulWidget {
   final PostViewModel viewModel;
+  final AppConfig appConfig;
   final EagleConfig eagleConfig;
   final EagleRepository eagleRepository;
+  final NetworkManager networkManager;
 
   const PostView({
     super.key,
     required this.viewModel,
+    required this.appConfig,
     required this.eagleConfig,
     required this.eagleRepository,
+    required this.networkManager,
   });
 
   @override
@@ -174,8 +180,10 @@ class _PostViewState extends State<PostView> {
                               create: (context) => PostFeedTileViewModel(postRepository: context.read(), post: posts[index]),
                               builder: (context, child) => PostFeedTile(
                                 viewModel: context.read(),
+                                appConfig: widget.appConfig,
                                 eagleConfig: widget.eagleConfig,
                                 eagleRepository: widget.eagleRepository,
+                                networkManager: widget.networkManager,
                               ),
                             ),
                           );

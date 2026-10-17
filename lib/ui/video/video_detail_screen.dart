@@ -1344,7 +1344,7 @@ class _CollectionTabState extends State<_CollectionTab> with AutomaticKeepAliveC
               controller: _observerController,
               child: ListView.builder(
                 controller: _scrollController,
-                itemCount: controller.length,
+                itemCount: controller.groups[_groupIndex].videos.length,
                 padding: _padding,
                 itemBuilder: (context, index) {
                   final video = controller.groups[_groupIndex].videos[index];

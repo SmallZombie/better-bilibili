@@ -205,8 +205,10 @@ final GoRouter router = GoRouter(
                 ),
                 builder: (context, _) => PostView(
                   viewModel: context.read(),
+                  appConfig: context.read(),
                   eagleConfig: context.read(),
                   eagleRepository: context.read(),
+                  networkManager: context.read(),
                 ),
               ),
             ),

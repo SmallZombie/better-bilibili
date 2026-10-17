@@ -209,7 +209,12 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
   int pageIndex = 0;
 
   void _setPage(int page) {
-    setState(() => pageIndex = page);
+    setState(() {
+      pageIndex = page;
+      if (widget.shouldUseOriginalQuality?.call(images[page]) ?? false) {
+        setState(() => _originalImageSet.add(page));
+      }
+    });
     pageController.animateToPage(
       page,
       duration: const Duration(milliseconds: 400),
@@ -219,12 +224,12 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> with SingleTicke
 
   void _onPageChanged(int event) {
     if (event == pageIndex) return;
-
-    if (widget.shouldUseOriginalQuality?.call(images[event]) ?? false) {
-      _originalImageSet.add(event);
-    }
-
-    setState(() => pageIndex = event);
+    setState(() {
+      pageIndex = event;
+      if (widget.shouldUseOriginalQuality?.call(images[event]) ?? false) {
+        _originalImageSet.add(event);
+      }
+    });
   }
 
   final Set<int> _originalImageSet = {};

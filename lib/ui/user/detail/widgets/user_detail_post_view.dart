@@ -1,5 +1,7 @@
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
@@ -12,14 +14,18 @@ const _orderLabels = ['全部', '视频'];
 
 class UserDetailPostView extends StatefulWidget {
   final UserDetailPostViewModel viewModel;
+  final AppConfig appConfig;
   final EagleConfig eagleConfig;
   final EagleRepository eagleRepository;
+  final NetworkManager networkManager;
 
   const UserDetailPostView({
     super.key,
     required this.viewModel,
+    required this.appConfig,
     required this.eagleConfig,
     required this.eagleRepository,
+    required this.networkManager,
   });
 
   @override
@@ -71,8 +77,10 @@ class _UserDetailPostViewState extends State<UserDetailPostView> with AutomaticK
           ),
           _PostListSliver(
             viewModel: widget.viewModel,
+            appConfig: widget.appConfig,
             eagleConfig: widget.eagleConfig,
             eagleRepository: widget.eagleRepository,
+            networkManager: widget.networkManager,
           ),
         ],
       ),
@@ -82,13 +90,17 @@ class _UserDetailPostViewState extends State<UserDetailPostView> with AutomaticK
 
 class _PostListSliver extends StatelessWidget {
   final UserDetailPostViewModel viewModel;
+  final AppConfig appConfig;
   final EagleConfig eagleConfig;
   final EagleRepository eagleRepository;
+  final NetworkManager networkManager;
 
   const _PostListSliver({
     required this.viewModel,
+    required this.appConfig,
     required this.eagleConfig,
     required this.eagleRepository,
+    required this.networkManager,
   });
 
   @override
@@ -140,8 +152,10 @@ class _PostListSliver extends StatelessWidget {
                   create: (context) => PostFeedTileViewModel(post: post, postRepository: context.read()),
                   builder: (context, _) => PostFeedTile(
                     viewModel: context.read(),
+                    appConfig: appConfig,
                     eagleConfig: eagleConfig,
                     eagleRepository: eagleRepository,
+                    networkManager: networkManager,
                   ),
                 ),
               );

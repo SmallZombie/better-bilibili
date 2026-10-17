@@ -1,8 +1,10 @@
 import 'dart:math';
 
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/uploaded_image.dart';
+import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/bilibili/movie/movie_tile.dart';
@@ -20,15 +22,19 @@ import 'package:provider/provider.dart';
 
 class PostFeedTile extends StatelessWidget {
   final PostFeedTileViewModel viewModel;
+  final AppConfig appConfig;
   final EagleConfig eagleConfig;
   final EagleRepository eagleRepository;
+  final NetworkManager networkManager;
   final bool compact;
 
   const PostFeedTile({
     super.key,
     required this.viewModel,
+    required this.appConfig,
     required this.eagleConfig,
     required this.eagleRepository,
+    required this.networkManager,
     this.compact = false,
   });
 
@@ -70,6 +76,8 @@ class PostFeedTile extends StatelessWidget {
           images: vm.post.images,
           eagleConfig: eagleConfig,
           eagleRepository: eagleRepository,
+          appConfig: appConfig,
+          networkManager: networkManager,
           getSourceUrl: getSourceUrl,
         ),
       );
@@ -178,8 +186,10 @@ class PostFeedTile extends StatelessWidget {
               create: (context) => PostFeedTileViewModel(postRepository: context.read(), post: vm.post.quotedPost!),
               builder: (context, _) => PostFeedTile(
                 viewModel: context.read(),
+                appConfig: appConfig,
                 eagleConfig: eagleConfig,
                 eagleRepository: eagleRepository,
+                networkManager: networkManager,
                 compact: true,
               ),
             ),
@@ -354,17 +364,22 @@ class PostFeedTile extends StatelessWidget {
 
 class _ImageGroup extends StatelessWidget {
   final List<UploadedImage> images;
+  final AppConfig appConfig;
   final EagleConfig eagleConfig;
   final EagleRepository eagleRepository;
+  final NetworkManager networkManager;
   final String Function() getSourceUrl;
 
   static const _gap = 4.0;
-  static const _suffix = '@600h'; // @406h
+  static const _thumbHeight = 600;
+  static const _suffix = '@${_thumbHeight}h';
 
   const _ImageGroup({
     required this.images,
+    required this.appConfig,
     required this.eagleConfig,
     required this.eagleRepository,
+    required this.networkManager,
     required this.getSourceUrl,
   });
 
@@ -376,6 +391,25 @@ class _ImageGroup extends StatelessWidget {
     context.openImageViewer(
       images.map((v) => ImageViewerItem(thumbUrl: _getThumbUrl(v.src), url: v.src, width: v.width, height: v.height)).toList(),
       initialIndex: index,
+      shouldUseOriginalQuality: (ImageViewerItem image) {
+        if (appConfig.viewOriginalImage.value == .always) {
+          return true;
+        }
+        if (appConfig.viewOriginalImage.value == .never) {
+          return false;
+        }
+        if (appConfig.viewOriginalImage.value == .auto) {
+          if (image.height / 2 > _thumbHeight) {
+            return true;
+          }
+          return false;
+        }
+        if (appConfig.viewOriginalImage.value == .wifiOnly) {
+          return !networkManager.isMobileNetwork();
+        }
+
+        return false;
+      },
       actionsBuilder: (context, image, index, images) {
         if (!eagleConfig.enable.value) return [];
 

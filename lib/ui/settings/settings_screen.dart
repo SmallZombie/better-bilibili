@@ -1,6 +1,7 @@
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_group.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -69,13 +70,14 @@ class SettingsScreen extends StatelessWidget {
           ),
           SettingGroup(
             children: [
-              SettingTile(
-                title: const Text('开发者选项'),
-                icon: const Icon(Icons.code),
-                onTap: () {
-                  context.push(Routes.settingDeveloper.path);
-                },
-              ),
+              if (kDebugMode)
+                SettingTile(
+                  title: const Text('开发者选项'),
+                  icon: const Icon(Icons.code),
+                  onTap: () {
+                    context.push(Routes.settingDeveloper.path);
+                  },
+                ),
               SettingTile(
                 title: const Text('反馈'),
                 icon: const Icon(Icons.feedback_outlined),
