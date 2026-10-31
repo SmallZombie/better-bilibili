@@ -12,12 +12,11 @@
 #define MyAppPrerelease GetEnv("APP_PRERELEASE")
 #define MyAppVersionSeparator Pos("+", MyAppProductVersion)
 
-#if MyAppVersionSeparator = 0
-  #error "Invalid ProductVersion. Expected version+build format."
-#endif
+#define MyAppVersionPrefix Copy(MyAppProductVersion, 1, MyAppVersionSeparator - 1)
+#define MyAppVersionSuffix Copy(MyAppProductVersion, MyAppVersionSeparator)
 
 #if MyAppPrerelease != ""
-  #define MyAppVersion Copy(MyAppProductVersion, 1, MyAppVersionSeparator - 1) + "-" + MyAppPrerelease + Copy(MyAppProductVersion, MyAppVersionSeparator)
+  #define MyAppVersion MyAppVersionPrefix + "-" + MyAppPrerelease + MyAppVersionSuffix
 #else
   #define MyAppVersion MyAppProductVersion
 #endif
