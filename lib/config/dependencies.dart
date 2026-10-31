@@ -122,7 +122,10 @@ List<SingleChildWidget> get onlineProviders => [
     // dart format on
   ),
   Provider(
-    create: (context) => BsbsbRepositoryRemote(config: context.read()) as BsbsbRepository,
+    create: (context) => BsbsbRepositoryRemote(
+      config: context.read(),
+      appConfig: context.read(),
+    ) as BsbsbRepository,
   ),
   Provider(
     create: (context) => EagleRepositoryRemote(config: context.read()) as EagleRepository,

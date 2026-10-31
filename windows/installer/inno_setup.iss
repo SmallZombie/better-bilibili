@@ -6,9 +6,24 @@
   #error "Flutter Release executable not found."
 #endif
 
+
 #define MyAppName GetStringFileInfo(MyAppExe, "ProductName")
-#define MyAppVersion GetFileProductVersionString(MyAppExe)
+#define MyAppProductVersion GetFileProductVersionString(MyAppExe)
+#define MyAppPrerelease GetEnv("APP_PRERELEASE")
+#define MyAppVersionSeparator Pos("+", MyAppProductVersion)
+
+#if MyAppVersionSeparator = 0
+  #error "Invalid ProductVersion. Expected version+build format."
+#endif
+
+#if MyAppPrerelease != ""
+  #define MyAppVersion Copy(MyAppProductVersion, 1, MyAppVersionSeparator - 1) + "-" + MyAppPrerelease + Copy(MyAppProductVersion, MyAppVersionSeparator)
+#else
+  #define MyAppVersion MyAppProductVersion
+#endif
+
 #define MyAppFileVersion GetVersionNumbersString(MyAppExe)
+
 
 #define MyAppPublisher "SmallZombie"
 #define MyAppAUMID "SmallZombie.BetterBilibili"

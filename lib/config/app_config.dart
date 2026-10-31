@@ -7,6 +7,7 @@ class AppConfig {
   final String appPackageName;
   final String appVersion;
   final String appBuildNumber;
+  final String appPrerelease;
 
   late final Box box;
   late final Future init;
@@ -16,12 +17,15 @@ class AppConfig {
     required this.appPackageName,
     required this.appVersion,
     required this.appBuildNumber,
+    required this.appPrerelease,
   }) {
     init = () async {
       Hive.registerAdapter(ViewOriginalImageEnumAdapter());
       box = await Hive.openBox('app_config');
     }();
   }
+
+  String get fullVersion => '$appVersion${appPrerelease.isNotEmpty ? '-$appPrerelease' : ''}+$appBuildNumber';
 
   void dispose() {
     viewOriginalImage.dispose();

@@ -35,29 +35,40 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
 
-          if ($tag -notmatch '^v(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$') {
-            throw "Invalid release tag: $tag. Expected v1.2.3"
+          # v1.2.3 or v1.2.3-alpha.1
+          $pattern = '^v(?<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
+
+          if ($tag -notmatch $pattern) {
+            throw "Invalid release tag: $tag"
           }
 
           $version = $Matches['version']
+          $prerelease = $Matches['prerelease']
           $buildNumber = [int]$env:GITHUB_RUN_NUMBER
 
           # Windows 文件版本的每个数字部分最大为 65535
-          $components = @(
-            $version.Split('.') | ForEach-Object { [int]$_ }
-          ) + $buildNumber
+          $components = $version.Split('.') + "$buildNumber"
 
           foreach ($component in $components) {
-            if ($component -gt 65535) {
-              throw "Version component exceeds Windows version limit."
+            $value = 0
+
+            if (
+              -not [int]::TryParse($component, [ref]$value) -or
+              $value -gt 65535
+            ) {
+              throw "Version component exceeds Windows version limit: $component"
             }
           }
 
+          # 供后续 step 使用
           "APP_VERSION=$version" >> $env:GITHUB_ENV
+          "APP_PRERELEASE=$prerelease" >> $env:GITHUB_ENV
           "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_ENV
 
           Write-Host "App Version: $version"
+          Write-Host "App Prerelease: $prerelease"
           Write-Host "Build Number: $buildNumber"
+
 
       - name: Install Dependencies
         run: flutter pub get
@@ -71,7 +82,8 @@ jobs:
           flutter build windows `
             --release `
             "--build-name=$env:APP_VERSION" `
-            "--build-number=$env:BUILD_NUMBER"
+            "--build-number=$env:BUILD_NUMBER" `
+            "--dart-define=APP_PRERELEASE=$env:APP_PRERELEASE"
 
       # 检查 exe 是否包含正确的版本信息
       - name: Verify Application Metadata
@@ -84,13 +96,16 @@ jobs:
           }
 
           $info = (Get-Item $exe).VersionInfo
+
           $expected = "$env:APP_VERSION+$env:BUILD_NUMBER"
+          $actual = $info.ProductVersion
 
           Write-Host "Product Name: $($info.ProductName)"
-          Write-Host "Product Version: $($info.ProductVersion)"
+          Write-Host "Product Version: $actual"
+          Write-Host "File Version: $($info.FileVersion)"
 
-          if ($info.ProductVersion -ne $expected) {
-            throw "Unexpected product version: $($info.ProductVersion)"
+          if ($actual -ne $expected) {
+            throw "Unexpected product version: $actual, expected: $expected"
           }
 
       - name: Setup Inno
@@ -237,15 +252,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          gh release edit "$TAG" \
-            --draft=false \
-            --verify-tag
+          if [[ "$TAG" == *-* ]]; then
+            echo "Publishing pre-release: $TAG"
 
-      - name: Verify Immutable Release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          gh release verify "$TAG"
+            gh release edit "$TAG" \
+              --draft=false \
+              --prerelease \
+              --verify-tag
+          else
+            echo "Publishing stable release: $TAG"
+
+            gh release edit "$TAG" \
+              --draft=false \
+              --prerelease=false \
+              --verify-tag
+          fi

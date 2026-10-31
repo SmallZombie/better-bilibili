@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/bsbsb_config.dart';
 import 'package:better_bilibili/data/interceptors/base_rate_limiter_intercrptor.dart';
 import 'package:better_bilibili/data/interceptors/debug_logger_interceptor.dart';
@@ -18,10 +19,10 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class BsbsbRepositoryRemote implements BsbsbRepository {
   final BsbsbConfig config;
+  final AppConfig appConfig;
   late final BsbsbApiService bsbsbApiService = BsbsbApiService(
     getClient: getClient,
     getPrivateId: getPrivateId,
@@ -29,7 +30,7 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
 
   late final StreamSubscription _subscription;
 
-  BsbsbRepositoryRemote({required this.config}) {
+  BsbsbRepositoryRemote({required this.config, required this.appConfig}) {
     _subscription = config.baseUrls.stream.listen((_) => _disposeClient());
   }
 
@@ -52,12 +53,9 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
 
     final baseUrls = config.baseUrls.value.split(',');
 
-    final packageInfo = await PackageInfo.fromPlatform();
-    final fullVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
-
     final client = Dio(
       BaseOptions(
-        headers: {'origin': packageInfo.packageName, 'x-ext-version': fullVersion},
+        headers: {'origin': appConfig.appPackageName, 'x-ext-version': appConfig.fullVersion},
       ),
     );
     client.interceptors.add(BaseUrlFallbackInterceptor(dio: client, baseUrls: baseUrls));
