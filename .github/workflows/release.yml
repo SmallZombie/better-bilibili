@@ -122,24 +122,10 @@ jobs:
       - name: Build Installer
         shell: pwsh
         run: |
-          $roots = @(
-            "$env:ProgramFiles\Inno Setup 7",
-            "${env:ProgramFiles(x86)}\Inno Setup 7"
-          )
+          $iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe"
 
-          $iscc = $null
-
-          foreach ($root in $roots) {
-            $candidate = Join-Path $root "ISCC.exe"
-
-            if (Test-Path $candidate) {
-              $iscc = $candidate
-              break
-            }
-          }
-
-          if (-not $iscc) {
-            throw "Inno Setup Compiler not found."
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup Compiler not found: $iscc"
           }
 
           & $iscc "windows\installer\inno_setup.iss"
