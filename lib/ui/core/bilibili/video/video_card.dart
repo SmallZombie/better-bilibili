@@ -11,7 +11,7 @@ import 'package:better_bilibili/ui/core/share/base_card.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:better_bilibili/utils/base_util.dart';
@@ -88,14 +88,14 @@ class _VideoCardState extends State<VideoCard> {
   Future<void> _watchLater() async {
     try {
       final userRepository = context.read<UserRepository>();
-      final result = await userRepository.addVideoToWatchLater( widget.videoId);
+      final result = await userRepository.addVideoToWatchLater(widget.videoId);
 
       if (!mounted) return;
 
       switch (result) {
         case Ok():
           context.showInfo('已添加');
-        case Error(:final error):
+        case Err(:final error):
           context.showError('添加失败: ${error.toString()}');
       }
     } on Exception {
@@ -142,7 +142,7 @@ class _VideoCardState extends State<VideoCard> {
         setState(() {
           notInterestedReasonId = null;
         });
-      case Error(:final error):
+      case Err(:final error):
         context.showError('撤销失败: $error');
     }
   }
@@ -200,9 +200,9 @@ class _VideoCardState extends State<VideoCard> {
                 onTap: () => context.push(Routes.buildUserDetail(widget.user!.id)),
               ),
             if (widget.uploadTime != null) MetadataItem(key: '上传时间', value: formatTimeToHumanReadable(widget.uploadTime!)),
-            if (widget.watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(widget.watchTime!)),
-            if (widget.favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(widget.favoriteTime!)),
-            if (widget.watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(widget.watchLaterTime!)),
+            if (widget.watchTime != null) MetadataItem(key: '观看于', value: '观看于${formatTimeToHumanReadable(widget.watchTime!)}'),
+            if (widget.favoriteTime != null) MetadataItem(key: '收藏于', value: '收藏于${formatTimeToHumanReadable(widget.favoriteTime!)}'),
+            if (widget.watchLaterTime != null) MetadataItem(key: '添加于', value: '添加于${formatTimeToHumanReadable(widget.watchLaterTime!)}'),
           ],
           separator: const Text(' · '),
         ),

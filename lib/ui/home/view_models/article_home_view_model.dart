@@ -5,11 +5,9 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class ArticleHomeViewModel extends SafeChangeNotifier {
-  final ArticleRepository _articleRepository;
+  final ArticleRepository articleRepository;
 
-  ArticleHomeViewModel({
-    required ArticleRepository articleRepository,
-  }) : _articleRepository = articleRepository {
+  ArticleHomeViewModel({required this.articleRepository}) {
     loadData = Command0(_getArticles)..execute();
   }
 
@@ -21,12 +19,12 @@ class ArticleHomeViewModel extends SafeChangeNotifier {
   List<RecommendArticle> get articles => List.unmodifiable(_articles);
 
   Future<Result<List<RecommendArticle>>> _getArticles() async {
-    final result = await _articleRepository.getRecommendedList(pn: _pn);
+    final result = await articleRepository.getRecommendedList(pn: _pn);
     switch (result) {
       case Ok(:final value):
         _articles.addAll(value);
         _pn++;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

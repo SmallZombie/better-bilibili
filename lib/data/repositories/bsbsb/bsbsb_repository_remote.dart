@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:better_bilibili/config/bsbsb_config.dart';
-import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/data/interceptors/base_rate_limiter_intercrptor.dart';
 import 'package:better_bilibili/data/interceptors/debug_logger_interceptor.dart';
 import 'package:better_bilibili/data/interceptors/base_url_fallback_interceptor.dart';
@@ -13,12 +12,13 @@ import 'package:better_bilibili/data/model/bsbsb/video.dart';
 import 'package:better_bilibili/data/repositories/bsbsb/bsbsb_repository.dart';
 import 'package:better_bilibili/data/services/bsbsb/bsbsb_api_service.dart';
 import 'package:better_bilibili/data/services/bsbsb/model/get_leaderboard_request.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/duration_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class BsbsbRepositoryRemote implements BsbsbRepository {
   final BsbsbConfig config;
@@ -45,16 +45,19 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
   Dio? _client;
 
   @override
-  Dio getClient() {
+  Future<Dio> getClient() async {
     if (_client != null) {
       return _client!;
     }
 
     final baseUrls = config.baseUrls.value.split(',');
 
+    final packageInfo = await PackageInfo.fromPlatform();
+    final fullVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
+
     final client = Dio(
       BaseOptions(
-        headers: {'origin': kAppId, 'x-ext-version': kAppVersion},
+        headers: {'origin': packageInfo.packageName, 'x-ext-version': fullVersion},
       ),
     );
     client.interceptors.add(BaseUrlFallbackInterceptor(dio: client, baseUrls: baseUrls));
@@ -93,7 +96,7 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
     switch (result) {
       case Ok(:final value):
         data = value;
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
 
@@ -130,7 +133,7 @@ class BsbsbRepositoryRemote implements BsbsbRepository {
       case Ok(:final value):
         final index = value.indexWhere((v) => v.username == username && v.saveTime.isCloseTo(saveTime));
         return Result.ok(index);
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
   }

@@ -8,7 +8,7 @@ import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
@@ -42,7 +42,8 @@ class BiliCommentWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -147,7 +148,7 @@ class BiliCommentWebApiService {
 
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/reply/add',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: buildWbiParams(
           {
             // 因为文章页没有回退元素，所以这里留空没问题
@@ -302,7 +303,7 @@ class BiliCommentWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/reply/del',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'oid': contextId,
           'type': type.value,
@@ -333,7 +334,7 @@ class BiliCommentWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/reply/action',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'oid': contextId,
           'type': type.value,
@@ -365,7 +366,7 @@ class BiliCommentWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/reply/hate',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'oid': contextId,
           'type': type.value,
@@ -478,7 +479,7 @@ class BiliCommentWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/reply/report',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'type': contentType.value,
           'oid': contentId,

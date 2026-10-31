@@ -16,27 +16,26 @@ const _watchStatusValues = [
 ];
 
 class MovieTabViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
-  final AuthRepository _authRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
   final String userId;
 
   MovieTabViewModel({
-    required UserRepository userRepository,
-    required AuthRepository authRepository,
+    required this.userRepository,
+    required this.authRepository,
     required this.userId,
-  }) : _userRepository = userRepository,
-       _authRepository = authRepository {
-    loadData = CancellableCommand0(
+  }) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (result) => _loadDataSuccess(result),
+      onSuccess: _loadDataSuccess,
       onCancel: () {},
     )..execute();
     modifyMovieWatchStatus = Command1<void, ModifyMovieWatchStatusRequest>((req) => _modifyMovieWatchStatus(req));
     unsubscribe = Command1<void, String>((movieId) => _unsubscribe(movieId));
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetSubscribedMovieResponse> loadData;
 
   final List<SubscribedMovie> _movies = [];
   List<SubscribedMovie> get movies => List.unmodifiable(_movies);
@@ -66,14 +65,14 @@ class MovieTabViewModel extends SafeChangeNotifier {
     reload();
   }
 
-  Future<Result<void>> _loadData() async {
-    final result = await _userRepository.getSubscribedMovie(
+  Future<Result<GetSubscribedMovieResponse>> _loadData() async {
+    final result = await userRepository.getSubscribedMovie(
       userId: userId,
       pn: _pn,
       ps: ps,
       watchStatus: _watchStatusValues[_selectedWatchStatusIndex],
     );
-    _isCurrentUser ??= userId == (await _authRepository.getAccount()).userId;
+    _isCurrentUser ??= userId == (await authRepository.getAccount()).userId;
     return result;
   }
 
@@ -93,7 +92,7 @@ class MovieTabViewModel extends SafeChangeNotifier {
   late final Command1<void, ModifyMovieWatchStatusRequest> modifyMovieWatchStatus;
 
   Future<Result<void>> _modifyMovieWatchStatus(ModifyMovieWatchStatusRequest req) async {
-    final result = await _userRepository.modifyMovieWatchStatus(
+    final result = await userRepository.modifyMovieWatchStatus(
       movieId: req.movieId,
       watchStatus: req.watchStatus,
     );
@@ -102,7 +101,7 @@ class MovieTabViewModel extends SafeChangeNotifier {
         final index = _movies.indexWhere((element) => element.id == req.movieId);
         _movies[index] = _movies[index].copyWith(watchStatus: req.watchStatus);
         notifyListeners();
-      case Error():
+      case Err():
     }
     return result;
   }
@@ -110,12 +109,12 @@ class MovieTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> unsubscribe;
 
   Future<Result<void>> _unsubscribe(String movieId) async {
-    final result = await _userRepository.unsubscribeMovie(movieId);
+    final result = await userRepository.unsubscribeMovie(movieId);
     switch (result) {
       case Ok():
         _movies.removeWhere((v) => v.id == movieId);
         notifyListeners();
-      case Error():
+      case Err():
     }
     return result;
   }

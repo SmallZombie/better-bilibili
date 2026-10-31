@@ -1,10 +1,14 @@
-import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
+import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:logger/logger.dart';
 
 /// 作为中间层解决因为前方路由的销毁比后方路由的恢复晚发生
 /// 导致 [FlutterMediaSession.deactivate] 销毁所有 `session` 的问题
 class MediaSessionController {
-  final FlutterMediaSession _mediaSession = FlutterMediaSession();
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'MediaSessionController'));
+
+  final FlutterMediaSession _plugin = FlutterMediaSession();
   MediaSession? _currentSession;
 
   MediaSession createSession(MediaSessionAdapter adapter) {
@@ -12,28 +16,29 @@ class MediaSessionController {
 
     session = MediaSession(
       adapter: adapter,
-      activate: () {
-        _mediaSession.unbind();
-        _mediaSession.bind(adapter);
+      activate: () async {
+        _log.i('activate ${session.hashCode}');
+        if (_currentSession == session) return;
 
         if (_currentSession == null) {
-          _mediaSession.activate();
+          _currentSession = session;
+          await _plugin.activate();
         }
-        _currentSession = session;
+
+        _plugin.bind(adapter);
       },
       deactivate: () {
+        _log.i('deactivate ${session.hashCode}');
         if (_currentSession == session) {
-          _mediaSession.unbind();
-          _mediaSession.deactivate();
           _currentSession = null;
+          _plugin.unbind();
+          _plugin.deactivate();
         }
       },
     );
 
     return session;
   }
-
-  void releaseSession() {}
 }
 
 class MediaSession {

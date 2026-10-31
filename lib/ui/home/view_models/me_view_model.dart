@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:async';
 
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
@@ -18,52 +18,42 @@ import 'package:logger/logger.dart';
 class MeViewModel extends SafeChangeNotifier {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'MeViewModel'));
 
-  final AuthRepository _authRepository;
-  final UserRepository _userRepository;
+  final AuthRepository authRepository;
+  final UserRepository userRepository;
 
-  MeViewModel({
-    required AuthRepository authRepository,
-    required UserRepository userRepository,
-  }) : _authRepository = authRepository,
-       _userRepository = userRepository {
+  late final StreamSubscription _accountChangeSubscription;
+
+  MeViewModel({required this.authRepository, required this.userRepository}) {
     getHeaderData = Command0(_getHeaderData);
     getContentData = Command0(_getContentData);
 
-    if (_authRepository.hasLogin) {
+    if (authRepository.hasLogin) {
       getHeaderData.execute();
       getContentData.execute();
     }
 
-    _authRepository.addListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription = authRepository.stream.current.listen(_onAccountChange);
   }
 
   @override
   void dispose() {
-    _authRepository.removeListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription.cancel();
 
     super.dispose();
   }
 
-  bool get hasLogin => _authRepository.hasLogin;
+  bool get hasLogin => authRepository.hasLogin;
 
-  String getRandomLogoutText() {
-    final texts = [
-      '未登录',
-      '角色未解锁',
-      '干员未解锁',
-      'Nya~',
-    ];
-    return texts[Random().nextInt(texts.length)];
-  }
+  void _onAccountChange(String event) {
+    _log.i('reload with accountChanged accountId=$event hasLogin=${authRepository.hasLogin}');
 
-  void _onAuthRepositoryChanged() {
-    if (_authRepository.hasLogin) {
+    _headerData = null;
+    _contentData = null;
+    notifyListeners();
+
+    if (authRepository.hasLogin) {
       getHeaderData.execute();
       getContentData.execute();
-    } else {
-      _headerData = null;
-      _contentData = null;
-      notifyListeners();
     }
   }
 
@@ -72,9 +62,9 @@ class MeViewModel extends SafeChangeNotifier {
 
   late final Command0<HeaderData> getHeaderData;
   Future<Result<HeaderData>> _getHeaderData() async {
-    assert(_authRepository.hasLogin);
+    assert(authRepository.hasLogin);
 
-    final account = await _authRepository.getAccount();
+    final account = await authRepository.getAccount();
     final userId = account.userId;
 
     var [
@@ -90,17 +80,17 @@ class MeViewModel extends SafeChangeNotifier {
       cachedFollowCount,
       cachedFansCount,
     ] = await Future.wait<String?>([
-      _userRepository.getLocalUserData(userId, 'nickname'),
-      _userRepository.getLocalUserData(userId, 'avatar'),
-      _userRepository.getLocalUserData(userId, 'avatarFrame'),
-      _userRepository.getLocalUserData(userId, 'banner'),
-      _userRepository.getLocalUserData(userId, 'level'),
-      _userRepository.getLocalUserData(userId, 'vipIcon'),
-      _userRepository.getLocalUserData(userId, 'bcoinCount'),
-      _userRepository.getLocalUserData(userId, 'coinCount'),
-      _userRepository.getLocalUserData(userId, 'dynamicCount'),
-      _userRepository.getLocalUserData(userId, 'followCount'),
-      _userRepository.getLocalUserData(userId, 'fansCount'),
+      userRepository.getLocalUserData(userId, 'nickname'),
+      userRepository.getLocalUserData(userId, 'avatar'),
+      userRepository.getLocalUserData(userId, 'avatarFrame'),
+      userRepository.getLocalUserData(userId, 'banner'),
+      userRepository.getLocalUserData(userId, 'level'),
+      userRepository.getLocalUserData(userId, 'vipIcon'),
+      userRepository.getLocalUserData(userId, 'bcoinCount'),
+      userRepository.getLocalUserData(userId, 'coinCount'),
+      userRepository.getLocalUserData(userId, 'dynamicCount'),
+      userRepository.getLocalUserData(userId, 'followCount'),
+      userRepository.getLocalUserData(userId, 'fansCount'),
     ]);
 
     try {
@@ -146,18 +136,18 @@ class MeViewModel extends SafeChangeNotifier {
       userInfoResult as Result<GetUserInfoResponse>,
       selfStatsResult as Result<GetSelfStatsResponse>,
     ] = await Future.wait([
-      _userRepository.getSelfInfo(),
-      _userRepository.getUserInfo(userId),
-      _userRepository.getSelfStats(),
+      userRepository.getSelfInfo(),
+      userRepository.getUserInfo(userId),
+      userRepository.getSelfStats(),
     ]);
 
-    if (selfInfoResult case Error()) {
+    if (selfInfoResult case Err()) {
       return Result.error(selfInfoResult.error);
     }
-    if (userInfoResult case Error()) {
+    if (userInfoResult case Err()) {
       return Result.error(userInfoResult.error);
     }
-    if (selfStatsResult case Error()) {
+    if (selfStatsResult case Err()) {
       return Result.error(selfStatsResult.error);
     }
 
@@ -167,24 +157,24 @@ class MeViewModel extends SafeChangeNotifier {
 
     final selfInfo = selfInfoResult.value as GetSelfInfoLogginResponse;
 
-    await _userRepository.setLocalUserData(userId, 'nickname', selfInfo.nickname);
-    await _userRepository.setLocalUserData(userId, 'avatar', selfInfo.avatar);
+    await userRepository.setLocalUserData(userId, 'nickname', selfInfo.nickname);
+    await userRepository.setLocalUserData(userId, 'avatar', selfInfo.avatar);
 
     if (selfInfo.avatarFrame != null) {
-      await _userRepository.setLocalUserData(userId, 'avatarFrame', selfInfo.avatarFrame!);
+      await userRepository.setLocalUserData(userId, 'avatarFrame', selfInfo.avatarFrame!);
     } else {
-      await _userRepository.removeLocalUserData(userId, 'avatarFrame');
+      await userRepository.removeLocalUserData(userId, 'avatarFrame');
     }
 
     await Future.wait([
-      _userRepository.setLocalUserData(userId, 'banner', userInfoResult.value.banner),
-      _userRepository.setLocalUserData(userId, 'level', selfInfo.level.currentLevel.toString()),
-      _userRepository.setLocalUserData(userId, 'vipIcon', selfInfo.vip.labelImage),
-      _userRepository.setLocalUserData(userId, 'bcoinNum', selfInfo.wallet.bcoin.toString()),
-      _userRepository.setLocalUserData(userId, 'coinNum', selfInfo.wallet.coin.toString()),
-      _userRepository.setLocalUserData(userId, 'dynamicNum', selfStatsResult.value.dynamicCount.toString()),
-      _userRepository.setLocalUserData(userId, 'followNum', selfStatsResult.value.followCount.toString()),
-      _userRepository.setLocalUserData(userId, 'fansNum', selfStatsResult.value.fansCount.toString()),
+      userRepository.setLocalUserData(userId, 'banner', userInfoResult.value.banner),
+      userRepository.setLocalUserData(userId, 'level', selfInfo.level.currentLevel.toString()),
+      userRepository.setLocalUserData(userId, 'vipIcon', selfInfo.vip.labelImage),
+      userRepository.setLocalUserData(userId, 'bcoinCount', selfInfo.wallet.bcoin.toString()),
+      userRepository.setLocalUserData(userId, 'coinCount', selfInfo.wallet.coin.toString()),
+      userRepository.setLocalUserData(userId, 'dynamicCount', selfStatsResult.value.dynamicCount.toString()),
+      userRepository.setLocalUserData(userId, 'followCount', selfStatsResult.value.followCount.toString()),
+      userRepository.setLocalUserData(userId, 'fansCount', selfStatsResult.value.fansCount.toString()),
     ]);
 
     _headerData = HeaderData(
@@ -200,6 +190,7 @@ class MeViewModel extends SafeChangeNotifier {
       followNum: selfStatsResult.value.followCount,
       fansNum: selfStatsResult.value.fansCount,
     );
+
     notifyListeners();
     return Result.ok(_headerData!);
   }
@@ -209,27 +200,27 @@ class MeViewModel extends SafeChangeNotifier {
 
   late final Command0<ContentData> getContentData;
   Future<Result<ContentData>> _getContentData() async {
-    assert(_authRepository.hasLogin);
+    assert(authRepository.hasLogin);
 
-    final account = await _authRepository.getAccount();
+    final account = await authRepository.getAccount();
 
     final [
       watchHistoryResult,
       watchLaterResult,
       favoritesResult,
     ] = await Future.wait([
-      _userRepository.getWatchHistory(),
-      _userRepository.getWatchLater(),
-      _userRepository.getFavoritesList(userId: account.userId),
+      userRepository.getWatchHistory(),
+      userRepository.getWatchLater(),
+      userRepository.getFavoritesList(userId: account.userId),
     ]);
 
-    if (watchHistoryResult case Error()) {
+    if (watchHistoryResult case Err()) {
       return Result.error(watchHistoryResult.error);
     }
-    if (watchLaterResult case Error()) {
+    if (watchLaterResult case Err()) {
       return Result.error(watchLaterResult.error);
     }
-    if (favoritesResult case Error()) {
+    if (favoritesResult case Err()) {
       return Result.error(favoritesResult.error);
     }
 
@@ -242,6 +233,7 @@ class MeViewModel extends SafeChangeNotifier {
       watchLater: watchLaterResult.value.list,
       favorites: favoritesResult.value.list,
     );
+
     notifyListeners();
     return Result.ok(_contentData!);
   }
@@ -275,7 +267,7 @@ class HeaderData extends User {
 class ContentData {
   final List<dynamic> watchHistory;
   final List<dynamic> watchLater;
-  final List<Favorites> favorites;
+  final List<FavoriteFolder> favorites;
 
   ContentData({
     required this.watchHistory,

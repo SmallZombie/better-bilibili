@@ -46,7 +46,7 @@ class GetUserInfoResponse {
         return null;
       }
 
-      return str;
+      return str.replaceAll('\n', ' ');
     }
 
     return GetUserInfoResponse(

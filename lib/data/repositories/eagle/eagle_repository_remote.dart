@@ -102,7 +102,7 @@ class EagleRepositoryRemote implements EagleRepository {
           switch (result) {
             case Ok():
               context.showInfo('已保存');
-            case Error(:final error):
+            case Err(:final error):
               context.showError('保存失败: ${error.toString()}');
           }
         },
@@ -126,7 +126,7 @@ class EagleRepositoryRemote implements EagleRepository {
             if (!context.mounted) return;
 
             for (final i in results) {
-              if (i is Error) context.showError('保存时发生错误: ${i.error.toString()}');
+              if (i is Err) context.showError('保存时发生错误: ${i.error.toString()}');
             }
 
             if (results.every((v) => v is Ok)) {

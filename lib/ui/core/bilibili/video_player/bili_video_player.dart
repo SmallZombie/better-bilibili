@@ -37,7 +37,9 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/quality/bili_quali
 import 'package:better_bilibili/ui/core/bilibili/video_player/quality/quality_button.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/settings/settings_panel.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/preview/bili_timeline_preview_controller.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment_controller.dart';
+import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/segment/timeline_segment_data_source.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/bili_timeline_waveform_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/windows_taskbar/windows_taskbar_adapter.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
@@ -101,7 +103,6 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   late TitlebarHandler titlebarHandler;
   late BiliQualityController qualityController;
   late BiliTimelinePreviewController previewController;
-  late BiliTimelineWaveformController waveformController;
   late TimelineSegmentController segmentController;
   late BiliDanmakuController danmakuController;
   late BiliHistoryReporter historyReporter;
@@ -109,6 +110,8 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
   final List<StreamSubscription> _subscriptions = [];
 
+  BiliTimelineWaveformController? _waveformController;
+  ExtraVideoPlayerMediaSessionAdapter? _mediaSessionAdapter;
   MediaSession? _mediaSession;
   BsbsbController? bsbsbController;
 
@@ -142,11 +145,14 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     _subscriptions.addAll([
       config.mediaControl.stream.listen(_onMediaControl),
       config.hideMediaControlInfo.stream.listen(_onHideMediaControlInfo),
+      config.heatWaveforms.stream.listen(_onHeatWaveforms),
+
       controller.stream.error.listen((e) => _log.e('onPlayerError', error: e)),
       controller.stream.duration.listen(_onDuration),
       controller.stream.volume.listen(_onVolume),
       controller.stream.muted.listen(_onMuted),
       controller.stream.completed.listen(_onCompleted),
+
       widget.bsbsbConfig.enable.stream.listen(_onBsbsbEnable),
     ]);
   }
@@ -172,12 +178,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     }
 
     if (oldWidget.playlistController != widget.playlistController) {
-      _mediaSession?.deactivate();
-      _mediaSession = null;
-
-      if (config.mediaControl.value) {
-        _onMediaControl(true);
-      }
+      _mediaSessionAdapter?.setPlaylistController(widget.playlistController);
     }
   }
 
@@ -198,18 +199,18 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
     super.dispose();
   }
 
-  /// 销毁所有依赖 playInfo 的控制器
+  /// 销毁所有依赖 playInfo 的类
   void _disposeWithPlayInfo() {
     qualityController.dispose();
     previewController.dispose();
-    waveformController.dispose();
+    _waveformController?.dispose();
     segmentController.dispose();
     danmakuController.dispose();
     historyReporter.dispose();
     refreshHandler.dispose();
   }
 
-  /// 创建所有依赖 playInfo 的控制器
+  /// 创建所有依赖 playInfo 的类
   void _createWithPlayInfo() {
     qualityController = BiliQualityController(
       controller: controller,
@@ -222,12 +223,25 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       videoId: widget.playInfo.videoId,
       episodeId: widget.playInfo.episodeId,
     );
-    waveformController = BiliTimelineWaveformController(
-      videoRepository: widget.videoRepository,
-      videoId: widget.playInfo.videoId,
-      episodeId: widget.playInfo.episodeId,
-    );
+
+    if (config.heatWaveforms.value) {
+      _waveformController = BiliTimelineWaveformController(
+        videoRepository: widget.videoRepository,
+        videoId: widget.playInfo.videoId,
+        episodeId: widget.playInfo.episodeId,
+      );
+    }
+
     segmentController = TimelineSegmentController(controller: controller);
+    if (widget.playInfo.chapters.isNotEmpty) {
+      final chapterDataSoure = TimelineSegmentDataSource();
+      chapterDataSoure.data = widget.playInfo.chapters.map((v) {
+        return TimelineSegment(type: .chapter, start: v.start, end: v.end, name: v.name);
+      }).toList();
+
+      segmentController.addDataSource(chapterDataSoure);
+    }
+
     danmakuController = BiliDanmakuController(
       contentType: .video,
       contentId: widget.playInfo.videoId,
@@ -260,12 +274,13 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   void _onMediaControl(bool event) {
     if (event) {
       debugPrint('_onMediaControl: ${widget.playlistController.hashCode}');
+      _mediaSessionAdapter = ExtraVideoPlayerMediaSessionAdapter(
+        player: controller.player,
+        mediaSessionData: widget.mediaSessionData,
+        playlistController: widget.playlistController,
+      );
       _mediaSession ??= widget.mediaSessionController.createSession(
-        ExtraVideoPlayerMediaSessionAdapter(
-          player: controller.player,
-          mediaSessionData: widget.mediaSessionData,
-          playlistController: widget.playlistController,
-        ),
+        _mediaSessionAdapter!,
       );
       _mediaSession!.activate();
     } else {
@@ -327,6 +342,18 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
       bsbsbController?.dispose();
       bsbsbController = null;
     }
+    setState(() {});
+  }
+
+  void _onHeatWaveforms(bool event) {
+    if (event) {
+      _waveformController ??= BiliTimelineWaveformController(
+        videoRepository: widget.videoRepository,
+        videoId: widget.playInfo.videoId,
+        episodeId: widget.playInfo.episodeId,
+      );
+    }
+    setState(() {});
   }
 
   @override
@@ -593,7 +620,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
         },
       ),
       previewController: previewController,
-      waveformController: waveformController,
+      waveformController: config.heatWaveforms.value ? _waveformController : null,
       segmentController: segmentController,
       onSeekStart: onSeekStart,
       onSeekEnd: onSeekEnd,

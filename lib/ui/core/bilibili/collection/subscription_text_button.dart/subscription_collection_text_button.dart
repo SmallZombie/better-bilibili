@@ -25,7 +25,7 @@ class _SubscriptionCollectionTextButtonState extends State<SubscriptionCollectio
   }
 
   void _onResult() {
-    if (widget.viewModel.subscription.completed) {
+    if (widget.viewModel.subscription.success) {
       widget.onChange?.call(widget.viewModel.subscribed);
     } else if (widget.viewModel.subscription.error) {
       context.showError('${widget.viewModel.subscribed ? '取消' : ''}订阅失败: ${(widget.viewModel.subscription.result as Error).toString()}');

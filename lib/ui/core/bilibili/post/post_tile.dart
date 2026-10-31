@@ -52,13 +52,12 @@ class PostTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.0),
         child: Ink(
           padding: const EdgeInsets.all(8.0),
-          decoration:
-              isActive
-                  ? BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(8.0),
-                  )
-                  : null,
+          decoration: isActive
+              ? BoxDecoration(
+                  color: ListTileTheme.of(context).selectedTileColor,
+                  borderRadius: BorderRadius.circular(8.0),
+                )
+              : null,
           child: IntrinsicHeight(
             child: Row(
               children: [
@@ -154,21 +153,20 @@ class PostTile extends StatelessWidget {
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder:
-                                      (BuildContext innerContext) => AlertDialog(
-                                        title: Text('你点击了作者名'),
-                                        content: Text(postId.toString()),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(innerContext, 'Cancel'),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(innerContext, 'OK'),
-                                            child: const Text('OK'),
-                                          ),
-                                        ],
+                                  builder: (BuildContext innerContext) => AlertDialog(
+                                    title: Text('你点击了作者名'),
+                                    content: Text(postId.toString()),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(innerContext, 'Cancel'),
+                                        child: const Text('Cancel'),
                                       ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(innerContext, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
                                 );
                               },
                               child: Text(

@@ -35,17 +35,15 @@ const _deviceTypeOptions = <GetWatchHistoryWithFilterDeviceTypeEnum>[
 ];
 
 class WatchHistoryViewModel extends SafeChangeNotifier {
-  WatchHistoryViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  final UserRepository userRepository;
+
+  WatchHistoryViewModel({required this.userRepository}) {
     loadWatchHistory = Command0(_loadWatchHistory)..execute();
     loadHistoryConfig = Command0(_loadHistoryConfig)..execute();
     setHistoryConfig = Command1<void, bool>((enable) => _setHistoryConfig(enable));
     clearAllWatchHistory = Command0(_clearAllWatchHistory);
     deleteSelectedItems = Command0(_deleteSelectedItems);
   }
-
-  final UserRepository _userRepository;
 
   late final Command0<void> loadWatchHistory;
 
@@ -99,7 +97,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   int _viewAt = 0;
 
   Future<Result<void>> _loadWatchHistoryWithNoFilter() async {
-    final result = await _userRepository.getWatchHistory(
+    final result = await userRepository.getWatchHistory(
       nextCursor: _nextCursor,
       viewAt: _viewAt,
       type: _typeOptions[selectedTypeIndex],
@@ -117,14 +115,15 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
         if (value.list.isEmpty) {
           _hasMore = false;
         }
-      case Error():
+      case Err():
     }
     notifyListeners();
     return result;
   }
 
   int _pn = 1;
-  String keyword = '';
+  String _keyword = '';
+  String get keyword => _keyword;
   int selectedTypeIndex = 0;
   int selectedDurationIndex = 0;
   int selectedRecordTimeIndex = 0;
@@ -133,7 +132,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   int? customRecordTimeEndSec;
 
   Future<Result<void>> _loadWatchHistoryWithFilter() async {
-    final result = await _userRepository.getWatchHistoryWithFilter(
+    final result = await userRepository.getWatchHistoryWithFilter(
       pn: _pn,
       keyword: keyword,
       type: _filterTypeOptions[selectedTypeIndex],
@@ -150,7 +149,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
         value.list.forEach(_addToDateList);
         _pn++;
         _hasMore = value.hasMore;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -158,7 +157,8 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   }
 
   void setKeyword(String keyword) {
-    this.keyword = keyword;
+    if (keyword == _keyword) return;
+    _keyword = keyword;
     reload();
   }
 
@@ -192,8 +192,6 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
 
   bool? _isHistoryEnabled;
   bool? get isHistoryEnabled => _isHistoryEnabled;
-
-  bool get showEmpty => !loadWatchHistory.running && !loadWatchHistory.error && _watchHistory.isEmpty;
 
   int _getFiltersState() => Object.hash(
     selectedTypeIndex,
@@ -232,11 +230,11 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   late final Command0<void> loadHistoryConfig;
 
   Future<Result<void>> _loadHistoryConfig() async {
-    final result = await _userRepository.getWatchHistoryConfig();
+    final result = await userRepository.getWatchHistoryConfig();
     switch (result) {
       case Ok(:final value):
         _isHistoryEnabled = value;
-      case Error():
+      case Err():
         _isHistoryEnabled = null;
     }
     return result;
@@ -245,11 +243,11 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   late final Command1<void, bool> setHistoryConfig;
 
   Future<Result<void>> _setHistoryConfig(bool enable) async {
-    final result = await _userRepository.setWatchHistoryConfig(enable: enable);
+    final result = await userRepository.setWatchHistoryConfig(enable: enable);
     switch (result) {
       case Ok():
         _isHistoryEnabled = enable;
-      case Error():
+      case Err():
     }
     return result;
   }
@@ -257,11 +255,11 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
   late final Command0<void> clearAllWatchHistory;
 
   Future<Result<void>> _clearAllWatchHistory() async {
-    final result = await _userRepository.clearWatchHistory();
+    final result = await userRepository.clearWatchHistory();
     switch (result) {
       case Ok():
         reload();
-      case Error():
+      case Err():
         notifyListeners();
     }
     return result;
@@ -325,7 +323,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _deleteSelectedItems() async {
     final ids = _selectedItems.map((v) => getItemId(v)).toList();
-    final result = await _userRepository.deleteWatchHistory(ids);
+    final result = await userRepository.deleteWatchHistory(ids);
     switch (result) {
       case Ok():
         _watchHistory.removeWhere(selectedItems.contains);
@@ -333,7 +331,7 @@ class WatchHistoryViewModel extends SafeChangeNotifier {
         _yesterdayList.removeWhere(selectedItems.contains);
         _beforeYesterdayList.removeWhere(selectedItems.contains);
         _otherList.removeWhere(selectedItems.contains);
-      case Error():
+      case Err():
     }
 
     notifyListeners();

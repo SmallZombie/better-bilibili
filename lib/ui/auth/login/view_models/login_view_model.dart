@@ -9,11 +9,9 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class LoginViewModel extends SafeChangeNotifier {
-  final AuthRepository _authRepository;
+  final AuthRepository authRepository;
 
-  LoginViewModel({
-    required AuthRepository authRepository,
-  }) : _authRepository = authRepository {
+  LoginViewModel({required this.authRepository}) {
     getLoginQrCode = Command0(_getLoginQrCode);
     getQrCodeStatus = Command1<GetQrCodeStatusResponse, String>((key) => _getQrCodeStatus(key));
   }
@@ -21,8 +19,6 @@ class LoginViewModel extends SafeChangeNotifier {
   @override
   void dispose() {
     stopPolling();
-    getLoginQrCode.dispose();
-    getQrCodeStatus.dispose();
     super.dispose();
   }
 
@@ -45,9 +41,7 @@ class LoginViewModel extends SafeChangeNotifier {
   }
 
   late final Command0<GetLoginQrCodeResponse> getLoginQrCode;
-  late final Command1<GetQrCodeStatusResponse, String> getQrCodeStatus;
-  QrCodeStatus? _qrCodeStatus;
-  QrCodeStatus? get qrCodeStatus => _qrCodeStatus;
+
   String? _qrCodeUrl;
   String? get qrCodeUrl => _qrCodeUrl;
   Timer? _pollTimer;
@@ -57,27 +51,32 @@ class LoginViewModel extends SafeChangeNotifier {
     _qrCodeStatus = null;
     notifyListeners();
 
-    final result = await _authRepository.getLoginQrCode();
+    final result = await authRepository.getLoginQrCode();
     switch (result) {
       case Ok(:final value):
         _qrCodeUrl = value.url;
         _qrCodeStatus = QrCodeStatus.waiting;
         _startPolling(value.key);
         return Result.ok(value);
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
   }
 
+  late final Command1<GetQrCodeStatusResponse, String> getQrCodeStatus;
+
+  QrCodeStatus? _qrCodeStatus;
+  QrCodeStatus? get qrCodeStatus => _qrCodeStatus;
+
   Future<Result<GetQrCodeStatusResponse>> _getQrCodeStatus(String key) async {
-    final result = await _authRepository.getQrCodeStatus( key);
+    final result = await authRepository.getQrCodeStatus(key);
     switch (result) {
       case Ok(:final value):
         _qrCodeStatus = value.status;
-        if (value.status == QrCodeStatus.expired) {
+        if (value.status == .expired) {
           stopPolling();
         }
-        if (value.status == QrCodeStatus.success) {
+        if (value.status == .success) {
           final resp = value as ConfirmedQrCodeStatusResponse;
           final userId = resp.dedeUserId;
 
@@ -91,14 +90,14 @@ class LoginViewModel extends SafeChangeNotifier {
           builder.sid = resp.sid;
           builder.biliJct = resp.biliJct;
 
-          await _authRepository.createAccount(builder);
-          await _authRepository.switchAccount(userId);
+          await authRepository.createAccount(builder);
+          await authRepository.switchAccount(userId);
         }
-        notifyListeners();
-        return Result.ok(value);
-      case Error(:final error):
-        return Result.error(error);
+      case Err():
     }
+
+    notifyListeners();
+    return result;
   }
 
   void refreshQrLogin() {

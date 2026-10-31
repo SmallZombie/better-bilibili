@@ -159,7 +159,7 @@ extension PostReportSheet on BuildContext {
     switch (result) {
       case Ok():
         showInfo('已提交');
-      case Error(:final error):
+      case Err(:final error):
         showError('提交失败: $error');
     }
   }

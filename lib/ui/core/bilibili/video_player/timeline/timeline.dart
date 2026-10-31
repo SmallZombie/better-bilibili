@@ -15,24 +15,27 @@ const _kHoverTransitionDuration = Duration(milliseconds: 150);
 
 class Timeline extends StatefulWidget {
   final ExtraVideoController controller;
-  final double height;
   final ValueChanged<Duration>? onSeekStart;
   final ValueChanged<Duration>? onSeekEnd;
   final VideoRepository videoRepository;
   final TimelinePreviewController previewController;
-  final TimelineWaveformController waveformController;
+  final TimelineWaveformController? waveformController;
   final TimelineSegmentController segmentController;
+  // 因为新增了章节条，所以时间线有时会变得比预期更高，
+  // 外面的 overlay 并不知到时间线什么时候会有因为存在章节条而变高，
+  // 所以暂时通过这样的方案来传递正确的高度，我觉得这样不够优雅但先这样吧
+  final ValueChanged<double>? onHeightChange;
 
   const Timeline({
     super.key,
     required this.controller,
-    required this.height,
     this.onSeekStart,
     this.onSeekEnd,
     required this.videoRepository,
     required this.previewController,
-    required this.waveformController,
+    this.waveformController,
     required this.segmentController,
+    this.onHeightChange,
   });
 
   @override
@@ -75,6 +78,9 @@ class TimelineState extends State<Timeline> {
         setState(() => buffer = event);
       }),
     ]);
+
+    widget.segmentController.addListener(_onSegmentChanged);
+    _onSegmentChanged();
   }
 
   @override
@@ -83,15 +89,9 @@ class TimelineState extends State<Timeline> {
       subscription.cancel();
     }
 
-    super.dispose();
-  }
+    widget.segmentController.removeListener(_onSegmentChanged);
 
-  void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
-    setState(() {
-      hover = true;
-      slider = percent.clamp(0.0, 1.0);
-    });
+    super.dispose();
   }
 
   void onPointerDown() {
@@ -101,12 +101,24 @@ class TimelineState extends State<Timeline> {
     });
   }
 
+  void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
+    final percent = e.localPosition.dx / constraints.maxWidth;
+    setState(() {
+      hover = true;
+      slider = percent.clamp(0.0, 1.0);
+    });
+
+    previewController.updatePreview(duration * slider);
+  }
+
   void onPointerUp() {
     widget.onSeekEnd?.call(duration * slider);
     setState(() {
       // Explicitly set the position to prevent the slider from jumping.
       click = false;
       position = duration * slider;
+
+      if (_exited) hover = false;
     });
     controller.seek(duration * slider);
   }
@@ -121,7 +133,11 @@ class TimelineState extends State<Timeline> {
     previewController.updatePreview(duration * slider);
   }
 
+  bool _exited = false;
+
   void onEnter(PointerEnterEvent e, BoxConstraints constraints) {
+    _exited = false;
+
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       hover = true;
@@ -130,6 +146,8 @@ class TimelineState extends State<Timeline> {
   }
 
   void onExit(PointerExitEvent e, BoxConstraints constraints) {
+    _exited = true;
+
     setState(() {
       hover = false;
       slider = 0.0;
@@ -156,16 +174,29 @@ class TimelineState extends State<Timeline> {
     }
   }
 
+  final height = 3.2;
+  final hoverHeight = 5.6;
+  final triggerPadding = 8.0;
+  final chapterBarHeight = 24.0;
+
+  void _onSegmentChanged() {
+    widget.onHeightChange?.call(
+      segmentController.chapters.isEmpty ? hoverHeight + triggerPadding * 2 : hoverHeight + triggerPadding + chapterBarHeight,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    final hasChapterBar = segmentController.chapters.isNotEmpty;
 
     return Row(
       crossAxisAlignment: .end,
       children: [
         SizedBox(width: 12.0),
         Text(
-          position.label(reference: position),
+          position.label(reference: duration),
           style: textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
         SizedBox(width: 8.0),
@@ -173,12 +204,18 @@ class TimelineState extends State<Timeline> {
           child: Column(
             mainAxisSize: .min,
             children: [
-              Transform.translate(
-                offset: const Offset(0.0, 20.0),
-                child: TimelineWaveformRender(controller: widget.waveformController),
+              if (widget.waveformController != null)
+                Transform.translate(
+                  offset: Offset(0, hasChapterBar ? 4 : 10),
+                  child: TimelineWaveformRender(controller: widget.waveformController!),
+                ),
+              Column(
+                mainAxisSize: .min,
+                children: [
+                  if (hasChapterBar) _buildChapterBar(),
+                  _buildProgressBar(hasChapterBar),
+                ],
               ),
-              _buildChapterBar(),
-              _buildNormalBar(),
             ],
           ),
         ),
@@ -194,71 +231,36 @@ class TimelineState extends State<Timeline> {
     );
   }
 
-  Widget _buildChapterBar() {
-    return Transform.translate(
-      offset: const Offset(0, 20),
-      child: DefaultTextStyle.merge(
-        style: const TextStyle(color: Color(0xffffffff), fontSize: 13.0),
-        textAlign: .center,
-        maxLines: 1,
-        overflow: .ellipsis,
-        child: Row(
-          spacing: 2.0,
-          children: [
-            for (final chapter in segmentController.chapters)
-              Expanded(
-                flex: (chapter.end!.inMilliseconds - chapter.start.inMilliseconds).clamp(1, 1 << 31),
-                child: InkWell(
-                  onTap: () {
-                    debugPrint('click chapter. $chapter');
-                  },
-                  mouseCursor: SystemMouseCursors.click,
-                  child: Container(
-                    color: chapter.color ?? Colors.white12,
-                    padding: const .symmetric(vertical: 2.0),
-                    child: Text(chapter.name),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNormalBar() {
+  /// [moreTopArea] 取消上方额外手势区域
+  Widget _buildProgressBar([bool moreTopArea = false]) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final double height = 3.2;
-    final double hoverHeight = 5.6;
+    final dotSize = 12.0;
 
-    final double dotSize = 12.0;
-
-    return Transform.translate(
-      offset: const Offset(0.0, 5.0),
-      child: Container(
-        clipBehavior: .none,
-        child: LayoutBuilder(
-          builder: (context, constraints) => MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onHover: (e) => onHover(e, constraints),
-            onEnter: (e) => onEnter(e, constraints),
-            onExit: (e) => onExit(e, constraints),
-            child: Listener(
-              onPointerMove: (e) => onPointerMove(e, constraints),
-              onPointerDown: (e) => onPointerDown(),
-              onPointerUp: (e) => onPointerUp(),
-              child: Container(
-                color: Colors.transparent,
-                width: constraints.maxWidth,
-                height: widget.height,
+    return Container(
+      clipBehavior: .none,
+      child: LayoutBuilder(
+        builder: (context, constraints) => MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onHover: (e) => onHover(e, constraints),
+          onEnter: (e) => onEnter(e, constraints),
+          onExit: (e) => onExit(e, constraints),
+          child: Listener(
+            onPointerMove: (e) => onPointerMove(e, constraints),
+            onPointerDown: (_) => onPointerDown(),
+            onPointerUp: (_) => onPointerUp(),
+            child: Container(
+              color: Colors.transparent,
+              width: constraints.maxWidth,
+              padding: moreTopArea ? .only(top: 3, bottom: triggerPadding) : .symmetric(vertical: triggerPadding),
+              child: SizedBox(
+                height: hoverHeight,
                 child: Stack(
                   clipBehavior: .none,
                   alignment: .centerLeft,
                   children: [
                     if (hover) _buildHoverPreview(constraints),
                     AnimatedContainer(
-                      width: constraints.maxWidth,
                       height: hover ? hoverHeight : height,
                       alignment: .centerLeft,
                       duration: _kHoverTransitionDuration,
@@ -297,6 +299,7 @@ class TimelineState extends State<Timeline> {
                       ),
                     ),
                     Positioned(
+                      // top: -dotSize / 2,
                       left: click ? constraints.maxWidth * slider - dotSize / 2 : constraints.maxWidth * positionPercent - dotSize / 2,
                       child: AnimatedContainer(
                         width: hover || click || segmentController.currentMarks.isNotEmpty ? dotSize : 0.0,
@@ -434,6 +437,44 @@ class TimelineState extends State<Timeline> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildChapterBar() {
+    List<Widget> children = [];
+    for (int i = 0; i < segmentController.chapters.length; i++) {
+      final chapter = segmentController.chapters[i];
+      final isLast = i == segmentController.chapters.length - 1;
+
+      children.add(
+        Expanded(
+          // 最后一个章节的末尾并不总是等于视频总时间
+          flex: isLast
+              ? duration.inMilliseconds - chapter.start.inMilliseconds
+              : chapter.end!.inMilliseconds - chapter.start.inMilliseconds + 1,
+          child: InkWell(
+            onTap: () => controller.seek(chapter.start),
+            mouseCursor: SystemMouseCursors.click,
+            child: Container(
+              color: chapter.color ?? Colors.white12,
+              height: chapterBarHeight,
+              padding: const .symmetric(vertical: 2.0),
+              child: Text(chapter.name),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Transform.translate(
+      offset: const Offset(0, 2),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(color: Color(0xffffffff), fontSize: 13.0),
+        textAlign: .center,
+        maxLines: 1,
+        overflow: .ellipsis,
+        child: Row(spacing: 2.0, children: children),
       ),
     );
   }

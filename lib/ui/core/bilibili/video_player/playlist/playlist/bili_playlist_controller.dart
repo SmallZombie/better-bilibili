@@ -41,11 +41,11 @@ class BiliPlaylistController extends ChangeNotifier {
   String get currentVideoId => _currentVideoId;
 
   Future<Result<void>> _initLoad() async {
-    final result = await videoRepository.getPlaylistInfo( playlistId);
+    final result = await videoRepository.getPlaylistInfo(playlistId);
     switch (result) {
       case Ok(:final value):
         _playlistInfo = value;
-      case Error():
+      case Err():
     }
 
     final result2 = await videoRepository.getPlaylistVideos(
@@ -56,7 +56,7 @@ class BiliPlaylistController extends ChangeNotifier {
     switch (result2) {
       case Ok(:final value):
         _videos.addAll(value.list);
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -75,7 +75,7 @@ class BiliPlaylistController extends ChangeNotifier {
       case Ok(:final value):
         _videos.insertAll(0, value.list);
         _hasMoreBefore = value.hasMore;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -94,7 +94,7 @@ class BiliPlaylistController extends ChangeNotifier {
       case Ok(:final value):
         _videos.addAll(value.list);
         _hasMoreAfter = value.hasMore;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

@@ -13,6 +13,7 @@ import 'package:better_bilibili/ui/core/bilibili/comment/comment_panel/comment_p
 import 'package:better_bilibili/ui/core/bilibili/tier_required_prompt.dart';
 import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_text_button.dart';
 import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_text_button_view_model.dart';
+import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/collection_tab_view_model.dart';
 import 'package:better_bilibili/ui/post_detail/widgets/collection_tab.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/post_detail_view_model.dart';
@@ -22,6 +23,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:go_router/go_router.dart' hide Block;
 import 'package:provider/provider.dart';
+import 'package:silky_scroll/silky_scroll.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final PostDetailViewModel viewModel;
@@ -149,7 +151,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 1200.0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             spacing: 24.0,
             children: [
               Expanded(child: _buildContent()),
@@ -166,11 +168,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (detail == null) {
       if (widget.viewModel.cover != null) {
         return Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const .all(16.0),
           child: BiliImageWapper(
             url: widget.viewModel.cover!,
             height: 400.0,
-            borderRadius: BorderRadius.circular(16.0),
+            borderRadius: .circular(16.0),
             suffix: kThumbnailSuffix,
           ),
         );
@@ -184,7 +186,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final document = Document.fromDelta(detail!.content!);
     final quillController = QuillController(
       document: document,
-      selection: const TextSelection.collapsed(offset: 0),
+      selection: const .collapsed(offset: 0),
       readOnly: true,
     );
 
@@ -209,20 +211,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     return Stack(
       children: [
-        CustomScrollView(
+        SilkyCustomScrollView(
+          silkyConfig: kDefaultSilkyConfig.copyWith(scrollSpeed: 1.8),
           key: _scrollViewKey,
           controller: _scrollController,
           slivers: [
             SliverToBoxAdapter(
               child: SelectableText(
                 detail.title ?? '',
-                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20.0, fontWeight: .bold),
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8.0)),
             SliverToBoxAdapter(
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                contentPadding: const .symmetric(horizontal: 4.0),
                 onTap: () => context.push(Routes.buildUserDetail(detail.owner.id)),
                 leading: BiliUserAvatar(url: detail.owner.avatar),
                 title: Text(detail.owner.nickname),
@@ -251,7 +254,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 child: BiliImageWapper(
                   url: detail.cover!,
                   height: 400.0,
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: .circular(16.0),
                   suffix: kThumbnailSuffix,
                 ),
               ),
@@ -263,26 +266,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   _recalculateHeaderOffsets();
                   return false;
                 },
-                child: SizeChangedLayoutNotifier(
-                  child: QuillEditor.basic(
-                    controller: quillController,
-                    config: QuillEditorConfig(
-                      scrollable: false,
-                      padding: EdgeInsets.zero,
-                      enableInteractiveSelection: true,
-                      showCursor: false,
-                      embedBuilders: [
-                        ImageEmbedBuilder(),
-                        VideoCardEmbedBuilder(),
-                        PostCardEmbedBuilder(),
-                        UserEmbedBuilder(),
-                        DividerEmbedBuilder(),
-                        InnerUserEmbedBuilder(),
-                      ],
-                      customStyles: quillEditorStyle(context),
-                      editorKey: _editorKey,
-                    ),
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    return SizeChangedLayoutNotifier(
+                      child: QuillEditor.basic(
+                        controller: quillController,
+                        config: QuillEditorConfig(
+                          scrollable: false,
+                          padding: .zero,
+                          enableInteractiveSelection: true,
+                          showCursor: false,
+                          embedBuilders: [
+                            ImageEmbedBuilder(),
+                            VideoCardEmbedBuilder(),
+                            PostCardEmbedBuilder(),
+                            UserEmbedBuilder(),
+                            DividerEmbedBuilder(),
+                            InnerUserEmbedBuilder(),
+                          ],
+                          customStyles: quillEditorStyle(context),
+                          editorKey: _editorKey,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -446,10 +453,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         children: [
           SizedBox(height: 4.0),
           TabBar(
-            splashBorderRadius: BorderRadius.circular(8.0),
+            splashBorderRadius: .circular(8.0),
             dividerColor: Colors.transparent,
             isScrollable: true,
-            tabAlignment: TabAlignment.center,
+            tabAlignment: .center,
             tabs: tabs,
           ),
           Expanded(child: TabBarView(children: children)),

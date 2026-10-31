@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:better_bilibili/data/repositories/bilibili/comment_repository/comment_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_comment_report_reasons_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
@@ -19,7 +21,9 @@ extension CommentReportSheet on BuildContext {
   }) async {
     final CommentReportSheetViewModel viewModel = read();
     viewModel.clear();
-    viewModel.getReasonList.execute(contentType, contentId);
+    unawaited(
+      viewModel.getReasonList.execute(GetReasonListOptions(contentType, contentId)),
+    );
 
     ReportReasonItem? reason;
     String description = '';
@@ -64,7 +68,7 @@ extension CommentReportSheet on BuildContext {
                   return CenterErrorMessage(
                     errorMessage: viewModel.getReasonList.result.toString(),
                     onRetry: () {
-                      viewModel.getReasonList.execute(contentType, contentId);
+                      viewModel.getReasonList.execute(GetReasonListOptions(contentType, contentId));
                     },
                   );
                 }
@@ -125,7 +129,7 @@ extension CommentReportSheet on BuildContext {
     switch (result) {
       case Ok():
         showInfo('已提交');
-      case Error(:final error):
+      case Err(:final error):
         showError('提交失败: $error');
     }
   }

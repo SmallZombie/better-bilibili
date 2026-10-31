@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/video_repository/video_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_recommend_videos_response.dart';
@@ -8,33 +10,31 @@ import 'package:better_bilibili/utils/safe_change_notifier.dart';
 import 'package:logger/logger.dart';
 
 class VideoHomeViewModel extends SafeChangeNotifier {
-  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'VideoHomeViewModel'));
+  final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'VideoHomeView'));
 
-  final VideoRepository _videoRepository;
-  final AuthRepository _authRepository;
+  final VideoRepository videoRepository;
+  final AuthRepository authRepository;
 
-  VideoHomeViewModel({
-    required VideoRepository videoRepository,
-    required AuthRepository authRepository,
-  }) : _videoRepository = videoRepository,
-       _authRepository = authRepository {
-    loadData = CancellableCommand0(
+  late final StreamSubscription _accountChangeSubscription;
+
+  VideoHomeViewModel({required this.videoRepository, required this.authRepository}) {
+    loadData = Command0(
       _getRecommendVideos,
       onSuccess: _appendRecommendVideos,
       onCancel: () {},
     )..execute();
 
-    _authRepository.addListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription = authRepository.stream.current.listen(_onAccountChanged);
   }
 
   @override
   void dispose() {
-    _authRepository.removeListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription.cancel();
 
     super.dispose();
   }
 
-  late final CancellableCommand0<List<RecommendVideo>> loadData;
+  late final Command0<List<RecommendVideo>> loadData;
 
   final List<RecommendVideo> _videos = [];
   List<RecommendVideo> get videos => List.unmodifiable(_videos);
@@ -98,8 +98,8 @@ class VideoHomeViewModel extends SafeChangeNotifier {
     final pn = _pn;
 
     return categoryIndex == 0
-        ? _videoRepository.getRecommendVideos(pn: pn)
-        : _videoRepository.getRecommendVideosByCategory(
+        ? videoRepository.getRecommendVideos(pn: pn)
+        : videoRepository.getRecommendVideosByCategory(
             categoryId: _categoryList[categoryIndex].$2,
             pn: pn,
           );
@@ -111,12 +111,14 @@ class VideoHomeViewModel extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  void _onAuthRepositoryChanged() {
-    _log.i('AuthRepository changed');
-    _videos.clear();
-    _pn = 1;
+  void _onAccountChanged(String event) {
+    _log.i('reload with accountChanged accountId=$event');
     loadData.cancel();
-    loadData.execute();
+
+    _pn = 1;
+    _videos.clear();
     notifyListeners();
+
+    loadData.execute();
   }
 }

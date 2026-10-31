@@ -46,7 +46,6 @@ import 'package:logger/web.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollview_observer/scrollview_observer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:better_bilibili/utils/result.dart' as result;
 import 'package:better_bilibili/utils/result.dart';
 
 const double _kMinReserveBelow = 100.0;
@@ -456,7 +455,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
             }
 
             if (widget.viewModel.getDetail.error) {
-              final msg = (widget.viewModel.getDetail.result as result.Error).toString();
+              final msg = getErrorMessage(widget.viewModel.getDetail.result!);
 
               late final String errorMessage;
               if (msg.contains('62002')) {
@@ -1594,7 +1593,7 @@ class _WatchLaterButtonState extends State<_WatchLaterButton> {
       case Ok(:final value):
         if (!mounted) return;
         setState(() => hasWatchLater = value);
-      case Error():
+      case Err():
     }
   }
 
@@ -1609,7 +1608,7 @@ class _WatchLaterButtonState extends State<_WatchLaterButton> {
       switch (result) {
         case Ok():
           return result;
-        case Error():
+        case Err():
           setState(() => hasWatchLater = !action);
       }
       return result;
@@ -1618,7 +1617,7 @@ class _WatchLaterButtonState extends State<_WatchLaterButton> {
       switch (result) {
         case Ok():
           return result;
-        case Error():
+        case Err():
           setState(() => hasWatchLater = !action);
       }
       return result;

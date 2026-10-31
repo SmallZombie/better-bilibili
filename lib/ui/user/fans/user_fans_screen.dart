@@ -6,7 +6,9 @@ import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
+import 'package:better_bilibili/ui/core/share/simple_dialog.dart';
 import 'package:better_bilibili/ui/user/fans/user_fans_view_model.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,19 +24,12 @@ class UserFansScreen extends StatefulWidget {
 
 class _UserFansScreenState extends State<UserFansScreen> {
   Future<void> _onDeleteFan(FanUser user) async {
-    final result = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除粉丝'),
-        content: Text('确定要删除粉丝 "${user.nickname}" 吗？'),
-        actions: [
-          TextButton(onPressed: () => context.pop(false), child: const Text('取消')),
-          TextButton(onPressed: () => context.pop(true), child: const Text('确定')),
-        ],
-      ),
+    final confirm = await context.showConfirm(
+      title: '删除粉丝',
+      content: '确定要删除粉丝 "${user.nickname}" 吗？',
     );
-    if (result == true) {
-      widget.viewModel.deleteFan.execute(user.id);
+    if (confirm && context.mounted) {
+      await widget.viewModel.deleteFan.execute(user.id);
     }
   }
 
@@ -52,21 +47,17 @@ class _UserFansScreenState extends State<UserFansScreen> {
           return ListenableBuilder(
             listenable: widget.viewModel.loadData,
             builder: (context, child) {
-              if (widget.viewModel.loadData.running) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
               if (widget.viewModel.loadData.error) {
-                return Center(
-                  child: CenterErrorMessage(
-                    errorMessage: widget.viewModel.loadData.result.toString(),
-                    onRetry: widget.viewModel.reload,
-                  ),
+                return CenterErrorMessage(
+                  errorMessage: getErrorMessage(widget.viewModel.loadData.result!),
+                  onRetry: widget.viewModel.reload,
                 );
               }
-
               if (widget.viewModel.fans.isEmpty) {
-                return const Center(child: Text('暂无记录'));
+                if (widget.viewModel.loadData.running) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return const Center(child: Text('暂无内容'));
               }
 
               return CustomScrollView(
@@ -76,7 +67,7 @@ class _UserFansScreenState extends State<UserFansScreen> {
                       horizontal: constraints.maxWidth > maxContentWidth ? (constraints.maxWidth - maxContentWidth) / 2 : 0,
                     ),
                     sliver: SliverPadding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: const .symmetric(vertical: 8.0),
                       sliver: Selector<UserFansViewModel, ({List<FanUser> fans, int version})>(
                         selector: (context, viewModel) => (fans: viewModel.fans, version: viewModel.fansVersion),
                         builder: (context, state, _) => SliverGrid(
@@ -141,9 +132,9 @@ class _UserTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const .all(12.0),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: .min,
             spacing: 8.0,
             children: [
               BiliUserAvatar(
@@ -154,8 +145,8 @@ class _UserTile extends StatelessWidget {
               ),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: .start,
+                  mainAxisSize: .min,
                   children: [
                     Row(
                       spacing: 8.0,
@@ -163,7 +154,7 @@ class _UserTile extends StatelessWidget {
                         Text(
                           user.nickname,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: .ellipsis,
                           style: TextStyle(fontSize: 16.0),
                         ),
                         if (user.amEarlyFan)
@@ -177,7 +168,7 @@ class _UserTile extends StatelessWidget {
                       Text(
                         user.description!,
                         maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        overflow: .ellipsis,
                         style: TextStyle(color: colorScheme.outline),
                       ),
                   ],

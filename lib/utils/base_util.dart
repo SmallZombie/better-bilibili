@@ -156,3 +156,8 @@ double getRandomDouble(double min, double max) {
 String cleanString(String input) {
   return input.replaceAll(RegExp(r'[\p{P}\p{S}\s]', unicode: true), '').toLowerCase();
 }
+
+T getRandomItem<T>(List<T> list) {
+  final random = Random();
+  return list[random.nextInt(list.length)];
+}

@@ -65,7 +65,7 @@ extension NotInterestedSheet on BuildContext {
       case Ok():
         showInfo('已提交');
         return reasonId;
-      case Error(:final error):
+      case Err(:final error):
         showError('提交失败: $error');
         return null;
     }

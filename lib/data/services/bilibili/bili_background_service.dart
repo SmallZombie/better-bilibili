@@ -7,24 +7,24 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BiliBackgroundService extends ChangeNotifier {
-  final UserRepository _userRepository;
-  final AuthRepository _authRepository;
-  final ChatRepository _chatRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
+  final ChatRepository chatRepository;
+
+  late final StreamSubscription _accountChangeSubscription;
 
   BiliBackgroundService({
-    required UserRepository userRepository,
-    required AuthRepository authRepository,
-    required ChatRepository chatRepository,
-  }) : _userRepository = userRepository,
-       _authRepository = authRepository,
-       _chatRepository = chatRepository {
+    required this.userRepository,
+    required this.authRepository,
+    required this.chatRepository,
+  }) {
     _startUnreadNotificationTimer();
     getUnreadChatCount();
     _startUnreadPostTimer();
     _getUnreadNotificationCount();
     _getUnreadPostCount();
 
-    _authRepository.addListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription = authRepository.stream.current.listen(_onAccountChanged);
   }
 
   @override
@@ -32,7 +32,7 @@ class BiliBackgroundService extends ChangeNotifier {
     _stopUnreadNotificationTimer();
     _stopUnreadPostTimer();
 
-    _authRepository.removeListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription.cancel();
 
     super.dispose();
   }
@@ -64,11 +64,11 @@ class BiliBackgroundService extends ChangeNotifier {
   int get unreadChatCount => _unreadChatCount;
 
   Future<void> getUnreadChatCount() async {
-    final result = await _chatRepository.getUnreadCount();
+    final result = await chatRepository.getUnreadCount();
     switch (result) {
       case Ok(:final value):
         _unreadChatCount = value.followed + value.notFollowed;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -84,11 +84,11 @@ class BiliBackgroundService extends ChangeNotifier {
   int get unreadPostCount => _unreadPostCount;
 
   Future<void> _getUnreadPostCount() async {
-    final result = await _userRepository.getUnreadPostCount();
+    final result = await userRepository.getUnreadPostCount();
     switch (result) {
       case Ok(:final value):
         _unreadPostCount = value;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -108,7 +108,7 @@ class BiliBackgroundService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onAuthRepositoryChanged() {
+  void _onAccountChanged(String event) {
     _getUnreadNotificationCount();
     getUnreadChatCount();
     _getUnreadPostCount();

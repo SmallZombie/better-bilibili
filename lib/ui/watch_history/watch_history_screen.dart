@@ -1,10 +1,12 @@
 import 'package:better_bilibili/ui/core/bilibili/dynamic_card.dart';
+import 'package:better_bilibili/ui/core/share/appbar_with_search.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/enhanced_appbar.dart';
+import 'package:better_bilibili/ui/core/share/multi_select_toolbar.dart';
 import 'package:better_bilibili/ui/core/share/selectable_item_wrapper.dart';
-import 'package:better_bilibili/ui/core/theme/theme.dart';
+import 'package:better_bilibili/ui/core/share/simple_dialog.dart';
 import 'package:better_bilibili/ui/watch_history/watch_history_view_model.dart';
-import 'package:better_bilibili/utils/result.dart' as result;
+import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -15,14 +17,16 @@ const _recordTimeLabels = ['全部', '昨天', '一周内', '一个月内', '自
 const _deviceLabels = ['全部', 'PC', '手机', '平板', 'TV'];
 
 class WatchHistoryScreen extends StatefulWidget {
-  const WatchHistoryScreen({super.key});
+  final WatchHistoryViewModel viewModel;
+
+  const WatchHistoryScreen({super.key, required this.viewModel});
 
   @override
   State<WatchHistoryScreen> createState() => _WatchHistoryScreenState();
 }
 
 class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
-  late WatchHistoryViewModel _viewModel;
+  WatchHistoryViewModel get viewModel => widget.viewModel;
 
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
@@ -34,12 +38,11 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
   void initState() {
     super.initState();
 
-    _viewModel = context.read();
     _scrollController.addListener(_onScroll);
-    _viewModel.loadHistoryConfig.addListener(_onResult);
-    _viewModel.setHistoryConfig.addListener(_onResult);
-    _viewModel.clearAllWatchHistory.addListener(_onResult);
-    _viewModel.deleteSelectedItems.addListener(_onResult);
+    viewModel.loadHistoryConfig.addListener(_onResult);
+    viewModel.setHistoryConfig.addListener(_onResult);
+    viewModel.clearAllWatchHistory.addListener(_onResult);
+    viewModel.deleteSelectedItems.addListener(_onResult);
   }
 
   @override
@@ -50,10 +53,10 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
     _searchFocusNode.dispose();
 
     _scrollController.removeListener(_onScroll);
-    _viewModel.loadHistoryConfig.removeListener(_onResult);
-    _viewModel.setHistoryConfig.removeListener(_onResult);
-    _viewModel.clearAllWatchHistory.removeListener(_onResult);
-    _viewModel.deleteSelectedItems.removeListener(_onResult);
+    viewModel.loadHistoryConfig.removeListener(_onResult);
+    viewModel.setHistoryConfig.removeListener(_onResult);
+    viewModel.clearAllWatchHistory.removeListener(_onResult);
+    viewModel.deleteSelectedItems.removeListener(_onResult);
 
     super.dispose();
   }
@@ -61,97 +64,81 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.maxScrollExtent - _scrollController.position.pixels <= 400 &&
-        !_viewModel.loadWatchHistory.running &&
-        _viewModel.hasMore) {
-      _viewModel.loadWatchHistory.execute();
+        !viewModel.loadWatchHistory.running &&
+        viewModel.hasMore) {
+      viewModel.loadWatchHistory.execute();
     }
   }
 
   void _onResult() {
-    if (_viewModel.loadHistoryConfig.error) {
-      final message = (_viewModel.loadHistoryConfig.result as result.Error).toString();
-      context.showError('获取历史记录配置失败: $message');
-      _viewModel.loadHistoryConfig.clearResult();
+    if (viewModel.loadHistoryConfig.error) {
+      context.showError('获取历史记录配置失败: ${getErrorMessage(viewModel.loadHistoryConfig.result!)}');
+      viewModel.loadHistoryConfig.clearResult();
     }
 
-    if (_viewModel.setHistoryConfig.completed) {
-      context.showInfo('已${_viewModel.isHistoryEnabled! ? '启用' : '禁用'}历史记录');
-      _viewModel.setHistoryConfig.clearResult();
+    if (viewModel.setHistoryConfig.success) {
+      context.showInfo('已${viewModel.isHistoryEnabled! ? '启用' : '禁用'}历史记录');
+      viewModel.setHistoryConfig.clearResult();
     }
-    if (_viewModel.setHistoryConfig.error) {
-      final message = (_viewModel.setHistoryConfig.result as result.Error).toString();
-      context.showError('修改失败: $message');
-      _viewModel.setHistoryConfig.clearResult();
-    }
-
-    if (_viewModel.clearAllWatchHistory.error) {
-      final message = (_viewModel.clearAllWatchHistory.result as result.Error).toString();
-      context.showError('清空失败: $message');
-      _viewModel.clearAllWatchHistory.clearResult();
+    if (viewModel.setHistoryConfig.error) {
+      context.showError('修改失败: ${getErrorMessage(viewModel.setHistoryConfig.result!)}');
+      viewModel.setHistoryConfig.clearResult();
     }
 
-    if (_viewModel.deleteSelectedItems.completed) {
+    if (viewModel.clearAllWatchHistory.error) {
+      context.showError('清空失败: ${getErrorMessage(viewModel.clearAllWatchHistory.result!)}');
+      viewModel.clearAllWatchHistory.clearResult();
+    }
+
+    if (viewModel.deleteSelectedItems.success) {
       if (_multiSelectMode) {
         _onToggleMultiSelectMode();
       }
     }
-    if (_viewModel.deleteSelectedItems.error) {
-      final message = (_viewModel.deleteSelectedItems.result as result.Error).toString();
-      context.showError('删除失败: $message');
-      _viewModel.deleteSelectedItems.clearResult();
+    if (viewModel.deleteSelectedItems.error) {
+      context.showError('删除失败: ${getErrorMessage(viewModel.deleteSelectedItems.result!)}');
+      viewModel.deleteSelectedItems.clearResult();
     }
   }
 
-  Future<void> _onToggleConfig() async {
-    _viewModel.setHistoryConfig.execute(!_viewModel.isHistoryEnabled!);
+  void _onToggleConfig() {
+    viewModel.setHistoryConfig.execute(!viewModel.isHistoryEnabled!);
   }
 
   Future<void> _onClearHistory() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('清空观看历史'),
-        content: const Text('确定清空全部观看历史吗？'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('确定')),
-        ],
-      ),
+    final confirm = await context.showConfirm(
+      title: '清空观看历史',
+      content: '确定清空全部观看历史吗？',
     );
-    if (ok == true && context.mounted) {
-      _viewModel.clearAllWatchHistory.execute();
+    if (confirm && context.mounted) {
+      await viewModel.clearAllWatchHistory.execute();
     }
   }
 
   Future<void> _onToggleMultiSelectMode() async {
-    _viewModel.clearSelectedItems();
+    viewModel.clearSelectedItems();
     setState(() {
       _multiSelectMode = !_multiSelectMode;
     });
   }
 
-  Future<void> _onDelete(dynamic item) async {
-    _viewModel.clearSelectedItems();
-    _viewModel.toggleItemSelection(item);
+  void _onDelete(dynamic item) {
+    viewModel.clearSelectedItems();
+    viewModel.toggleItemSelection(item);
     _onDeleteSelectedItems();
   }
 
   Future<void> _onDeleteSelectedItems() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除选中项'),
-        content: Text('确定删除选中的 ${_viewModel.selectedItems.length} 项吗？'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('确定')),
-        ],
-      ),
+    final confirm = await context.showConfirm(
+      title: '删除选中项',
+      content: '确定删除选中的 ${viewModel.selectedItems.length} 项吗？',
     );
-    if (ok == true && context.mounted) {
-      _viewModel.deleteSelectedItems.execute();
+    if (confirm && context.mounted) {
+      await viewModel.deleteSelectedItems.execute();
     }
   }
+
+  bool _searchMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -159,23 +146,30 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, child) => EnhancedAppBar(
+          listenable: viewModel,
+          builder: (context, child) => AppBarWithSearch(
             title: const Text('观看历史'),
             searchHintText: '在观看历史中搜索',
+            searchMode: _searchMode,
+            onToggleSearchMode: () {
+              if (_searchMode) {
+                viewModel.setKeyword('');
+              }
+              setState(() => _searchMode = !_searchMode);
+            },
             onSearch: (value) {
-              _viewModel.setKeyword(value ?? '');
+              viewModel.setKeyword(value);
             },
             onToggleFilter: () {
-              _viewModel.rememberFiltersState();
+              viewModel.rememberFiltersState();
               showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
                 builder: (sheetContext) {
                   return ListenableBuilder(
-                    listenable: _viewModel,
+                    listenable: viewModel,
                     builder: (context, _) {
-                      final double screenHeight = MediaQuery.of(context).size.height;
+                      final double screenHeight = MediaQuery.sizeOf(context).height;
                       final double maxHeight = screenHeight / 2 < 500 ? screenHeight / 2 : 500;
 
                       final List<Widget> typeChips = [];
@@ -184,9 +178,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                         typeChips.add(
                           ChoiceChip(
                             label: Text(label),
-                            selected: _viewModel.selectedTypeIndex == i,
+                            selected: viewModel.selectedTypeIndex == i,
                             onSelected: (selected) {
-                              _viewModel.setSelectedTypeIndex(selected ? i : 0);
+                              viewModel.setSelectedTypeIndex(selected ? i : 0);
                             },
                           ),
                         );
@@ -198,9 +192,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                         durationChips.add(
                           ChoiceChip(
                             label: Text(label),
-                            selected: _viewModel.selectedDurationIndex == i,
+                            selected: viewModel.selectedDurationIndex == i,
                             onSelected: (selected) {
-                              _viewModel.setSelectedDurationIndex(selected ? i : 0);
+                              viewModel.setSelectedDurationIndex(selected ? i : 0);
                             },
                           ),
                         );
@@ -212,14 +206,14 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                         recordTimeChips.add(
                           ChoiceChip(
                             label: Text(label),
-                            selected: _viewModel.selectedRecordTimeIndex == i,
+                            selected: viewModel.selectedRecordTimeIndex == i,
                             onSelected: (selected) {
-                              _viewModel.setSelectedRecordTimeIndex(selected ? i : 0);
+                              viewModel.setSelectedRecordTimeIndex(selected ? i : 0);
                             },
                           ),
                         );
                       }
-                      if (_viewModel.selectedRecordTimeIndex == 4) {
+                      if (viewModel.selectedRecordTimeIndex == 4) {
                         recordTimeChips.add(
                           TextButton.icon(
                             onPressed: () async {
@@ -228,19 +222,19 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                                 context: context,
                                 firstDate: DateTime(now.year - 1),
                                 lastDate: now,
-                                initialDateRange: _viewModel.customRecordTimeStartSec != null
+                                initialDateRange: viewModel.customRecordTimeStartSec != null
                                     ? DateTimeRange(
                                         start: DateTime.fromMillisecondsSinceEpoch(
-                                          _viewModel.customRecordTimeStartSec! * 1000,
+                                          viewModel.customRecordTimeStartSec! * 1000,
                                         ),
                                         end: DateTime.fromMillisecondsSinceEpoch(
-                                          (_viewModel.customRecordTimeEndSec ?? _viewModel.customRecordTimeStartSec)! * 1000,
+                                          (viewModel.customRecordTimeEndSec ?? viewModel.customRecordTimeStartSec)! * 1000,
                                         ),
                                       )
                                     : null,
                               );
                               if (range == null || !mounted) return;
-                              _viewModel.setCustomRecordTimeRange(
+                              viewModel.setCustomRecordTimeRange(
                                 startSec: range.start.millisecondsSinceEpoch ~/ 1000,
                                 endSec: range.end.millisecondsSinceEpoch ~/ 1000,
                               );
@@ -257,9 +251,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                         deviceChips.add(
                           ChoiceChip(
                             label: Text(label),
-                            selected: _viewModel.selectedDeviceIndex == i,
+                            selected: viewModel.selectedDeviceIndex == i,
                             onSelected: (selected) {
-                              _viewModel.setSelectedDeviceIndex(selected ? i : 0);
+                              viewModel.setSelectedDeviceIndex(selected ? i : 0);
                             },
                           ),
                         );
@@ -300,30 +294,32 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                 },
               ).whenComplete(() {
                 if (mounted) {
-                  _viewModel.onFilterSheetDismissed();
+                  viewModel.onFilterSheetDismissed();
                 }
               });
             },
-            onToggleMultiSelectMode: _onToggleMultiSelectMode,
-            multiSelectMode: _multiSelectMode,
-            multiSelectCount: _viewModel.selectedItems.length,
-            onSelectAll: _viewModel.selectAll,
-            onDeselectAll: _viewModel.deselectAll,
-            onInvertSelection: _viewModel.invertSelection,
-            multiSelectActions: [
-              IconButton(
-                onPressed: _onDeleteSelectedItems,
-                icon: const Icon(Icons.delete_outline),
-                tooltip: '删除',
-              ),
-            ],
             actions: [
+              MultiSelectToolbar(
+                onToggleMultiSelectMode: _onToggleMultiSelectMode,
+                enabled: _multiSelectMode,
+                count: viewModel.selectedItems.length,
+                onSelectAll: viewModel.selectAll,
+                onDeselectAll: viewModel.deselectAll,
+                onInvertSelection: viewModel.invertSelection,
+                actions: [
+                  IconButton(
+                    onPressed: _onDeleteSelectedItems,
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: '删除',
+                  ),
+                ],
+              ),
               ListenableBuilder(
-                listenable: Listenable.merge([_viewModel.loadHistoryConfig, _viewModel.setHistoryConfig]),
+                listenable: Listenable.merge([viewModel.loadHistoryConfig, viewModel.setHistoryConfig]),
                 builder: (context, child) => PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert),
                   tooltip: '更多',
-                  onSelected: _viewModel.isHistoryEnabled != null
+                  onSelected: viewModel.isHistoryEnabled != null
                       ? (value) {
                           if (value == 'toggle_config') {
                             _onToggleConfig();
@@ -335,9 +331,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                   itemBuilder: (context) => [
                     PopupMenuItem(
                       value: 'toggle_config',
-                      enabled: _viewModel.isHistoryEnabled != null,
+                      enabled: viewModel.isHistoryEnabled != null,
                       child: Text(
-                        _viewModel.isHistoryEnabled == null ? '...' : (_viewModel.isHistoryEnabled! ? '关闭历史记录' : '开启历史记录'),
+                        viewModel.isHistoryEnabled == null ? '...' : (viewModel.isHistoryEnabled! ? '关闭历史记录' : '开启历史记录'),
                       ),
                     ),
                     PopupMenuItem(
@@ -351,71 +347,88 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
           ),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 2100),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = (constraints.maxWidth / 280).floor().clamp(1, 5);
-              final childAspectRatio = 1.14 - (crossAxisCount - 1) * 0.01;
-              final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                childAspectRatio: constraints.maxWidth > 1750 ? 1.25 : childAspectRatio,
+      body: CardLayoutBuilder(
+        padding: .symmetric(horizontal: 16.0),
+        builder: (context, constraints, gridDelegate, padding) => ListenableBuilder(
+          listenable: viewModel.loadWatchHistory,
+          builder: (context, child) {
+            if (viewModel.loadWatchHistory.error) {
+              return CenterErrorMessage(
+                errorMessage: getErrorMessage(viewModel.loadWatchHistory.result!),
+                onRetry: viewModel.reload,
               );
+            }
+            if (viewModel.watchHistory.isEmpty) {
+              if (viewModel.loadWatchHistory.running) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return const Center(child: Text('暂无内容'));
+            }
 
-              return ListenableBuilder(
-                listenable: Listenable.merge([_viewModel, _viewModel.loadWatchHistory]),
-                builder: (context, child) {
-                  if (_viewModel.watchHistory.isEmpty && _viewModel.loadWatchHistory.running) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (_viewModel.loadWatchHistory.error) {
-                    final message = switch (_viewModel.loadWatchHistory.result) {
-                      result.Error(:final error) => error.toString(),
-                      _ => '加载失败',
-                    };
-                    return CenterErrorMessage(
-                      errorMessage: message,
-                      onRetry: () => _viewModel.reload(),
-                    );
-                  }
-
-                  if (_viewModel.showEmpty) {
-                    return const Center(child: Text('暂无记录'));
-                  }
-
-                  return CustomScrollView(
-                    controller: _scrollController,
-                    slivers: [
-                      if (_viewModel.todayList.isNotEmpty) ..._buildDateList(context, '今天', _viewModel.todayList, gridDelegate),
-                      if (_viewModel.yesterdayList.isNotEmpty) ..._buildDateList(context, '昨天', _viewModel.yesterdayList, gridDelegate),
-                      if (_viewModel.beforeYesterdayList.isNotEmpty)
-                        ..._buildDateList(context, '前天', _viewModel.beforeYesterdayList, gridDelegate),
-                      if (_viewModel.otherList.isNotEmpty) ..._buildDateList(context, '更早', _viewModel.otherList, gridDelegate),
-                      SliverToBoxAdapter(child: SizedBox(height: kScreenBottomPadding)),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
+            return Selector<WatchHistoryViewModel, Set<dynamic>>(
+              selector: (context, vm) => vm.selectedItems,
+              builder: (context, value, _) => CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  if (viewModel.todayList.isNotEmpty)
+                    ..._buildDateList(
+                      context,
+                      '今天',
+                      viewModel.todayList,
+                      gridDelegate,
+                      padding,
+                    ),
+                  if (viewModel.yesterdayList.isNotEmpty)
+                    ..._buildDateList(
+                      context,
+                      '昨天',
+                      viewModel.yesterdayList,
+                      gridDelegate,
+                      padding,
+                    ),
+                  if (viewModel.beforeYesterdayList.isNotEmpty)
+                    ..._buildDateList(
+                      context,
+                      '前天',
+                      viewModel.beforeYesterdayList,
+                      gridDelegate,
+                      padding,
+                    ),
+                  if (viewModel.otherList.isNotEmpty)
+                    ..._buildDateList(
+                      context,
+                      '更早',
+                      viewModel.otherList,
+                      gridDelegate,
+                      padding,
+                    ),
+                  SliverToBoxAdapter(child: SizedBox(height: kBottomNavigationBarHeight)),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  List<Widget> _buildDateList(BuildContext context, String title, List<dynamic> list, SliverGridDelegate gridDelegate) {
+  List<Widget> _buildDateList(
+    BuildContext context,
+    String title,
+    List<dynamic> list,
+    SliverGridDelegate gridDelegate,
+    EdgeInsets padding,
+  ) {
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: padding,
         sliver: SliverToBoxAdapter(
           child: Text(title, style: TextStyle(fontSize: 24.0)),
         ),
       ),
       const SliverToBoxAdapter(child: SizedBox(height: 4.0)),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: padding,
         sliver: SliverGrid.builder(
           gridDelegate: gridDelegate,
           itemCount: list.length,
@@ -437,9 +450,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
             return SelectableItemWrapper(
               borderRadius: BorderRadius.circular(12.0),
               borderPadding: const EdgeInsets.all(8.0),
-              selected: _viewModel.selectedItems.contains(item),
+              selected: viewModel.selectedItems.contains(item),
               onTap: () {
-                _viewModel.toggleItemSelection(item);
+                viewModel.toggleItemSelection(item);
               },
               child: card,
             );

@@ -15,22 +15,18 @@ import 'dart:core' as $core;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 class DmColorfulType extends $pb.ProtobufEnum {
-  static const DmColorfulType NoneType =
-      DmColorfulType._(0, _omitEnumNames ? '' : 'NoneType');
-  static const DmColorfulType VipGradualColor =
-      DmColorfulType._(60001, _omitEnumNames ? '' : 'VipGradualColor');
+  static const DmColorfulType NoneType = DmColorfulType._(0, _omitEnumNames ? '' : 'NoneType');
+  static const DmColorfulType VipGradualColor = DmColorfulType._(60001, _omitEnumNames ? '' : 'VipGradualColor');
 
   static const $core.List<DmColorfulType> values = <DmColorfulType>[
     NoneType,
     VipGradualColor,
   ];
 
-  static final $core.Map<$core.int, DmColorfulType> _byValue =
-      $pb.ProtobufEnum.initByValue(values);
+  static final $core.Map<$core.int, DmColorfulType> _byValue = $pb.ProtobufEnum.initByValue(values);
   static DmColorfulType? valueOf($core.int value) => _byValue[value];
 
   const DmColorfulType._(super.value, super.name);
 }
 
-const $core.bool _omitEnumNames =
-    $core.bool.fromEnvironment('protobuf.omit_enum_names');
+const $core.bool _omitEnumNames = $core.bool.fromEnvironment('protobuf.omit_enum_names');

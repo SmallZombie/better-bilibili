@@ -1,6 +1,6 @@
 import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/routing/routes.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:logger/logger.dart';
 

@@ -55,23 +55,30 @@ class LaunchedAdvancedDanmaku {
 
   Offset getCurrentPosition(Size viewPortSize) {
     final double moveAge = age - extra.translationStartDelay.inMilliseconds;
+    final double duration = extra.translationDuration.inMilliseconds.toDouble();
 
-    double currentXScale = extra.beginX;
-    double currentYScale = extra.beginY;
+    double currentX = extra.beginX;
+    double currentY = extra.beginY;
 
-    if (moveAge > 0 && moveAge < extra.translationDuration.inMilliseconds) {
-      double t = moveAge / extra.translationDuration.inMilliseconds;
-      if (extra.isQuadraticEaseOut) {
-        t = 1 - (1 - t) * (1 - t);
-      }
-      currentXScale = extra.beginX + (extra.endX - extra.beginX) * t;
-      currentYScale = extra.beginY + (extra.endY - extra.beginY) * t;
-    } else if (moveAge >= extra.translationDuration.inMilliseconds) {
-      currentXScale = extra.endX;
-      currentYScale = extra.endY;
+    if (moveAge > 0 && moveAge < duration) {
+      final double t = moveAge / duration;
+      // dart format off
+      final double progress = extra.useLinearEaseIn
+          ? t // Linear.easeIn
+          : 1 - (1 - t) * (1 - t); // Quadratic.easeOut
+      // dart format on
+
+      currentX = extra.beginX + (extra.endX - extra.beginX) * progress;
+      currentY = extra.beginY + (extra.endY - extra.beginY) * progress;
+    } else if (moveAge >= duration) {
+      currentX = extra.endX;
+      currentY = extra.endY;
     }
 
-    return Offset(currentXScale * viewPortSize.width, currentYScale * viewPortSize.height);
+    return Offset(
+      extra.useRelativePosition ? currentX * viewPortSize.width : currentX,
+      extra.useRelativePosition ? currentY * viewPortSize.height : currentY,
+    );
   }
 
   bool get isDead => age >= extra.duration.inMilliseconds;
@@ -141,6 +148,7 @@ class _ControllerState {
   bool carnivalMode = false;
   Size viewPortSize = Size.zero;
   bool duplicateMerge = false;
+  double playbackRate = 1.0;
 }
 
 class DanmakuController extends SafeChangeNotifier {
@@ -350,6 +358,11 @@ class DanmakuController extends SafeChangeNotifier {
 
   bool onPreLaunchScroll(Danmaku danmaku) {
     return _coordinator.onPreLaunchScroll(danmaku);
+  }
+
+  void setPlaybackRate(double rate) {
+    _state.playbackRate = rate;
+    notifyListeners();
   }
 }
 
@@ -1094,29 +1107,33 @@ class _AdvancedDanmakuModule implements _Module {
       if (time >= item.time) {
         disposeSet.add(item);
 
-        final color = item.color.withAlpha((255 * state.opacity).toInt());
-        final shadowColor = Color(0xFF000000).withAlpha((255 * state.opacity).toInt());
+        final shadowColor = Color.fromARGB(40, 0, 0, 0);
+        final borderColor = Color.fromARGB(100, 0, 0, 0);
+
         final painter = TextPainter(
           text: TextSpan(
             text: item.text,
             style: TextStyle(
-              fontSize: item.size.toDouble() * state.fontSize,
-              color: color,
-              height: 1.2,
+              fontSize: item.size.toDouble(),
+              color: item.color,
+              height: 1,
               fontFamily: item.extra?.fontFamily,
+              fontWeight: .w700,
               shadows: [
                 Shadow(offset: Offset(1, 1), blurRadius: 2, color: shadowColor),
                 Shadow(offset: Offset(0, 0), blurRadius: 1, color: shadowColor),
 
                 // border
-                Shadow(offset: Offset(-1, -1), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(0, -1), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(1, -1), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(-1, 0), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(1, 0), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(-1, 1), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(0, 1), blurRadius: 0, color: shadowColor),
-                Shadow(offset: Offset(1, 1), blurRadius: 0, color: shadowColor),
+                if (item.extra?.border ?? false) ...[
+                  Shadow(offset: Offset(-1, -1), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(0, -1), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(1, -1), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(-1, 0), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(1, 0), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(-1, 1), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(0, 1), blurRadius: 0, color: borderColor),
+                  Shadow(offset: Offset(1, 1), blurRadius: 0, color: borderColor),
+                ],
               ],
             ),
           ),
@@ -1157,7 +1174,7 @@ class _AdvancedDanmakuModule implements _Module {
         disposeSet.add(item);
         disposedList.add(item.data);
       } else {
-        item.age += deltaTime;
+        item.age += deltaTime * state.playbackRate;
         item.position = item.getCurrentPosition(state.viewPortSize);
         item.alpha = item.currentAlpha;
       }
@@ -1206,8 +1223,14 @@ class _AdvancedDanmakuModule implements _Module {
         canvas.transform(matrix.storage);
       }
 
+      final alpha = item.alpha.clamp(0.0, 1.0);
+      canvas.saveLayer(
+        null,
+        Paint()..color = Color.fromARGB((alpha * 255).round(), 255, 255, 255),
+      );
       item.painter.paint(canvas, Offset.zero);
 
+      canvas.restore();
       canvas.restore();
     }
   }

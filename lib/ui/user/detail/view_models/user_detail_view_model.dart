@@ -10,17 +10,16 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class UserDetailViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
-  final AuthRepository _authRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
   final String userId;
 
   UserDetailViewModel({
-    required UserRepository userRepository,
-    required AuthRepository authRepository,
+    required this.userRepository,
+    required this.authRepository,
     required this.userId,
-  }) : _userRepository = userRepository,
-       _authRepository = authRepository {
+  }) {
     loadData = Command0(_loadData)..execute();
   }
 
@@ -41,7 +40,7 @@ class UserDetailViewModel extends SafeChangeNotifier {
   bool get isCurrentAccount => _isCurrentAccount;
 
   Future<Result<void>> _loadData() async {
-    _isCurrentAccount = (await _authRepository.getAccount()).userId == userId;
+    _isCurrentAccount = (await authRepository.getAccount()).userId == userId;
 
     final [
       userInfoResult,
@@ -50,26 +49,26 @@ class UserDetailViewModel extends SafeChangeNotifier {
       userCountersResult,
       userRelationResult,
     ] = await Future.wait([
-      _userRepository.getUserInfo(userId),
-      _userRepository.getUserStats(userId),
-      _userRepository.getUserTotalLikeAndViewCount(userId),
-      _userRepository.getUserCounters(userId),
-      _userRepository.getUserRelation(userId),
+      userRepository.getUserInfo(userId),
+      userRepository.getUserStats(userId),
+      userRepository.getUserTotalLikeAndViewCount(userId),
+      userRepository.getUserCounters(userId),
+      userRepository.getUserRelation(userId),
     ]);
 
-    if (userInfoResult case Error()) {
+    if (userInfoResult case Err()) {
       return Result.error(userInfoResult.error);
     }
-    if (userStatsResult case Error()) {
+    if (userStatsResult case Err()) {
       return Result.error(userStatsResult.error);
     }
-    if (userTotalLikeAndViewCountResult case Error()) {
+    if (userTotalLikeAndViewCountResult case Err()) {
       return Result.error(userTotalLikeAndViewCountResult.error);
     }
-    if (userCountersResult case Error()) {
+    if (userCountersResult case Err()) {
       return Result.error(userCountersResult.error);
     }
-    if (userRelationResult case Error()) {
+    if (userRelationResult case Err()) {
       return Result.error(userRelationResult.error);
     }
 

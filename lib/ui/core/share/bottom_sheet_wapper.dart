@@ -34,7 +34,7 @@ class BottomSheetWapper extends StatelessWidget {
         children: [
           InkWell(
             onTap: () => context.pop(),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+            borderRadius: .vertical(top: .circular(28.0)),
             mouseCursor: SystemMouseCursors.click,
             child: Padding(
               padding: const .symmetric(vertical: 12.0),
@@ -43,8 +43,8 @@ class BottomSheetWapper extends StatelessWidget {
                   width: 50,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.outline.withAlpha(100),
-                    borderRadius: BorderRadius.circular(2),
+                    color: colorScheme.outline.withAlpha(200),
+                    borderRadius: .circular(2),
                   ),
                 ),
               ),

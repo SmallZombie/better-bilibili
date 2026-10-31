@@ -25,6 +25,7 @@ protoc --dart_out=lib/data/model/bilibili -I assets assets/bilibili.proto --plug
 - 个人认证叫 isVerified
 - 企业认证叫 isEnterpriseVerified
 - 原始粉丝叫早期粉丝(earlyFan)
+- 收藏夹现在改叫 FavoriteFolder (favorites -> FavoriteFolder)
 
 - 关注还是关注(follow)
 - 订阅合集还是订阅合集

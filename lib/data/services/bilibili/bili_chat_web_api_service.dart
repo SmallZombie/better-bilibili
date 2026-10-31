@@ -10,7 +10,7 @@ import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/chat.dart' as chat_model;
 import 'package:better_bilibili/domain/models/bilibili/comment.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
@@ -36,7 +36,8 @@ class BiliChatWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));

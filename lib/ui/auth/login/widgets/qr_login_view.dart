@@ -1,73 +1,73 @@
-import 'package:better_bilibili/data/services/bilibili/model/get_qr_code_status_response.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class QrLoginView extends StatefulWidget {
-  const QrLoginView({super.key});
+  final LoginViewModel viewModel;
+
+  const QrLoginView({super.key, required this.viewModel});
 
   @override
   State<QrLoginView> createState() => _QrLoginViewState();
 }
 
 class _QrLoginViewState extends State<QrLoginView> {
-  late final LoginViewModel _viewModel;
+  LoginViewModel get viewModel => widget.viewModel;
 
   @override
   void initState() {
     super.initState();
 
-    _viewModel = context.read();
-    _viewModel.getQrCodeStatus.addListener(_onQrCodeStatusChanged);
+    viewModel.getQrCodeStatus.addListener(_onResult);
   }
 
   @override
   void dispose() {
-    _viewModel.getQrCodeStatus.removeListener(_onQrCodeStatusChanged);
+    viewModel.getQrCodeStatus.removeListener(_onResult);
 
     super.dispose();
   }
 
-  void _onQrCodeStatusChanged() {
-    if (_viewModel.qrCodeStatus == QrCodeStatus.success) {
+  void _onResult() {
+    if (viewModel.qrCodeStatus == .success) {
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const .all(24.0),
       children: [
-        const SizedBox(height: 40),
+        const SizedBox(height: 40.0),
         Center(
           child: Container(
-            width: 250,
-            height: 250,
-            padding: const EdgeInsets.all(16),
+            width: 250.0,
+            height: 250.0,
+            padding: const .all(16.0),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: .circular(16.0),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(20),
+                  color: colorScheme.shadow.withAlpha(20),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ListenableBuilder(
-              listenable: _viewModel.getLoginQrCode,
+              listenable: viewModel.getLoginQrCode,
               builder: (context, child) {
-                if (_viewModel.getLoginQrCode.error) {
+                if (viewModel.getLoginQrCode.error) {
                   return Center(child: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error));
                 }
-                if (_viewModel.qrCodeUrl != null) {
+                if (viewModel.qrCodeUrl != null) {
                   return QrImageView(
-                    data: _viewModel.qrCodeUrl!,
+                    data: viewModel.qrCodeUrl!,
                     version: QrVersions.auto,
                     size: 218,
                     backgroundColor: Colors.white,
@@ -81,7 +81,7 @@ class _QrLoginViewState extends State<QrLoginView> {
         ),
         const SizedBox(height: 32),
         ListenableBuilder(
-          listenable: Listenable.merge([_viewModel.getLoginQrCode, _viewModel.getQrCodeStatus]),
+          listenable: Listenable.merge([viewModel.getLoginQrCode, viewModel.getQrCodeStatus]),
           builder: (context, child) => _buildStatusText(
             Theme.of(context).colorScheme,
             Theme.of(context).textTheme,
@@ -89,7 +89,7 @@ class _QrLoginViewState extends State<QrLoginView> {
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
-          onPressed: _viewModel.refreshQrLogin,
+          onPressed: viewModel.refreshQrLogin,
           icon: const Icon(Icons.refresh),
           label: const Text('刷新'),
         ),
@@ -103,27 +103,27 @@ class _QrLoginViewState extends State<QrLoginView> {
     IconData icon;
     Color? color;
 
-    if (_viewModel.getLoginQrCode.result case Error(:final error)) {
+    if (viewModel.getLoginQrCode.result case Err(:final error)) {
       text = '获取二维码失败：$error';
       icon = Icons.error_outline;
       color = Colors.red;
-    } else if (_viewModel.getQrCodeStatus.result case Error(:final error)) {
+    } else if (viewModel.getQrCodeStatus.result case Err(:final error)) {
       text = '获取二维码状态失败：$error';
       icon = Icons.error_outline;
       color = Colors.red;
-    } else if (_viewModel.qrCodeStatus == .waiting) {
+    } else if (viewModel.qrCodeStatus == .waiting) {
       text = '请使用 B 站客户端扫描二维码';
       icon = Icons.qr_code_scanner;
       color = colorScheme.primary;
-    } else if (_viewModel.qrCodeStatus == .scanned) {
+    } else if (viewModel.qrCodeStatus == .scanned) {
       text = '请在手机上确认登录';
       icon = Icons.check_circle_outline;
       color = Colors.orange;
-    } else if (_viewModel.qrCodeStatus == .expired) {
+    } else if (viewModel.qrCodeStatus == .expired) {
       text = '二维码已过期';
       icon = Icons.error_outline;
       color = Colors.red;
-    } else if (_viewModel.qrCodeStatus == .success) {
+    } else if (viewModel.qrCodeStatus == .success) {
       text = '登录成功';
       icon = Icons.check_circle_outline;
       color = Colors.green;

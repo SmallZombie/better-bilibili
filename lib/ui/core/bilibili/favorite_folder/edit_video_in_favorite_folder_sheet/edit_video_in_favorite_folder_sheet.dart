@@ -130,7 +130,7 @@ extension EditVideoInFavoriteFolderSheet on BuildContext {
     return result;
   }
 
-  Future<Favorites?> showCreateFavoritesDialog() async {
+  Future<FavoriteFolder?> showCreateFavoritesDialog() async {
     final EditVideoInFavoriteFolderSheetViewModel viewModel = read();
 
     final formKey = GlobalKey<FormState>();
@@ -138,7 +138,7 @@ extension EditVideoInFavoriteFolderSheet on BuildContext {
     final descriptionController = TextEditingController();
     bool isPublic = false;
 
-    return showDialog<Favorites>(
+    return showDialog<FavoriteFolder>(
       context: this,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
@@ -147,42 +147,37 @@ extension EditVideoInFavoriteFolderSheet on BuildContext {
             title: const Text('创建收藏夹'),
             content: Form(
               key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(labelText: '名称'),
-                    validator: (value) => value?.isEmpty ?? true ? '名称不能为空' : null,
-                    maxLength: 20,
-                  ),
-                  SizedBox(height: 8.0),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 300,
-                      maxWidth: 300,
+              child: SizedBox(
+                width: 260,
+                child: Column(
+                  crossAxisAlignment: .start,
+                  mainAxisSize: .min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: '名称'),
+                      validator: (value) => value?.isEmpty ?? true ? '名称不能为空' : null,
+                      maxLength: 20,
                     ),
-                    child: TextFormField(
+                    TextFormField(
                       controller: descriptionController,
                       decoration: InputDecoration(labelText: '描述'),
                       minLines: 2,
                       maxLines: 5,
-                      keyboardType: TextInputType.multiline,
+                      keyboardType: .multiline,
                       maxLength: 200,
                     ),
-                  ),
-                  Row(
-                    children: [
-                      const Text('公开'),
-                      Checkbox(
-                        value: isPublic,
-                        onChanged: (v) => setState(() => isPublic = v ?? false),
-                      ),
-                    ],
-                  ),
-                ],
+                    Row(
+                      children: [
+                        const Text('公开'),
+                        Checkbox(
+                          value: isPublic,
+                          onChanged: (v) => setState(() => isPublic = v ?? false),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -212,7 +207,7 @@ extension EditVideoInFavoriteFolderSheet on BuildContext {
                           name: nameController.text,
                           description: descriptionController.text,
                           isPrivate: isPublic == false,
-                          coverUrl: null,
+                          cover: null,
                         ),
                       );
 
@@ -221,7 +216,7 @@ extension EditVideoInFavoriteFolderSheet on BuildContext {
                       switch (viewModel.createFavorites.result) {
                         case Ok(:final value):
                           context.pop(value);
-                        case Error(:final error):
+                        case Err(:final error):
                           showError(error.toString());
                         default:
                           break;

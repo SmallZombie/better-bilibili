@@ -25,7 +25,7 @@ class _FollowTextButtonState extends State<FollowTextButton> {
   }
 
   void _onResult() {
-    if (widget.viewModel.follow.completed) {
+    if (widget.viewModel.follow.success) {
       widget.onChange?.call(widget.viewModel.followed);
     } else if (widget.viewModel.follow.error) {
       context.showError('${widget.viewModel.followed ? '取消' : ''}关注失败: ${(widget.viewModel.follow.result as Error).toString()}');

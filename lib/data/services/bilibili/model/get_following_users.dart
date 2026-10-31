@@ -42,7 +42,7 @@ class FollowingUser {
     required this.isFan,
   });
 
-  factory FollowingUser.fromJson(Map<String, dynamic> json) {
+  factory FollowingUser.fromJson(Map<String, dynamic> json, {bool? followOverride}) {
     return FollowingUser(
       id: json['mid'].toString(),
       avatar: json['face'],
@@ -53,7 +53,7 @@ class FollowingUser {
       isEnterpriseVerified: json['official_verify']['type'] == 1,
       isEarlyFan: json['contract_info']?['is_contractor'] == true,
       amEarlyFan: json['contract_info']?['is_contract'] == true,
-      isFollowing: json['attribute'] == 2,
+      isFollowing: followOverride ?? json['attribute'] == 2,
       isFan: false,
     );
   }

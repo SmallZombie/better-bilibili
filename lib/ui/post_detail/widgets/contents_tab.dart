@@ -5,7 +5,12 @@ class ContentsTab extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
 
-  const ContentsTab({super.key, required this.contents, required this.currentIndex, required this.onIndexChanged});
+  const ContentsTab({
+    super.key,
+    required this.contents,
+    required this.currentIndex,
+    required this.onIndexChanged,
+  });
 
   @override
   State<ContentsTab> createState() => _ContentsTabState();
@@ -21,19 +26,18 @@ class _ContentsTabState extends State<ContentsTab> with AutomaticKeepAliveClient
 
     return ListView.builder(
       itemCount: widget.contents.length,
-      itemBuilder:
-          (context, index) => Material(
-            child: ListTile(
-              onTap: () => widget.onIndexChanged(index),
-              title: Text(
-                widget.contents[index],
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              dense: true,
-              selected: index == widget.currentIndex,
-            ),
+      itemBuilder: (context, index) => Material(
+        child: ListTile(
+          onTap: () => widget.onIndexChanged(index),
+          title: Text(
+            widget.contents[index],
+            maxLines: 1,
+            overflow: .ellipsis,
           ),
+          dense: true,
+          selected: index == widget.currentIndex,
+        ),
+      ),
     );
   }
 }

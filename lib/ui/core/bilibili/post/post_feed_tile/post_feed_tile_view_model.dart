@@ -31,7 +31,7 @@ class PostFeedTileViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         post = postBak;
         notifyListeners();
         return result;

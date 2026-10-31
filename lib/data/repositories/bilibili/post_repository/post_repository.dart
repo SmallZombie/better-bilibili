@@ -1,10 +1,11 @@
+import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_posts_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/utils/result.dart';
 
 abstract interface class PostRepository {
-  Future<Result<dynamic>> getDetail(String postId);
+  Future<Result<PostDetail>> getDetail(String postId);
 
   Future<Result<void>> like({required String postId, required bool like});
 

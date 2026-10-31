@@ -1,7 +1,8 @@
 import 'package:better_bilibili/ui/core/bilibili/dynamic_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_view_model.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 
 class RecentlyCoinedScreen extends StatefulWidget {
@@ -24,29 +25,23 @@ class _RecentlyCoinedScreenState extends State<RecentlyCoinedScreen> {
       body: ListenableBuilder(
         listenable: widget.viewModel.loadData,
         builder: (context, child) {
-          if (widget.viewModel.loadData.running) {
-            return const Center(child: CircularProgressIndicator());
-          }
           if (widget.viewModel.loadData.error) {
             return CenterErrorMessage(
-              errorMessage: widget.viewModel.loadData.result.toString(),
+              errorMessage: getErrorMessage(widget.viewModel.loadData.result!),
               onRetry: widget.viewModel.loadData.execute,
             );
           }
           if (widget.viewModel.videos.isEmpty) {
-            return const Center(child: Text('暂无记录'));
+            if (widget.viewModel.loadData.running) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return const Center(child: Text('暂无内容'));
           }
 
-          return GridLayoutBuilder(
-            minColumns: 1,
-            maxColumns: 5,
-            minItemWidth: 280,
-            imageAspectRatio: 16 / 9,
-            extraHeight: 100,
-            horizontalPadding: 16,
-            builder: (context, constraints, gridDelegate) => GridView.builder(
+          return CardLayoutBuilder(
+            builder: (context, constraints, gridDelegate, padding) => GridView.builder(
               gridDelegate: gridDelegate,
-              padding: const EdgeInsets.all(16.0),
+              padding: padding,
               itemCount: widget.viewModel.videos.length,
               itemBuilder: (context, index) => DynamicCard(data: widget.viewModel.videos[index]),
             ),

@@ -2,189 +2,164 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'result.dart';
 
 typedef CommandAction0<T> = Future<Result<T>> Function();
 typedef CommandAction1<T, A> = Future<Result<T>> Function(A);
-typedef CommandAction2<T, A, B> = Future<Result<T>> Function(A, B);
 typedef CommandSuccess<T> = void Function(T);
 
-/// Facilitates interaction with a ViewModel.
+/// Encapsulates an action and exposes its running and result states.
 ///
-/// Encapsulates an action,
-/// exposes its running and error states,
-/// and ensures that it can't be launched again until it finishes.
+/// Repeated executions share the same Future while running.
+/// Actions must return a [Result]. Exceptions are propagated through
+/// the Future returned by [execute].
 ///
-/// Use [Command0] for actions without arguments.
-/// Use [Command1] for actions with one argument.
-/// Use [CancellableCommand0] / [CancellableCommand1] when the caller needs
-/// to abort an in-flight action.
-///
-/// Actions must return a [Result].
-///
-/// Consume the action result by listening to changes,
-/// then call to [clearResult] when the state is consumed.
+/// Call [clearResult] after consuming the result.
 abstract class Command<T> extends ChangeNotifier {
   Command();
 
-  bool _running = false;
+  int _executionId = 0;
+  Future<void>? _executionFuture;
 
-  /// True when the action is running.
+  bool _running = false;
   bool get running => _running;
 
   Result<T>? _result;
+  Result<T>? get result => _result;
 
-  /// true if action completed with error
-  bool get error => _result is Error;
+  bool get error => _result is Err;
+  bool get success => _result is Ok;
 
-  /// true if action completed successfully
-  bool get completed => _result is Ok;
-
-  /// Get last action result
-  Result? get result => _result;
-
-  int _execSeq = 0;
-
-  Future<void>? _executionFuture;
-
-  /// Clear last action result
   void clearResult() {
+    if (_result == null) return;
+
     _result = null;
     notifyListeners();
   }
 
-  /// Internal execute implementation
-  Future<void> _execute(
-    CommandAction0<T> action, {
-    CommandSuccess<T>? onSuccess,
-  }) {
+  Future<void> _execute(CommandAction0<T> action, {CommandSuccess<T>? onSuccess}) {
     final existing = _executionFuture;
-    if (existing != null) {
-      return existing;
-    }
+    if (existing != null) return existing;
 
-    final seq = ++_execSeq;
-
-    final future = () async {
-      _running = true;
-      _result = null;
-      notifyListeners();
-
-      Result<T>? r;
-
-      try {
-        r = await action();
-      } finally {
-        if (seq == _execSeq) {
-          _result = r;
-          _running = false;
-
-          if (r case Ok(:final value)) {
-            onSuccess?.call(value);
-          }
-
-          notifyListeners();
-        }
-      }
-    }();
+    final executionId = ++_executionId;
+    final completer = Completer<void>();
+    final future = completer.future;
 
     _executionFuture = future;
+    _running = true;
+    _result = null;
+    notifyListeners();
 
-    future.whenComplete(() {
+    if (executionId != _executionId) {
       if (identical(_executionFuture, future)) {
         _executionFuture = null;
       }
+
+      completer.complete();
+      return future;
+    }
+
+    final execution = Future<void>.sync(() async {
+      Result<T>? result;
+
+      try {
+        result = await action();
+      } finally {
+        if (executionId == _executionId) {
+          _result = result;
+          _running = false;
+
+          try {
+            if (result case Ok(:final value)) {
+              onSuccess?.call(value);
+            }
+          } finally {
+            notifyListeners();
+          }
+        }
+      }
     });
+
+    unawaited(
+      execution.then<void>(
+        (_) {
+          if (identical(_executionFuture, future)) {
+            _executionFuture = null;
+          }
+          completer.complete();
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (identical(_executionFuture, future)) {
+            _executionFuture = null;
+          }
+          completer.completeError(error, stackTrace);
+        },
+      ),
+    );
 
     return future;
   }
+
+  void _cancel(VoidCallback onCancel) {
+    if (!_running) return;
+
+    ++_executionId;
+    _running = false;
+    _executionFuture = null;
+
+    try {
+      onCancel();
+    } finally {
+      notifyListeners();
+    }
+  }
 }
 
-/// [Command] without arguments.
-/// Takes a [CommandAction0] as action.
 class Command0<T> extends Command<T> {
-  Command0(this._action, {CommandSuccess<T>? onSuccess}) : _onSuccess = onSuccess;
-
   final CommandAction0<T> _action;
   final CommandSuccess<T>? _onSuccess;
+  final VoidCallback? _onCancel;
 
-  /// Executes the action.
-  Future<void> execute() async {
-    await _execute(_action, onSuccess: _onSuccess);
+  Command0(this._action, {this._onSuccess, this._onCancel});
+
+  Future<void> execute() {
+    return _execute(_action, onSuccess: _onSuccess);
+  }
+
+  void cancel() {
+    if (_onCancel == null) {
+      throw StateError('You should not call cancel without providing onCancel.');
+    }
+
+    if (!running) return;
+    _cancel(_onCancel);
   }
 }
 
-/// [Command] with one argument.
-/// Takes a [CommandAction1] as action.
 class Command1<T, A> extends Command<T> {
-  Command1(this._action, {CommandSuccess<T>? onSuccess}) : _onSuccess = onSuccess;
-
   final CommandAction1<T, A> _action;
   final CommandSuccess<T>? _onSuccess;
+  final VoidCallback? _onCancel;
 
-  /// Executes the action with the argument.
-  Future<void> execute(A argument) async {
-    await _execute(() => _action(argument), onSuccess: _onSuccess);
+  Command1(this._action, {this._onSuccess, this._onCancel});
+
+  Future<void> execute(A argument) {
+    return _execute(
+      () => _action(argument),
+      onSuccess: _onSuccess,
+    );
   }
-}
 
-/// [Command] with two argument.
-/// Takes a [CommandAction1] as action.
-class Command2<T, A, B> extends Command<T> {
-  Command2(this._action, {CommandSuccess<T>? onSuccess}) : _onSuccess = onSuccess;
-
-  final CommandAction2<T, A, B> _action;
-  final CommandSuccess<T>? _onSuccess;
-
-  /// Executes the action with the argument.
-  Future<void> execute(A arg1, B arg2) async {
-    await _execute(() => _action(arg1, arg2), onSuccess: _onSuccess);
-  }
-}
-
-/// 可取消的 [Command0]
-class CancellableCommand0<T> extends Command0<T> {
-  CancellableCommand0(
-    CommandAction0<T> action, {
-    CommandSuccess<T>? onSuccess,
-    required VoidCallback onCancel,
-  }) : _onCancel = onCancel,
-       super(action, onSuccess: onSuccess);
-
-  final VoidCallback _onCancel;
-
-  /// 取消当前执行，
-  /// 未在 running 时调用是安全的（no-op）
   void cancel() {
-    if (!_running) return;
-    _execSeq++;
-    _running = false;
-    notifyListeners();
-    _onCancel();
-  }
-}
+    if (_onCancel == null) {
+      throw StateError('You should not call cancel without providing onCancel.');
+    }
 
-/// 可取消版的 [Command1]，
-/// 语义同 [CancellableCommand0]
-class CancellableCommand1<T, A> extends Command1<T, A> {
-  CancellableCommand1(
-    CommandAction1<T, A> action, {
-    CommandSuccess<T>? onSuccess,
-    required VoidCallback onCancel,
-  }) : _onCancel = onCancel,
-       super(action, onSuccess: onSuccess);
-
-  final VoidCallback _onCancel;
-
-  /// 取消当前执行，
-  /// 未在 running 时调用是安全的（no-op）
-  void cancel() {
-    if (!_running) return;
-    _execSeq++;
-    _running = false;
-    notifyListeners();
-    _onCancel();
+    if (!running) return;
+    _cancel(_onCancel);
   }
 }

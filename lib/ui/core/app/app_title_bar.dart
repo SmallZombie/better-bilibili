@@ -1,10 +1,12 @@
-import 'package:better_bilibili/config/constants.dart';
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
 class AppTitleBar extends StatefulWidget {
-  const AppTitleBar({super.key});
+  final AppConfig config;
+
+  const AppTitleBar({required this.config, super.key});
 
   static const height = 36.0;
 
@@ -68,7 +70,7 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
                   spacing: 6.0,
                   children: [
                     Text(
-                      kAppName,
+                      widget.config.appName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(

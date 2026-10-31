@@ -49,10 +49,7 @@ class CodecEnumAdapter extends TypeAdapter<CodecEnum> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CodecEnumAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+      identical(this, other) || other is CodecEnumAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
 }
 
 class SkipOptionsEnumAdapter extends TypeAdapter<SkipOptionsEnum> {
@@ -102,10 +99,7 @@ class SkipOptionsEnumAdapter extends TypeAdapter<SkipOptionsEnum> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SkipOptionsEnumAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+      identical(this, other) || other is SkipOptionsEnumAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
 }
 
 class ViewOriginalImageEnumAdapter extends TypeAdapter<ViewOriginalImageEnum> {
@@ -147,14 +141,10 @@ class ViewOriginalImageEnumAdapter extends TypeAdapter<ViewOriginalImageEnum> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ViewOriginalImageEnumAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+      identical(this, other) || other is ViewOriginalImageEnumAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
 }
 
-class LoudnessNormalizationEnumAdapter
-    extends TypeAdapter<LoudnessNormalizationEnum> {
+class LoudnessNormalizationEnumAdapter extends TypeAdapter<LoudnessNormalizationEnum> {
   @override
   final typeId = 3;
 
@@ -189,8 +179,5 @@ class LoudnessNormalizationEnumAdapter
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LoudnessNormalizationEnumAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+      identical(this, other) || other is LoudnessNormalizationEnumAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
 }

@@ -8,17 +8,14 @@ import 'package:better_bilibili/utils/safe_change_notifier.dart';
 const _typeValues = [GetUserPostsTypeEnum.all, GetUserPostsTypeEnum.video];
 
 class UserDetailPostViewModel extends SafeChangeNotifier {
-  final PostRepository _postRepository;
+  final PostRepository postRepository;
 
   final String userId;
 
-  UserDetailPostViewModel({
-    required PostRepository postRepository,
-    required this.userId,
-  }) : _postRepository = postRepository {
-    loadData = CancellableCommand0(
+  UserDetailPostViewModel({required this.postRepository, required this.userId}) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (resp) => loadDataSuccess(resp),
+      onSuccess: loadDataSuccess,
       onCancel: () {},
     )..execute();
   }
@@ -34,7 +31,7 @@ class UserDetailPostViewModel extends SafeChangeNotifier {
     reload();
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetUserPostsResponse> loadData;
 
   String? _offset;
   bool _hasMore = true;
@@ -43,8 +40,8 @@ class UserDetailPostViewModel extends SafeChangeNotifier {
   final List<Post> _posts = [];
   List<Post> get posts => List.unmodifiable(_posts);
 
-  Future<Result<void>> _loadData() async {
-    final result = await _postRepository.getUserPosts(
+  Future<Result<GetUserPostsResponse>> _loadData() async {
+    final result = await postRepository.getUserPosts(
       userId: userId,
       type: _typeValues[_selectedTypeIndex],
       offset: _offset,

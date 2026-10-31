@@ -32,7 +32,7 @@ class ExtraVideoPlayer extends StatefulWidget {
   final List<Widget> bottomItems;
   final Widget? background;
   final TimelinePreviewController previewController;
-  final TimelineWaveformController waveformController;
+  final TimelineWaveformController? waveformController;
   final TimelineSegmentController segmentController;
   final ValueChanged<Duration>? onSeekStart;
   final ValueChanged<Duration>? onSeekEnd;
@@ -54,7 +54,7 @@ class ExtraVideoPlayer extends StatefulWidget {
     this.bottomItems = const [],
     this.background,
     required this.previewController,
-    required this.waveformController,
+    this.waveformController,
     required this.segmentController,
     this.onSeekStart,
     this.onSeekEnd,
@@ -260,7 +260,7 @@ class _PlayerOverlay extends StatefulWidget {
   final List<Widget> topItems;
   final List<Widget> bottomItems;
   final TimelinePreviewController previewController;
-  final TimelineWaveformController waveformController;
+  final TimelineWaveformController? waveformController;
   final TimelineSegmentController segmentController;
   final ValueChanged<Duration>? onSeekStart;
   final ValueChanged<Duration>? onSeekEnd;
@@ -278,7 +278,7 @@ class _PlayerOverlay extends StatefulWidget {
     this.topItems = const [],
     this.bottomItems = const [],
     required this.previewController,
-    required this.waveformController,
+    this.waveformController,
     required this.segmentController,
     this.onSeekStart,
     this.onSeekEnd,
@@ -304,7 +304,6 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
   final double buttonBarHeight = 42;
   final EdgeInsets topBarMargin = EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
   final EdgeInsets bottomBarMargin = EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0);
-  final double seekBarContainerHeight = 28.0;
 
   bool visible = false;
   Timer? visibleTimer;
@@ -420,6 +419,13 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
     }
   }
 
+  double _timelineHeight = 0;
+
+  void _onTimelineHeightChanged(double height) {
+    debugPrint('_onTimelineHeightChanged $height');
+    _timelineHeight = height;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -466,10 +472,9 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
 
             final RenderBox box = context.findRenderObject() as RenderBox;
             final Offset localPosition = box.globalToLocal(details.globalPosition);
-            const double seekBarOffset = 5.0;
 
             final topHeight = buttonBarHeight + topBarMargin.vertical;
-            final bottomHeight = box.size.height - bottomBarMargin.vertical - buttonBarHeight - seekBarContainerHeight + seekBarOffset;
+            final bottomHeight = box.size.height - bottomBarMargin.vertical - buttonBarHeight - _timelineHeight;
             if (!visible || (localPosition.dy > topHeight && localPosition.dy < bottomHeight)) {
               controller.playOrPause();
             }
@@ -540,7 +545,6 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                             previewController: widget.previewController,
                             waveformController: widget.waveformController,
                             segmentController: widget.segmentController,
-                            height: seekBarContainerHeight,
                             onSeekStart: (newPosition) {
                               widget.onSeekStart?.call(newPosition);
                               visibleTimer?.cancel();
@@ -550,6 +554,7 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
                               _onMouseEnter();
                             },
                             videoRepository: widget.videoRepository,
+                            onHeightChange: _onTimelineHeightChanged,
                           ),
 
                           // 底栏

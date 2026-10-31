@@ -70,10 +70,11 @@ class _AccountManagerScreenState extends State<AccountManagerScreen> {
             padding: const EdgeInsets.only(top: 16, bottom: 24),
             children: [
               ...viewModel.accounts.map((account) {
-                final isSelected = viewModel.currentAccount!.userId == account.userId;
+                final isSelected = viewModel.currentAccount! == account.userId;
                 final userId = account.userId;
 
                 return Card(
+                  key: Key(account.userId),
                   margin: const .symmetric(horizontal: 16, vertical: 4),
                   color: isSelected ? colorScheme.secondaryContainer : null,
                   child: ListTile(

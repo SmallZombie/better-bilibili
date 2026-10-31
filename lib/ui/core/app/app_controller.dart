@@ -1,4 +1,4 @@
-import 'package:better_bilibili/config/constants.dart';
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
@@ -6,6 +6,10 @@ import 'package:window_manager/window_manager.dart';
 
 class AppController extends ChangeNotifier {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'AppController'));
+
+  final AppConfig config;
+
+  AppController({required this.config});
 
   bool _showTitleBar = true;
   bool get showTitleBar => _showTitleBar;
@@ -40,7 +44,7 @@ class AppController extends ChangeNotifier {
     String title;
 
     if (titleSessions.isEmpty) {
-      title = kDebugMode ? '$kAppName (Debug mode)' : kAppName;
+      title = kDebugMode ? '${config.appName} (Debug mode)' : config.appName;
     } else {
       title = titleSessions.map((v) => v.content).join(' & ');
     }

@@ -13,7 +13,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_qr_code_status_
 import 'package:better_bilibili/data/services/bilibili/model/get_self_info_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_ticket_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
@@ -21,7 +21,7 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 /// 只在切换账户的时候通知页面刷新
-class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
+class AuthRepositoryRemote implements AuthRepository {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'AuthRepository'));
 
   late final BiliAuthWebApiService authApiService = BiliAuthWebApiService(
@@ -30,11 +30,22 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   );
   final AccountConfig config;
 
+  late final _createController = StreamController<AccountBuilder>.broadcast();
+  late final _removeController = StreamController<String>.broadcast();
+  late final _updateController = StreamController<Account>.broadcast();
+  late final _currentController = StreamController<String>.broadcast();
+  @override
+  late final AuthRepositoryStream stream = AuthRepositoryStream(
+    create: _createController.stream,
+    remove: _removeController.stream,
+    update: _updateController.stream,
+    current: _currentController.stream,
+  );
+
   AuthRepositoryRemote({required this.config}) {
     unawaited(_refreshLoginState());
   }
 
-  @override
   void dispose() async {
     for (final client in _clientCache.values) {
       (await client).close();
@@ -43,7 +54,10 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
     _clientCache.clear();
     _accountInitializationCache.clear();
 
-    super.dispose();
+    unawaited(_createController.close());
+    unawaited(_removeController.close());
+    unawaited(_updateController.close());
+    unawaited(_currentController.close());
   }
 
   @override
@@ -164,7 +178,7 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
           builder.buvid3 = result.value.buvid3;
           builder.buvid4 = result.value.buvid4;
           _log.i('New buvid3: ${builder.buvid3}, buvid4: ${builder.buvid4}');
-        case Error<GetBuvidResponse>(:final error):
+        case Err<GetBuvidResponse>(:final error):
           _log.e('Failed to get buvid', error: error);
           throw error;
       }
@@ -184,7 +198,7 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
         },
       );
 
-      final result = await service.getSelfInfo();
+      final result = await service.getWbiKeys();
       switch (result) {
         case Ok<GetSelfInfoResponse>():
           if (builder.wbiImgKey != result.value.wbiImgKey || builder.wbiSubKey != result.value.wbiSubKey) {
@@ -195,7 +209,7 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
           } else {
             _log.i('Wbi keys are up to date');
           }
-        case Error<GetSelfInfoResponse>(:final error):
+        case Err<GetSelfInfoResponse>(:final error):
           _log.e('Failed to get wbi keys', error: error);
       }
     }
@@ -222,7 +236,7 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
           _log.i('New bili ticket: "${result.value.ticket}", expiredAt: ${result.value.expiredAt}');
           builder.biliTicket = result.value.ticket;
           builder.biliTicketExpiredAt = result.value.expiredAt;
-        case Error<GetTicketResponse>(:final error):
+        case Err<GetTicketResponse>(:final error):
           _log.e('Failed to get bili ticket', error: error);
       }
     }
@@ -233,7 +247,7 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   }
 
   void _cleanAccountContext(String userId) async {
-    _accountInitializationCache.remove(userId);
+    unawaited(_accountInitializationCache.remove(userId));
 
     final client = _clientCache.remove(userId);
     (await client)?.close();
@@ -272,10 +286,11 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   @override
   Future<void> createAccount(AccountBuilder builder) async {
     assert(builder.userId != null);
+    _log.i('createAccount ${builder.userId}');
 
     await config.saveAccountWithBuilder(builder);
-    await _refreshLoginState();
-    notifyListeners();
+
+    _createController.add(builder);
   }
 
   @override
@@ -286,7 +301,8 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
       await switchAccount(kGuestUserId);
     } else {
       await _refreshLoginState();
-      notifyListeners();
+
+      _removeController.add(accountId);
     }
   }
 
@@ -295,11 +311,13 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   Future<void> switchAccount(String nextAccountId) async {
     final currentId = await config.getCurrentAccountId();
     assert(nextAccountId != currentId);
+    _log.i('switchAccount to $nextAccountId');
 
     await config.setCurrentAccount(nextAccountId);
 
     await _refreshLoginState();
-    notifyListeners();
+
+    _currentController.add(nextAccountId);
   }
 
   @override
@@ -310,7 +328,8 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
     _cleanAccountContext(account.userId);
     await config.saveAccount(account);
     await _refreshLoginState();
-    notifyListeners();
+
+    _updateController.add(account);
   }
 
   @override
@@ -336,12 +355,12 @@ class AuthRepositoryRemote extends ChangeNotifier implements AuthRepository {
   }
 
   @override
-  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus( String key) {
+  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus(String key) {
     return authApiService.getQrCodeStatus(key);
   }
 
   @override
-  Future<Result<GetSelfInfoResponse>> getSelfInfo() {
-    return authApiService.getSelfInfo();
+  Future<Result<GetSelfInfoResponse>> getWbiKeys() {
+    return authApiService.getWbiKeys();
   }
 }

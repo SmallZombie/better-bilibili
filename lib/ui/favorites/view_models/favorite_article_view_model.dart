@@ -5,16 +5,14 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class FavoriteArticleViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
+  final UserRepository userRepository;
 
-  FavoriteArticleViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  FavoriteArticleViewModel({required this.userRepository}) {
     loadArticles = Command0(_loadArticles);
-    deleteItem = Command1<void, String>((postId) => _deleteItem(postId));
+    deleteArticle = Command1<void, String>((postId) => _deleteArticle(postId));
   }
 
-  late final Command0<void> loadArticles;
+  late final Command0<GetFavoriteArticlesResponse> loadArticles;
 
   int _pn = 1;
   int get pn => _pn;
@@ -35,27 +33,27 @@ class FavoriteArticleViewModel extends SafeChangeNotifier {
     loadArticles.execute();
   }
 
-  Future<Result<void>> _loadArticles() async {
-    final result = await _userRepository.getFavoriteArticles(pn: _pn);
+  Future<Result<GetFavoriteArticlesResponse>> _loadArticles() async {
+    final result = await userRepository.getFavoriteArticles(pn: _pn);
     switch (result) {
       case Ok(:final value):
         _articles.addAll(value.list);
         _total = value.total;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
     return result;
   }
 
-  late final Command1<void, String> deleteItem;
+  late final Command1<void, String> deleteArticle;
 
-  Future<Result<void>> _deleteItem(String postId) async {
-    final result = await _userRepository.deleteFavoritePost( postId);
+  Future<Result<void>> _deleteArticle(String postId) async {
+    final result = await userRepository.deleteFavoritePost(postId);
     switch (result) {
       case Ok():
         reload();
-      case Error():
+      case Err():
     }
     return result;
   }

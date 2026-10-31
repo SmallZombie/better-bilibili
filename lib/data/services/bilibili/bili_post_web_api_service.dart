@@ -8,7 +8,7 @@ import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
@@ -42,7 +42,8 @@ class BiliPostWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -50,7 +51,7 @@ class BiliPostWebApiService {
   }
 
   /// 返回值可能为 [PostDetail]
-  Future<Result<PostDetail>> getDetail( String postId) async {
+  Future<Result<PostDetail>> getDetail(String postId) async {
     assert(postId.isNotEmpty);
 
     final client = await getClient();
@@ -202,7 +203,7 @@ class BiliPostWebApiService {
           'features':
               'itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete,onlyfansQaCard,commentsNewVersion,avatarAutoTheme,sunflowerStyle,cardsEnhance,eva3CardOpus,eva3CardVideo,eva3CardComment,eva3CardVote,eva3CardUser',
           'web_location': WebLocation.dynamicHome,
-          'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1365"}',
+          'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1365","mobi_app":"web_cn"}',
         },
         // dart format on
       );
@@ -292,8 +293,7 @@ class BiliPostWebApiService {
             'timezone_offset': '-480',
             'platform': 'web',
             if (type != .all) ...{'type': type.value},
-            'features':
-                'itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard,avatarAutoTheme,sunflowerStyle,cardsEnhance,eva3CardOpus,eva3CardVideo,eva3CardComment,eva3CardUser',
+            'features': 'itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard,avatarAutoTheme,sunflowerStyle,cardsEnhance,eva3CardOpus,eva3CardVideo,eva3CardComment,eva3CardUser',
             'web_location': WebLocation.userSpace,
             'dm_img_list': dmImgListStr,
             'dm_img_str': getDmImgStr(),

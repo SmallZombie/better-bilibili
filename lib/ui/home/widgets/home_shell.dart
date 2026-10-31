@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:material_ui/material_ui.dart';
@@ -42,7 +40,7 @@ class _HomeShellState extends State<HomeShell> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const .all(8.0),
           child: Row(
             children: [
               // 展开/折叠
@@ -64,7 +62,7 @@ class _HomeShellState extends State<HomeShell> {
                         borderRadius: kInfiniteBorderRadius,
                         onTap: () => context.push(Routes.search),
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16.0, 10.0, 16.0, 10.0),
+                          padding: const .symmetric(horizontal: 16.0, vertical: 10.0),
                           child: Row(
                             children: [
                               Icon(Icons.search, size: 20.0, color: colorScheme.onSurfaceVariant),
@@ -108,7 +106,7 @@ class HomeDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Drawer(
-        width: min(248, MediaQuery.sizeOf(context).width),
+        width: 248,
         child: ListView(
           children: [
             // const Padding(

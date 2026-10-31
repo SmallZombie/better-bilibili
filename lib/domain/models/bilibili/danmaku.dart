@@ -30,6 +30,7 @@ class Danmaku {
 class ExtraAnimation {
   final double beginX;
   final double beginY;
+  final bool useRelativePosition;
   final double endX;
   final double endY;
   final double beginAlpha;
@@ -42,11 +43,12 @@ class ExtraAnimation {
   final Duration duration;
   final bool border;
   final String? fontFamily;
-  final bool isQuadraticEaseOut;
+  final bool useLinearEaseIn;
 
   const ExtraAnimation({
     required this.beginX,
     required this.beginY,
+    required this.useRelativePosition,
     required this.endX,
     required this.endY,
     required this.beginAlpha,
@@ -59,7 +61,7 @@ class ExtraAnimation {
     required this.duration,
     required this.border,
     this.fontFamily,
-    required this.isQuadraticEaseOut,
+    required this.useLinearEaseIn,
   });
 
   @override
@@ -67,6 +69,7 @@ class ExtraAnimation {
     return 'ExtraAnimation('
         'beginX: $beginX, '
         'beginY: $beginY, '
+        'useRelativePosition: $useRelativePosition, '
         'endX: $endX, '
         'endY: $endY, '
         'beginAlpha: $beginAlpha, '
@@ -79,7 +82,7 @@ class ExtraAnimation {
         'duration: $duration, '
         'border: $border, '
         'fontFamily: $fontFamily, '
-        'isQuadraticEaseOut: $isQuadraticEaseOut'
+        'isQuadraticEaseOut: $useLinearEaseIn'
         ')';
   }
 }

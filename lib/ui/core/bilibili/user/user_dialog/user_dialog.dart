@@ -70,11 +70,11 @@ class _UserGroupCreateDialogState extends State<_UserGroupCreateDialog> {
   }
 
   void _onResult() {
-    if (widget.viewModel.createGroup.completed || widget.viewModel.createGroup.error) {
+    if (widget.viewModel.createGroup.success || widget.viewModel.createGroup.error) {
       switch (widget.viewModel.createGroup.result!) {
         case Ok(:final value):
           context.pop(value);
-        case Error(:final error):
+        case Err(:final error):
           context.showError('创建失败: ${error.toString()}');
           widget.viewModel.createGroup.clearResult();
       }
@@ -189,11 +189,11 @@ class _UserGroupModifyDialogState extends State<_UserGroupModifyDialog> {
   }
 
   void _onResult() {
-    if (widget.viewModel.modifyGroup.completed || widget.viewModel.modifyGroup.error) {
+    if (widget.viewModel.modifyGroup.success || widget.viewModel.modifyGroup.error) {
       switch (widget.viewModel.modifyGroup.result!) {
         case Ok(:final value):
           context.pop(value);
-        case Error(:final error):
+        case Err(:final error):
           context.showError('修改失败: ${error.toString()}');
           widget.viewModel.modifyGroup.clearResult();
       }

@@ -51,16 +51,16 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
   }
 
   void _onResult() {
-    if (viewModel.loadData.completed) {
+    if (viewModel.loadData.success) {
       viewModel.loadData.clearResult();
       viewModel.getMyLeaderboardRank.execute();
     }
     if (viewModel.loadData.error) {
-      context.showError('无法获取个人数据: ${getErrorFromResult(viewModel.loadData.result!)}');
+      context.showError('无法获取个人数据: ${getErrorMessage(viewModel.loadData.result!)}');
       viewModel.loadData.clearResult();
     }
     if (viewModel.getMyLeaderboardRank.error) {
-      context.showError('无法获取个人排行: ${getErrorFromResult(viewModel.getMyLeaderboardRank.result!)}');
+      context.showError('无法获取个人排行: ${getErrorMessage(viewModel.getMyLeaderboardRank.result!)}');
       viewModel.getMyLeaderboardRank.clearResult();
     }
   }
@@ -115,7 +115,7 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
         switch (viewModel.modifyUsername.result!) {
           case Ok _:
             return null;
-          case Error(:final error):
+          case Err(:final error):
             return error.toString();
         }
       },

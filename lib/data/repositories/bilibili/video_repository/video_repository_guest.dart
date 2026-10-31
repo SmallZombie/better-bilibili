@@ -46,7 +46,7 @@ class VideoRepositoryGuest implements VideoRepository {
   }
 
   @override
-  Future<Result<GetVideoDetailResponse>> getVideoDetail( String videoId) {
+  Future<Result<GetVideoDetailResponse>> getVideoDetail(String videoId) {
     return videoApiService.getVideoDetail(videoId);
   }
 
@@ -66,7 +66,7 @@ class VideoRepositoryGuest implements VideoRepository {
   }
 
   @override
-  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo( String playlistId) {
+  Future<Result<GetPlaylistInfoResponse>> getPlaylistInfo(String playlistId) {
     return videoApiService.getPlaylistInfo(playlistId);
   }
 

@@ -57,7 +57,7 @@ class SearchRepositoryGuest implements SearchRepository {
   }
 
   @override
-  Future<Result<List<String>>> getSuggestList( String keyword) {
+  Future<Result<List<String>>> getSuggestList(String keyword) {
     return searchApiService.getSuggestList(keyword);
   }
 }

@@ -10,93 +10,45 @@ class CardStyle {
 }
 
 DefaultStyles quillEditorStyle(BuildContext context) {
-  // final defaultTextStyle = DefaultTextStyle.of(context);
-  const baseHorizontalSpacing = HorizontalSpacing(0, 0);
-  final colorScheme = Theme.of(context).colorScheme;
+  final defaults = DefaultStyles.getInstance(context);
+  const lineHeight = 1.7;
+
+  DefaultTextBlockStyle withLineHeight(DefaultTextBlockStyle style) {
+    return style.copyWith(style: style.style.copyWith(height: lineHeight));
+  }
+
+  DefaultTextBlockStyle headingStyle(
+    DefaultTextBlockStyle style, {
+    required double fontSize,
+  }) {
+    return style.copyWith(
+      style: style.style.copyWith(
+        fontSize: fontSize,
+        fontWeight: .w500,
+        height: lineHeight,
+      ),
+    );
+  }
 
   return DefaultStyles(
-    paragraph: DefaultTextBlockStyle(
-      TextStyle(
-        height: 1.7,
-        fontSize: 16.0,
-        color: colorScheme.onSurface,
-      ),
-      baseHorizontalSpacing,
-      VerticalSpacing.zero,
-      VerticalSpacing.zero,
-      null,
+    h1: headingStyle(defaults.h1!, fontSize: 30),
+    h2: headingStyle(defaults.h2!, fontSize: 24),
+    h3: headingStyle(defaults.h3!, fontSize: 20),
+    h4: headingStyle(defaults.h4!, fontSize: 16),
+    h5: headingStyle(defaults.h5!, fontSize: 12),
+    h6: headingStyle(defaults.h6!, fontSize: 8),
+
+    paragraph: withLineHeight(defaults.paragraph!),
+    quote: withLineHeight(defaults.quote!),
+    code: withLineHeight(defaults.code!),
+    indent: withLineHeight(defaults.indent!),
+    align: withLineHeight(defaults.align!),
+    leading: withLineHeight(defaults.leading!),
+
+    lists: defaults.lists!.copyWith(
+      style: defaults.lists!.style.copyWith(height: lineHeight),
     ),
-    h1: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 30,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(16, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
-    h2: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 24,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(8, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
-    h3: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 20,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(8, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
-    h4: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 16,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(6, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
-    h5: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 12,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(6, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
-    h6: DefaultTextBlockStyle(
-      TextStyle(
-        fontSize: 8,
-        height: 1.7,
-        color: colorScheme.onSurface,
-        fontWeight: FontWeight.w500,
-      ),
-      baseHorizontalSpacing,
-      const VerticalSpacing(4, 0),
-      VerticalSpacing.zero,
-      null,
-    ),
+
+    placeHolder: withLineHeight(defaults.placeHolder!),
   );
 }

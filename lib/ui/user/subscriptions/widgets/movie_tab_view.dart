@@ -4,7 +4,7 @@ import 'package:better_bilibili/ui/core/bilibili/movie/movie_poster.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
-import 'package:better_bilibili/ui/core/share/sliver_grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/sliver_card_layout_builder.dart';
 import 'package:better_bilibili/ui/user/subscriptions/view_models/movie_tab_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:better_bilibili/utils/result.dart' as result;
@@ -43,13 +43,13 @@ class _MovieTabViewState extends State<MovieTabView> with AutomaticKeepAliveClie
 
   void _onResult() {
     if (widget.viewModel.modifyMovieWatchStatus.error) {
-      final message = (widget.viewModel.modifyMovieWatchStatus.result as result.Error).toString();
+      final message = (widget.viewModel.modifyMovieWatchStatus.result as result.Err).toString();
       context.showError('修改观看状态失败: $message');
       widget.viewModel.modifyMovieWatchStatus.clearResult();
     }
 
     if (widget.viewModel.unsubscribe.error) {
-      final message = (widget.viewModel.unsubscribe.result as result.Error).toString();
+      final message = (widget.viewModel.unsubscribe.result as result.Err).toString();
       context.showError('取消订阅失败: $message');
       widget.viewModel.unsubscribe.clearResult();
     }
@@ -119,7 +119,7 @@ class _MovieTabViewState extends State<MovieTabView> with AutomaticKeepAliveClie
             ),
           ),
         ),
-        SliverGridLayoutBuilder(
+        SliverCardLayoutBuilder(
           minColumns: 1,
           maxColumns: 6,
           minItemWidth: 240,

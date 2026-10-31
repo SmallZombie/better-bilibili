@@ -48,7 +48,7 @@ class UserDetailArticleViewModel extends SafeChangeNotifier {
         _pn++;
         _hasMore = value.hasMore;
         _offset = value.offset;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

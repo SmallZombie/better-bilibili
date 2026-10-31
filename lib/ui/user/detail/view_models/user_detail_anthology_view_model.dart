@@ -10,17 +10,14 @@ const _orderValues = [
 ];
 
 class UserDetailAnthologyViewModel extends SafeChangeNotifier {
-  final ArticleRepository _articleRepository;
+  final ArticleRepository articleRepository;
 
   final String userId;
 
-  UserDetailAnthologyViewModel({
-    required ArticleRepository articleRepository,
-    required this.userId,
-  }) : _articleRepository = articleRepository {
-    loadData = CancellableCommand0(
+  UserDetailAnthologyViewModel({required this.articleRepository, required this.userId}) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (resp) => loadDataSuccess(resp),
+      onSuccess: loadDataSuccess,
       onCancel: () {},
     )..execute();
   }
@@ -36,13 +33,13 @@ class UserDetailAnthologyViewModel extends SafeChangeNotifier {
     reload();
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<List<GetUserAnthologysItem>> loadData;
 
   final List<GetUserAnthologysItem> _anthologys = [];
   List<GetUserAnthologysItem> get anthologys => List.unmodifiable(_anthologys);
 
-  Future<Result<void>> _loadData() async {
-    final result = await _articleRepository.getUserAnthologys(
+  Future<Result<List<GetUserAnthologysItem>>> _loadData() async {
+    final result = await articleRepository.getUserAnthologys(
       userId: userId,
       order: _orderValues[_selectedOrderIndex],
     );

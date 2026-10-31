@@ -5,7 +5,7 @@ import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
+import 'package:better_bilibili/ui/core/share/responsive/sliver_max_width_viewport.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_post_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -134,7 +134,7 @@ class _PostListSliver extends StatelessWidget {
           );
         }
 
-        return SliverMaxWidthBox(
+        return SliverMaxWidthViewport(
           maxWidth: 800,
           sliver: SliverList.builder(
             itemCount: viewModel.posts.length,

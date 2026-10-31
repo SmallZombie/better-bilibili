@@ -46,7 +46,7 @@ class PlaylistTabViewModel extends SafeChangeNotifier {
         _playlists.addAll(value.list);
         _pn++;
         _hasMore = value.hasMore;
-      case Error():
+      case Err():
     }
     _isCurrentUser ??= userId == (await _authRepository.getAccount()).userId;
     return result;
@@ -73,7 +73,7 @@ class PlaylistTabViewModel extends SafeChangeNotifier {
     switch (await result) {
       case Ok():
         reload();
-      case Error():
+      case Err():
     }
 
     return result;

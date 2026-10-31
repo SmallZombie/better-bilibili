@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:better_bilibili/ui/core/bilibili/video_player/media_session/media_session_data.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/playlist/playlist_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
@@ -18,7 +19,6 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
 
   final List<StreamSubscription> _subscriptions = [];
   FlutterMediaSession? _session;
-  bool _isUpdating = false;
 
   ExtraVideoPlayerMediaSessionAdapter({
     required this.player,
@@ -34,12 +34,15 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
 
     if (manageLifecycle) {
       _session?.activate().catchError((e) {
-        _log.i('MediaKitAdapter: Failed to activate media session: $e');
+        _log.i('Failed to activate media session: $e');
       });
     }
 
     _subscriptions.addAll([
-      player.stream.playing.listen((_) => _syncPlaybackState()),
+      player.stream.playing.listen((_) {
+        _syncPlaybackState();
+        _syncAvailableActions();
+      }),
       player.stream.position.listen((_) => _syncPlaybackState()),
       player.stream.duration.listen((_) {
         _syncMetadata();
@@ -47,11 +50,12 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
       }),
       player.stream.rate.listen((_) => _syncPlaybackState()),
       player.stream.buffer.listen((_) => _syncPlaybackState()),
-      player.stream.playlist.listen((_) => _syncMetadata()),
+      player.stream.completed.listen((_) => _syncPlaybackState()),
+
       FlutterMediaSessionPlatform.instance.onMediaAction.listen(_handleMediaAction),
 
-      mediaSessionData.stream.title.listen((_) => _syncMetadata),
-      mediaSessionData.stream.artist.listen((_) => _syncMetadata),
+      mediaSessionData.stream.title.listen((_) => _syncMetadata()),
+      mediaSessionData.stream.artist.listen((_) => _syncMetadata()),
       mediaSessionData.stream.privacyMode.listen((_) => _syncMetadata()),
     ]);
 
@@ -79,46 +83,33 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
   }
 
   void _syncMetadata() {
-    if (_session == null || _isUpdating) return;
+    if (_session == null) return;
 
-    MediaMetadata metadata;
-    if (mediaSessionData.state.privacyMode) {
-      metadata = MediaMetadata(
-        title: '[Hidden title]',
-        artist: mediaSessionData.state.artist,
-        duration: player.state.duration,
-      );
-    } else {
-      metadata = MediaMetadata(
-        title: mediaSessionData.state.title,
-        artist: mediaSessionData.state.artist,
-        duration: player.state.duration,
-      );
-    }
+    final metadata = MediaMetadata(
+      title: mediaSessionData.state.privacyMode ? '[Hidden title]' : mediaSessionData.state.title,
+      artist: mediaSessionData.state.artist,
+      duration: player.state.duration,
+    );
 
-    _isUpdating = true;
-    FlutterMediaSessionPlatform.instance
-        .updateMetadata(metadata)
-        .catchError((e) {
-          _log.i('MediaKitAdapter: Failed to update metadata: $e');
-        })
-        .whenComplete(() => _isUpdating = false);
+    FlutterMediaSessionPlatform.instance.updateMetadata(metadata).catchError((e) {
+      _log.i('MediaKitAdapter: Failed to update metadata: $e');
+    });
   }
 
   void _syncPlaybackState() {
     if (_session == null) return;
 
     final state = player.state;
-    PlaybackStatus status = PlaybackStatus.idle;
+    PlaybackStatus status = .idle;
 
     if (state.buffering) {
-      status = PlaybackStatus.buffering;
+      status = .buffering;
     } else if (state.playing) {
-      status = PlaybackStatus.playing;
+      status = .playing;
     } else if (state.completed) {
-      status = PlaybackStatus.ended;
+      status = .ended;
     } else {
-      status = PlaybackStatus.paused;
+      status = .paused;
     }
 
     // Set 3-way Repeat mode corresponding to media_kit's playlistMode
@@ -139,10 +130,8 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
     );
 
     FlutterMediaSessionPlatform.instance.updatePlaybackState(playbackState).catchError((e) {
-      _log.i('MediaKitAdapter: Failed to update playback state: $e');
+      _log.i('Failed to update playback state: $e');
     });
-
-    _syncAvailableActions();
   }
 
   void _handleMediaAction(MediaAction action) async {
@@ -168,16 +157,9 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
         case 'skipToPrevious':
           playlistController?.previous();
           break;
-        case 'repeat':
-          PlaylistMode nextMode = player.state.playlistMode == PlaylistMode.none
-              ? PlaylistMode.loop
-              : (player.state.playlistMode == PlaylistMode.loop ? PlaylistMode.single : PlaylistMode.none);
-          await player.setPlaylistMode(nextMode);
-          _syncAvailableActions();
-          break;
       }
     } catch (e) {
-      _log.i('MediaKitAdapter: Error handling action ${action.name}: $e');
+      _log.i('Error handling action ${action.name}: $e');
     }
   }
 
@@ -208,5 +190,10 @@ class ExtraVideoPlayerMediaSessionAdapter implements MediaSessionAdapter {
     });
   }
 
-  void updateMetadata() => _syncMetadata();
+  void setPlaylistController(PlaylistController? controller) {
+    playlistController?.removeListener(_syncAvailableActions);
+    playlistController = controller;
+    playlistController?.addListener(_syncAvailableActions);
+    _syncAvailableActions();
+  }
 }

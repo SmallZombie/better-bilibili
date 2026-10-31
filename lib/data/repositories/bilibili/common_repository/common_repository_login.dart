@@ -14,12 +14,12 @@ class CommonRepositoryLogin implements CommonRepository {
   CommonRepositoryLogin({required this.authRepository});
 
   @override
-  Future<Result<UploadedImage>> uploadImageForDynamic( String filePath) {
+  Future<Result<UploadedImage>> uploadImageForDynamic(String filePath) {
     return commonApiService.uploadImageForDynamic(filePath);
   }
 
   @override
-  Future<Result<String>> uploadImageForFavorites( String filePath) {
+  Future<Result<String>> uploadImageForFavorites(String filePath) {
     return commonApiService.uploadImageForFavorites(filePath);
   }
 }

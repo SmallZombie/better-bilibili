@@ -56,7 +56,7 @@ class PostFeedTile extends StatelessWidget {
       children.add(
         SelectableText(
           vm.post.title!,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: .bold),
         ),
       );
     }

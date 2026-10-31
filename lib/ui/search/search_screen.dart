@@ -13,7 +13,7 @@ import 'package:better_bilibili/ui/core/share/appbar_with_search.dart';
 import 'package:better_bilibili/ui/core/share/bottom_sheet_wapper.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
-import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
 import 'package:better_bilibili/ui/core/share/simple_dialog.dart';
@@ -28,7 +28,11 @@ class SearchScreen extends StatefulWidget {
   final SearchViewModel viewModel;
   final String? initialKeyword;
 
-  const SearchScreen({super.key, required this.viewModel, this.initialKeyword});
+  const SearchScreen({
+    super.key,
+    required this.viewModel,
+    this.initialKeyword,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -40,14 +44,9 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    if (widget.initialKeyword != null && widget.initialKeyword!.isNotEmpty) {
-      viewModel.setKeyword(widget.initialKeyword!);
-      _searchController.text = widget.initialKeyword!;
-      viewModel.reSearch();
-    }
+  void initState() {
+    super.initState();
+    _scheduleInitialSearch(widget.initialKeyword);
   }
 
   @override
@@ -55,6 +54,18 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController.dispose();
 
     super.dispose();
+  }
+
+  void _scheduleInitialSearch(String? keyword) {
+    if (keyword == null || keyword.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      _searchController.text = keyword;
+      viewModel.setKeyword(keyword);
+      viewModel.reSearch();
+    });
   }
 
   void _onSuggestTap(String keyword) {
@@ -68,17 +79,24 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _pickCustomReleaseTimeRange() async {
-    final now = DateTime.now();
+    final now = DateUtils.dateOnly(DateTime.now());
     final start = widget.viewModel.customReleaseTimeStart;
     final end = widget.viewModel.customReleaseTimeEnd ?? start;
+
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(now.year - 1),
+      // 2009年6月26日，B站的前身 Mikufans 成立
+      // 2010年1月24日，Mikufans 更名为 Bilibili
+      firstDate: DateTime(2009, 6, 26),
       lastDate: now,
       initialDateRange: start != null
           ? DateTimeRange(
-              start: DateTime.fromMillisecondsSinceEpoch(start * 1000),
-              end: DateTime.fromMillisecondsSinceEpoch((end! + 1) * 1000),
+              start: DateUtils.dateOnly(
+                DateTime.fromMillisecondsSinceEpoch(start * 1000),
+              ),
+              end: DateUtils.dateOnly(
+                DateTime.fromMillisecondsSinceEpoch(end! * 1000),
+              ),
             )
           : null,
     );
@@ -90,7 +108,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _onTapClearSearchHistory() async {
     final choice = await context.showConfirm(
       title: '清空搜索历史',
-      content: '此操作不可逆，确定要清空搜索历史么？',
+      content: '此操作不可逆，确定要清空搜索历史吗？',
       confirmColor: Theme.of(context).colorScheme.error,
     );
     if (choice) {
@@ -175,7 +193,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
                 if (widget.viewModel.search.error) {
                   final message = switch (widget.viewModel.search.result) {
-                    result.Error(:final error) => error.toString(),
+                    result.Err(:final error) => error.toString(),
                     _ => '加载失败',
                   };
                   return CenterErrorMessage(
@@ -350,7 +368,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                             child: const Text(
                               'PIN',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontWeight: .bold),
                             ),
                           )
                         : CircleAvatar(
@@ -368,21 +386,15 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchResult() {
-    return GridLayoutBuilder(
-      minColumns: 1,
-      maxColumns: 5,
-      minItemWidth: 280,
-      imageAspectRatio: 16 / 9,
-      extraHeight: 100,
-      horizontalPadding: 16,
-      builder: (context, constraints, gridDelegate) {
+    return CardLayoutBuilder(
+      builder: (context, constraints, gridDelegate, padding) {
         return CustomScrollView(
           slivers: [
             if (viewModel.pn == 1) ...[
               // banner
               if (viewModel.resultBanners.isNotEmpty)
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: padding,
                   sliver: SliverList.separated(
                     itemCount: viewModel.resultBanners.length,
                     itemBuilder: (context, index) {
@@ -408,7 +420,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 26.0,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: .bold,
                                       shadows: [Shadow(color: Colors.black.withAlpha(100), blurRadius: 20.0)],
                                     ),
                                   ),

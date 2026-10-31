@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:better_bilibili/ui/core/bilibili/video/video_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
+import 'package:better_bilibili/ui/core/share/responsive/sliver_max_width_viewport.dart';
 import 'package:better_bilibili/ui/core/share/section_tile.dart';
-import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_playlist_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -50,9 +50,10 @@ class _UserDetailPlaylistViewState extends State<UserDetailPlaylistView> with Au
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 16.0)),
             ...widget.viewModel.playlists.map(
-              (playlist) => SliverMaxWidthBox(
+              (playlist) => SliverMaxWidthViewport(
+                maxWidth: 2100,
                 sliver: SliverToBoxAdapter(
-                  child: SectionTile(
+                  child: SectionTile.viewAll(
                     title: Row(
                       mainAxisSize: .min,
                       spacing: 4.0,
@@ -69,7 +70,6 @@ class _UserDetailPlaylistViewState extends State<UserDetailPlaylistView> with Au
                       ],
                     ),
                     subtitle: playlist.description == null ? null : Text(playlist.description!),
-                    headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                     onTap: () {},
                     expandedHeight: 300,
                     child: playlist.videos.isEmpty

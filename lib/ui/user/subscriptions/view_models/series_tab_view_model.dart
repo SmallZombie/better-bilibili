@@ -15,27 +15,26 @@ const _watchStatusValues = [
 ];
 
 class SeriesTabViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
-  final AuthRepository _authRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
   final String userId;
 
   SeriesTabViewModel({
-    required UserRepository userRepository,
-    required AuthRepository authRepository,
+    required this.userRepository,
+    required this.authRepository,
     required this.userId,
-  }) : _userRepository = userRepository,
-       _authRepository = authRepository {
-    loadData = CancellableCommand0(
+  }) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (resp) => loadDataSuccess(resp),
+      onSuccess: loadDataSuccess,
       onCancel: () {},
     )..execute();
     modifySeriesWatchStatus = Command1<void, ModifySeriesWatchStatusRequest>((req) => _modifySeriesWatchStatus(req));
     unsubscribe = Command1<void, String>((seriesId) => _unsubscribe(seriesId));
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetSubscribedSeriesResponse> loadData;
 
   final List<SubscribedSeries> _series = [];
   List<SubscribedSeries> get series => List.unmodifiable(_series);
@@ -66,13 +65,13 @@ class SeriesTabViewModel extends SafeChangeNotifier {
   }
 
   Future<Result<GetSubscribedSeriesResponse>> _loadData() async {
-    final result = await _userRepository.getSubscribedSeries(
+    final result = await userRepository.getSubscribedSeries(
       userId: userId,
       pn: _pn,
       ps: ps,
       watchStatus: _watchStatusValues[_selectedWatchStatusIndex],
     );
-    _isCurrentUser ??= userId == (await _authRepository.getAccount()).userId;
+    _isCurrentUser ??= userId == (await authRepository.getAccount()).userId;
     return result;
   }
 
@@ -92,7 +91,7 @@ class SeriesTabViewModel extends SafeChangeNotifier {
   late final Command1<void, ModifySeriesWatchStatusRequest> modifySeriesWatchStatus;
 
   Future<Result<void>> _modifySeriesWatchStatus(ModifySeriesWatchStatusRequest req) async {
-    final result = await _userRepository.modifySeriesWatchStatus(
+    final result = await userRepository.modifySeriesWatchStatus(
       seriesId: req.seriesId,
       watchStatus: req.watchStatus,
     );
@@ -101,7 +100,7 @@ class SeriesTabViewModel extends SafeChangeNotifier {
         final index = _series.indexWhere((element) => element.id == req.seriesId);
         _series[index] = _series[index].copyWith(watchStatus: req.watchStatus);
         notifyListeners();
-      case Error():
+      case Err():
     }
     return result;
   }
@@ -109,12 +108,12 @@ class SeriesTabViewModel extends SafeChangeNotifier {
   late final Command1<void, String> unsubscribe;
 
   Future<Result<void>> _unsubscribe(String seriesId) async {
-    final result = await _userRepository.unsubscribeSeries(seriesId);
+    final result = await userRepository.unsubscribeSeries(seriesId);
     switch (result) {
       case Ok():
         _series.removeWhere((v) => v.id == seriesId);
         notifyListeners();
-      case Error():
+      case Err():
     }
     return result;
   }

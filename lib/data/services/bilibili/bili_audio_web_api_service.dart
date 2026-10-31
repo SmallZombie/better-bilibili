@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_user_audios_response.dart';
 import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
@@ -27,7 +27,8 @@ class BiliAudioWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));

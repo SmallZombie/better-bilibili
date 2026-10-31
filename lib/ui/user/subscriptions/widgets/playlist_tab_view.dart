@@ -1,8 +1,8 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_playlists_response.dart';
-import 'package:better_bilibili/ui/core/bilibili/favorite_folder/favorites_card.dart';
+import 'package:better_bilibili/ui/core/bilibili/favorite_folder/favorite_folder_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/playlist/playlist_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/ui/user/subscriptions/view_models/playlist_tab_view_model.dart';
 import 'package:material_ui/material_ui.dart';
@@ -50,7 +50,7 @@ class _PlaylistTabState extends State<PlaylistTabView> with AutomaticKeepAliveCl
 
   void _onResult() {
     if (widget.viewModel.unsubscribe.error) {
-      final message = (widget.viewModel.unsubscribe.result as result.Error).toString();
+      final message = (widget.viewModel.unsubscribe.result as result.Err).toString();
       context.showError('退订失败: $message');
       widget.viewModel.unsubscribe.clearResult();
     }
@@ -88,14 +88,9 @@ class _PlaylistTabState extends State<PlaylistTabView> with AutomaticKeepAliveCl
 
     final colorScheme = Theme.of(context).colorScheme;
 
-    return GridLayoutBuilder(
-      minColumns: 1,
-      maxColumns: 5,
-      minItemWidth: 280,
-      imageAspectRatio: 16 / 9,
-      extraHeight: 100,
-      horizontalPadding: 16,
-      builder: (context, constraints, gridDelegate) => ListenableBuilder(
+    return CardLayoutBuilder(
+      padding: const .fromLTRB(16.0, 0, 16.0, kBottomNavigationBarHeight),
+      builder: (context, constraints, gridDelegate, padding) => ListenableBuilder(
         listenable: widget.viewModel.loadData,
         builder: (context, child) {
           if (widget.viewModel.loadData.running && widget.viewModel.playlists.isEmpty) {
@@ -104,7 +99,7 @@ class _PlaylistTabState extends State<PlaylistTabView> with AutomaticKeepAliveCl
 
           if (widget.viewModel.loadData.error) {
             final message = switch (widget.viewModel.loadData.result) {
-              result.Error(:final error) => error.toString(),
+              result.Err(:final error) => error.toString(),
               _ => '加载失败',
             };
             return CenterErrorMessage(
@@ -121,8 +116,8 @@ class _PlaylistTabState extends State<PlaylistTabView> with AutomaticKeepAliveCl
             onNotification: _onScroll,
             child: GridView.builder(
               gridDelegate: gridDelegate,
+              padding: padding,
               itemCount: widget.viewModel.playlists.length,
-              padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, kBottomNavigationBarHeight),
               itemBuilder: (context, index) {
                 final item = widget.viewModel.playlists[index];
 
@@ -138,7 +133,7 @@ class _PlaylistTabState extends State<PlaylistTabView> with AutomaticKeepAliveCl
                 }
 
                 if (item is SubscribedFavorites) {
-                  return FavoritesCard(
+                  return FavoriteFolderCard(
                     favoritesId: item.id,
                     cover: item.cover,
                     title: item.name,

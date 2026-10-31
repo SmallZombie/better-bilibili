@@ -2,6 +2,7 @@ import 'package:better_bilibili/config/account_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_post_web_api_service.dart';
+import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_posts_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
@@ -17,7 +18,7 @@ class PostRepositoryGuest implements PostRepository {
   PostRepositoryGuest({required this.authRepository});
 
   @override
-  Future<Result<dynamic>> getDetail( String postId) {
+  Future<Result<PostDetail>> getDetail(String postId) {
     return postApiService.getDetail(postId);
   }
 

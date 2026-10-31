@@ -11,30 +11,28 @@ import 'package:logger/logger.dart';
 class PostDetailViewModel extends SafeChangeNotifier {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'PostDetailViewModel'));
 
-  final PostRepository _postRepository;
-  final UserRepository _userRepository;
+  final PostRepository postRepository;
+  final UserRepository userRepository;
 
   String postId;
   String? cover;
 
   PostDetailViewModel({
-    required PostRepository postRepository,
-    required UserRepository userRepository,
+    required this.postRepository,
+    required this.userRepository,
     required this.postId,
     String? initCover,
-  }) : _postRepository = postRepository,
-       _userRepository = userRepository,
-       cover = initCover {
-    loadData = CancellableCommand0(
+  }) : cover = initCover {
+    loadData = Command0(
       _loadData,
-      onSuccess: (result) => _loadDataSuccess(result),
+      onSuccess: _loadDataSuccess,
       onCancel: () {},
     )..execute();
     like = Command0(_like);
     favorite = Command0(_favorite);
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<PostDetail> loadData;
 
   PostDetail? _postDetail;
   PostDetail? get postDetail => _postDetail;
@@ -43,8 +41,8 @@ class PostDetailViewModel extends SafeChangeNotifier {
   String? _collectionId;
   String? get collectionId => _collectionId;
 
-  Future<Result<void>> _loadData() async {
-    final result = await _postRepository.getDetail( postId);
+  Future<Result<PostDetail>> _loadData() async {
+    final result = await postRepository.getDetail(postId);
     return result;
   }
 
@@ -81,11 +79,11 @@ class PostDetailViewModel extends SafeChangeNotifier {
     );
     notifyListeners();
 
-    final result = await _postRepository.like(postId: postId, like: action);
+    final result = await postRepository.like(postId: postId, like: action);
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         _postDetail = postDetailbak;
         notifyListeners();
     }
@@ -105,11 +103,11 @@ class PostDetailViewModel extends SafeChangeNotifier {
     );
     notifyListeners();
 
-    final result = await _postRepository.favorite(postId: postId, favorite: action);
+    final result = await postRepository.favorite(postId: postId, favorite: action);
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         _postDetail = postDetailbak;
         notifyListeners();
     }
@@ -134,6 +132,6 @@ class PostDetailViewModel extends SafeChangeNotifier {
       return;
     }
 
-    _userRepository.reportArticleHistory( _postDetail!.commentId);
+    userRepository.reportArticleHistory(_postDetail!.commentId);
   }
 }

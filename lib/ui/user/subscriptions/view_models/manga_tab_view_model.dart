@@ -50,7 +50,7 @@ class MangaTabViewModel extends SafeChangeNotifier {
         _mangas.addAll(value.list);
         _pn++;
         _hasMore = value.hasMore;
-      case Error():
+      case Err():
     }
     return result;
   }
@@ -63,7 +63,7 @@ class MangaTabViewModel extends SafeChangeNotifier {
       case Ok():
         _mangas.removeWhere((v) => v.id == mangaId);
         notifyListeners();
-      case Error():
+      case Err():
     }
     return result;
   }

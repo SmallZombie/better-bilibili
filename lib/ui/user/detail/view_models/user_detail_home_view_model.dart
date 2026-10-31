@@ -37,7 +37,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   final List<VideoItem> _videos = [];
   final List<GetArticlesWithUserItem> _articles = [];
   final List<GetUserCollectionsAndPlaylistsItem> _playlists = [];
-  final List<Favorites> _favoritesList = [];
+  final List<FavoriteFolder> _favoritesList = [];
   final List<SubscribedSeries> _series = [];
   final List<dynamic> _likedVideos = [];
   final List<dynamic> _coindVideos = [];
@@ -46,7 +46,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   List<VideoItem> get videos => List.unmodifiable(_videos);
   List<GetArticlesWithUserItem> get articles => List.unmodifiable(_articles);
   List<GetUserCollectionsAndPlaylistsItem> get playlists => List.unmodifiable(_playlists);
-  List<Favorites> get favoritesList => List.unmodifiable(_favoritesList);
+  List<FavoriteFolder> get favoritesList => List.unmodifiable(_favoritesList);
   List<SubscribedSeries> get series => List.unmodifiable(_series);
   List<dynamic> get likedVideos => List.unmodifiable(_likedVideos);
   List<dynamic> get coindVideos => List.unmodifiable(_coindVideos);
@@ -59,7 +59,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       _,
       _,
     ] = await Future.wait([
-      _userRepository.getUserProfileSettings( userId),
+      _userRepository.getUserProfileSettings(userId),
       _loadPinnedVideos(),
       _loadVideos(),
       _loadArticles(),
@@ -68,7 +68,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
     switch (settingResult) {
       case Ok(:final value):
         _profileSettings = value;
-      case Error():
+      case Err():
         return settingResult;
     }
 
@@ -92,17 +92,17 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       futures.add(_loadRecentlyPlay());
     }
 
-    final _ = await Future.wait(futures);
+    await Future.wait(futures);
     return Result.ok(null);
   }
 
   Future<void> _loadPinnedVideos() async {
-    final result = await _userRepository.getUserPinnedVideos( userId);
+    final result = await _userRepository.getUserPinnedVideos(userId);
     switch (result) {
       case Ok(:final value):
         _pinnedVideos.clear();
         _pinnedVideos.addAll(value);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -113,7 +113,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _videos.clear();
         _videos.addAll(value.list);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -124,7 +124,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _articles.clear();
         _articles.addAll(value.list);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -135,7 +135,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _playlists.clear();
         _playlists.addAll(value.list);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -146,7 +146,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _favoritesList.clear();
         _favoritesList.addAll(value.list);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -157,7 +157,7 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _series.clear();
         _series.addAll(value.list);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
@@ -165,23 +165,23 @@ class UserDetailHomeViewModel extends SafeChangeNotifier {
   Future<void> _loadSubscribedManga() async {}
 
   Future<void> _loadRecentlyLiked() async {
-    final result = await _userRepository.getLikedVideos( userId);
+    final result = await _userRepository.getLikedVideos(userId);
     switch (result) {
       case Ok(:final value):
         _likedVideos.clear();
         _likedVideos.addAll(value);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }
 
   Future<void> _loadRecentlyCoind() async {
-    final result = await _userRepository.getCoinedVideos( userId);
+    final result = await _userRepository.getCoinedVideos(userId);
     switch (result) {
       case Ok(:final value):
         _coindVideos.clear();
         _coindVideos.addAll(value);
-      case Error(:final error):
+      case Err(:final error):
         throw error;
     }
   }

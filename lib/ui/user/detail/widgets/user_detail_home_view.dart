@@ -1,17 +1,16 @@
-import 'dart:ui';
-
 import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/core/bilibili/dynamic_card.dart';
-import 'package:better_bilibili/ui/core/bilibili/favorite_folder/favorites_card.dart';
+import 'package:better_bilibili/ui/core/bilibili/favorite_folder/favorite_folder_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/series/series_poster.dart';
 import 'package:better_bilibili/ui/core/bilibili/video/video_card.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/sliver_max_width_box.dart';
-import 'package:better_bilibili/ui/core/share/sliver_scetion_tile.dart';
+import 'package:better_bilibili/ui/core/share/responsive/sliver_max_width_viewport.dart';
+import 'package:better_bilibili/ui/core/share/section_tile.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_home_view_model.dart';
 import 'package:better_bilibili/ui/user/detail/widgets/user_detail_screen.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,26 +41,22 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
     return ListenableBuilder(
       listenable: widget.viewModel.loadData,
       builder: (context, _) {
+        if (widget.viewModel.loadData.error) {
+          return CenterErrorMessage(
+            errorMessage: getErrorMessage(widget.viewModel.loadData.result!),
+            onRetry: widget.viewModel.loadData.execute,
+          );
+        }
         if (widget.viewModel.loadData.running) {
           return const Center(child: CircularProgressIndicator());
-        }
-
-        if (widget.viewModel.loadData.error) {
-          return Center(
-            child: CenterErrorMessage(
-              errorMessage: widget.viewModel.loadData.result.toString(),
-              onRetry: widget.viewModel.loadData.execute,
-            ),
-          );
         }
 
         final List<Widget> slivers = [];
         if (widget.viewModel.pinnedVideos.isNotEmpty) {
           slivers.add(
-            _buildPadding(
-              SliverSectionTile.box(
+            _buildSection(
+              SectionTile.viewAll(
                 title: const Text('精选视频'),
-                headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                 expandedHeight: 280,
                 child: ListView.builder(
                   scrollDirection: .horizontal,
@@ -91,10 +86,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
         for (final i in widget.viewModel.profileSettings!.moduleSorting) {
           if (i == 1 && widget.viewModel.videos.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('视频'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                   expandedHeight: 280,
                   onTap: () => widget.onSwitchTab(.video),
                   child: ListView.builder(
@@ -122,10 +116,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
             );
           } else if (i == 2 && widget.viewModel.favoritesList.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('收藏夹'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                   expandedHeight: 280,
                   onTap: () => context.push(Routes.buildUserSubscriptions(widget.viewModel.userId)),
                   child: ListView.builder(
@@ -136,7 +129,7 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
                       final favorite = widget.viewModel.favoritesList[index];
                       return SizedBox(
                         width: 340,
-                        child: FavoritesCard(
+                        child: FavoriteFolderCard(
                           favoritesId: favorite.id,
                           cover: favorite.cover ?? kEmptyImageUrl,
                           title: favorite.name,
@@ -151,10 +144,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
             );
           } else if (i == 3 && widget.viewModel.series.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('订阅的剧集'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                   expandedHeight: 350,
                   onTap: () => context.push(
                     Routes.buildUserSubscriptions(widget.viewModel.userId),
@@ -184,10 +176,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
             );
           } else if (i == 5 && widget.viewModel.coindVideos.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('近期投币'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                   expandedHeight: 280,
                   onTap: () => context.push(
                     Routes.buildUserRecentlyCoined(
@@ -217,10 +208,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
               }
 
               slivers.add(
-                _buildPadding(
-                  SliverSectionTile.box(
+                _buildSection(
+                  SectionTile.viewAll(
                     title: Text(playlist.name),
-                    headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                     subtitle: playlist.description == null ? null : Text(playlist.description!),
                     expandedHeight: 280,
                     onTap: () => context.push(Routes.buildPlaylistDetail(playlist.id)),
@@ -250,10 +240,9 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
             }
           } else if (i == 8 && widget.viewModel.articles.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('文章'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
                   expandedHeight: 260,
                   onTap: () => widget.onSwitchTab(.article),
                   child: ListView.builder(
@@ -278,11 +267,10 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
             );
           } else if (i == 10 && widget.viewModel.likedVideos.isNotEmpty) {
             slivers.add(
-              _buildPadding(
-                SliverSectionTile.box(
+              _buildSection(
+                SectionTile.viewAll(
                   title: const Text('近期赞过'),
-                  headerPadding: const .symmetric(horizontal: 24.0, vertical: 8.0),
-                  expandedHeight: 280,
+                  expandedHeight: 290,
                   onTap: () => context.push(
                     Routes.buildUserRecentlyLiked(
                       widget.viewModel.userId,
@@ -318,16 +306,12 @@ class _UserDetailHomeViewState extends State<UserDetailHomeView> with AutomaticK
     );
   }
 
-  Widget _buildPadding(Widget sliver) {
-    return SliverMaxWidthBox(
+  Widget _buildSection(SectionTile sectionTile) {
+    return SliverMaxWidthViewport(
+      maxWidth: 2100,
       sliver: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-          },
-        ),
-        child: sliver,
+        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {.touch, .mouse}),
+        child: SliverToBoxAdapter(child: sectionTile),
       ),
     );
   }

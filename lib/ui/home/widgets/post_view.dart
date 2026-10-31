@@ -1,20 +1,19 @@
-import 'dart:ui';
-
 import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/eagle_config.dart';
 import 'package:better_bilibili/data/repositories/eagle/eagle_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
-import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
 import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_user_avatar.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_feed_tile/post_feed_tile_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
+import 'package:better_bilibili/ui/core/share/responsive/max_width_viewport.dart';
 import 'package:better_bilibili/ui/home/view_models/post_view_model.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
-class PostView extends StatefulWidget {
+class PostView extends StatelessWidget {
   final PostViewModel viewModel;
   final AppConfig appConfig;
   final EagleConfig eagleConfig;
@@ -30,193 +29,174 @@ class PostView extends StatefulWidget {
     required this.networkManager,
   });
 
-  @override
-  State<PostView> createState() => _PostViewState();
-}
-
-class _PostViewState extends State<PostView> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.maxScrollExtent - _scrollController.position.pixels <= 400 &&
-        !widget.viewModel.getPosts.running &&
-        widget.viewModel.hasMore) {
-      widget.viewModel.getPosts.execute();
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    if (notification.metrics.maxScrollExtent - notification.metrics.pixels <= 400 && !viewModel.getPosts.running && viewModel.hasMore) {
+      viewModel.getPosts.execute();
     }
+
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final vm = context.watch<PostViewModel>();
 
-    if (vm.getPosts.error) {
-      return CenterErrorMessage(
-        errorMessage: vm.getPosts.result.toString(),
-        onRetry: vm.getPosts.execute,
-      );
-    }
-    if (vm.getUsers.error) {
-      return CenterErrorMessage(
-        errorMessage: vm.getUsers.result.toString(),
-        onRetry: vm.getUsers.execute,
-      );
-    }
+    return Stack(
+      alignment: .topCenter,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 280,
+              child: ListenableBuilder(
+                listenable: viewModel.getUsers,
+                builder: (context, child) {
+                  if (viewModel.getUsers.error) {
+                    return CenterErrorMessage(
+                      errorMessage: getErrorMessage(viewModel.getUsers.result!),
+                      onRetry: viewModel.getUsers.execute,
+                    );
+                  }
+                  if (viewModel.users.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
 
-    final maxContentWidth = 640;
+                  final avatarSize = 36.0;
+                  final titleStyle = const TextStyle(fontSize: 15.0);
 
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: kMinInteractiveDimension,
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                    },
-                  ),
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: 3 + vm.users.length,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return ChoiceChip(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 9.6),
-                          label: Text('全部'),
-                          showCheckmark: false,
-                          selected: vm.selectedTypeIndex == 0,
-                          onSelected: (selected) => vm.setSelectedTypeIndex(0),
-                        );
-                      } else if (index == 1) {
-                        return ChoiceChip(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 9.6),
-                          label: Text('新视频'),
-                          showCheckmark: false,
-                          selected: vm.selectedTypeIndex == 1,
-                          onSelected: (selected) => vm.setSelectedTypeIndex(1),
-                        );
-                      } else if (index == 2) {
-                        return ChoiceChip(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 9.6),
-                          label: Text('新文章'),
-                          showCheckmark: false,
-                          selected: vm.selectedTypeIndex == 2,
-                          onSelected: (selected) => vm.setSelectedTypeIndex(2),
-                        );
-                      } else {
-                        final user = vm.users[index - 3];
-                        return ChoiceChip(
-                          padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 6.0),
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 4.0,
-                            children: [
-                              SizedBox(
-                                width: 26.0,
-                                height: 26.0,
-                                child: BiliUserAvatar(url: user.avatar),
-                              ),
-                              Text(user.nickname),
-                            ],
+                  return Selector<PostViewModel, ({int user, int type})>(
+                    selector: (context, vm) => (type: vm.selectedTypeIndex, user: vm.selectedUserIndex),
+                    builder: (context, state, child) => ListView.builder(
+                      padding: const .symmetric(horizontal: 16.0, vertical: 8.0),
+                      itemCount: 3 + viewModel.users.length,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return ListTile(
+                            leading: SizedBox(width: avatarSize, height: avatarSize),
+                            title: Text('全部', style: titleStyle),
+                            selected: state.type == 0,
+                            onTap: () => viewModel.setSelectedTypeIndex(0),
+                            shape: RoundedRectangleBorder(borderRadius: .circular(8)),
+                          );
+                        }
+                        if (index == 1) {
+                          return ListTile(
+                            leading: SizedBox(width: avatarSize, height: avatarSize),
+                            title: Text('新视频', style: titleStyle),
+                            selected: state.type == 1,
+                            onTap: () => viewModel.setSelectedTypeIndex(1),
+                            shape: RoundedRectangleBorder(borderRadius: .circular(8)),
+                          );
+                        }
+                        if (index == 2) {
+                          return ListTile(
+                            leading: SizedBox(width: avatarSize, height: avatarSize),
+                            title: Text('新文章', style: titleStyle),
+                            selected: state.type == 2,
+                            onTap: () => viewModel.setSelectedTypeIndex(2),
+                            shape: RoundedRectangleBorder(borderRadius: .circular(8)),
+                          );
+                        }
+
+                        final user = viewModel.users[index - 3];
+                        return ListTile(
+                          leading: SizedBox(
+                            width: avatarSize,
+                            height: avatarSize,
+                            child: BiliUserAvatar(url: user.avatar),
                           ),
-                          showCheckmark: false,
-                          selected: vm.selectedUserIndex == index - 3,
-                          onSelected: (selected) => vm.setSelectedUserIndex(index - 3),
+                          title: Text(user.nickname, style: titleStyle),
+                          selected: state.user == index - 3,
+                          onTap: () => viewModel.setSelectedUserIndex(index - 3),
+                          shape: RoundedRectangleBorder(borderRadius: .circular(8)),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            Expanded(
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onScroll,
+                  child: ListenableBuilder(
+                    listenable: viewModel.getPosts,
+                    builder: (context, child) {
+                      if (viewModel.getPosts.error) {
+                        return CenterErrorMessage(
+                          errorMessage: getErrorMessage(viewModel.getPosts.result!),
+                          onRetry: viewModel.getPosts.execute,
                         );
                       }
-                    },
-                    separatorBuilder: (context, index) => const SizedBox(width: 4.0),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Selector<PostViewModel, List<Post>>(
-                  selector: (context, vm) => vm.posts,
-                  builder: (context, posts, child) {
-                    if (posts.isEmpty) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                      if (viewModel.posts.isEmpty) {
+                        if (viewModel.getPosts.running) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return const Center(child: Text('暂无内容'));
+                      }
 
-                    return LayoutBuilder(
-                      builder: (context, constraints) => ListView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: ((constraints.maxWidth - maxContentWidth) / 2).clamp(0, double.infinity),
+                      return MaxWidthViewport.builder(
+                        maxWidth: 640,
+                        builder: (context, padding) => ListView.builder(
+                          padding: padding,
+                          itemCount: viewModel.posts.length,
+                          itemBuilder: (context, index) {
+                            final borderColor = colorScheme.outline.withAlpha(50);
+                            return DecoratedBox(
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: borderColor),
+                                  right: BorderSide(color: borderColor),
+                                  bottom: BorderSide(color: borderColor),
+                                ),
+                              ),
+                              child: ChangeNotifierProvider(
+                                create: (context) => PostFeedTileViewModel(
+                                  postRepository: context.read(),
+                                  post: viewModel.posts[index],
+                                ),
+                                builder: (context, child) => PostFeedTile(
+                                  viewModel: context.read(),
+                                  appConfig: appConfig,
+                                  eagleConfig: eagleConfig,
+                                  eagleRepository: eagleRepository,
+                                  networkManager: networkManager,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          return DecoratedBox(
-                            decoration: BoxDecoration(
-                              border: Border(
-                                left: BorderSide(color: colorScheme.outline),
-                                right: BorderSide(color: colorScheme.outline),
-                                bottom: BorderSide(color: colorScheme.outline),
-                              ),
-                            ),
-                            child: ChangeNotifierProvider(
-                              create: (context) => PostFeedTileViewModel(postRepository: context.read(), post: posts[index]),
-                              builder: (context, child) => PostFeedTile(
-                                viewModel: context.read(),
-                                appConfig: widget.appConfig,
-                                eagleConfig: widget.eagleConfig,
-                                eagleRepository: widget.eagleRepository,
-                                networkManager: widget.networkManager,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          Selector<BiliBackgroundService, int>(
-            selector: (context, service) => service.unreadPostCount,
-            builder: (context, count, _) {
-              final visible = count > 0;
-
-              return AnimatedPositioned(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                top: visible ? kMinInteractiveDimension + 24 : -56,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 180),
-                  opacity: visible ? 1 : 0,
-                  child: _NewPostPill(
-                    count: count,
-                    onTap: widget.viewModel.reload,
+                      );
+                    },
                   ),
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            ),
+          ],
+        ),
+        Selector<BiliBackgroundService, int>(
+          selector: (context, service) => service.unreadPostCount,
+          builder: (context, count, _) {
+            final visible = count > 0;
+            return AnimatedPositioned(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              top: visible ? kMinInteractiveDimension + 24 : -56,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: visible ? 1 : 0,
+                child: _NewPostPill(
+                  count: count,
+                  onTap: viewModel.reload,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -243,9 +223,9 @@ class _NewPostPill extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          padding: const .symmetric(horizontal: 16, vertical: 9),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: .min,
             children: [
               Icon(
                 Icons.keyboard_arrow_up,
@@ -257,7 +237,7 @@ class _NewPostPill extends StatelessWidget {
                 '$count 条新动态',
                 style: TextStyle(
                   color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: .w600,
                 ),
               ),
             ],

@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/bsbsb_config.dart';
-import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/config/danmaku_config.dart';
 import 'package:better_bilibili/config/player_config.dart';
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
@@ -41,6 +41,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
   final MediaSessionController mediaSessionController;
   final BsbsbRepository bsbsbRepository;
   final BsbsbConfig bsbsbConfig;
+  final AppConfig appConfig;
 
   String videoId;
   String? episodeId;
@@ -58,25 +59,26 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     required this.mediaSessionController,
     required this.bsbsbRepository,
     required this.bsbsbConfig,
+    required this.appConfig,
     required this.videoId,
     this.episodeId,
     String? initCover,
     this.playlistId,
   }) : cover = initCover {
-    getDetail = CancellableCommand0(
+    getDetail = Command0(
       _getDetail,
-      onCancel: () {},
       onSuccess: _getDetailSuccess,
+      onCancel: () {},
     );
-    getVideoInteraction = CancellableCommand0(
+    getVideoInteraction = Command0(
       _getVideoInteraction,
-      onCancel: () {},
       onSuccess: _getVideoInteractionSuccess,
-    );
-    getPlayInfo = CancellableCommand0(
-      _getPlayInfo,
       onCancel: () {},
+    );
+    getPlayInfo = Command0(
+      _getPlayInfo,
       onSuccess: _getPlayInfoSuccess,
+      onCancel: () {},
     );
     like = Command0(_like);
     coin = Command1(_coin);
@@ -97,7 +99,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     super.dispose();
   }
 
-  late final CancellableCommand0<GetVideoDetailResponse> getDetail;
+  late final Command0<GetVideoDetailResponse> getDetail;
 
   VideoDetail? _detail;
   VideoDetail? get detail => _detail;
@@ -126,7 +128,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     final hideMediaControlInfo = playerConfig.hideMediaControlInfo.value;
     mediaSessionData.setPrivacyMode(hideMediaControlInfo);
     mediaSessionData.setTitle(_detail!.title);
-    mediaSessionData.setArtist(kAppName);
+    mediaSessionData.setArtist(appConfig.appName);
 
     if (result.video.episodes.length > 1) {
       episodeController?.dispose();
@@ -207,7 +209,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     }
   }
 
-  late final CancellableCommand0<VideoInteraction> getVideoInteraction;
+  late final Command0<VideoInteraction> getVideoInteraction;
 
   bool get hasLiked => states?.hasLiked ?? false;
   bool get hasCoined => (states?.coinCount ?? 0) > 0;
@@ -230,11 +232,11 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  late final CancellableCommand0<PlayInfo> getPlayInfo;
+  late final Command0<PlayInfo> getPlayInfo;
 
   PlayInfo? _playInfo;
   PlayInfo? get playInfo => _playInfo;
-  final ExtraVideoController videoController = ExtraVideoController(kAppName);
+  late final ExtraVideoController videoController = ExtraVideoController(appConfig.appName);
   final MediaSessionData mediaSessionData = MediaSessionData();
   final NoticeController noticeController = NoticeController();
 
@@ -420,7 +422,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         states = statesBak;
         notifyListeners();
         return result;
@@ -444,7 +446,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         states = statesBak;
         notifyListeners();
         return result;
@@ -480,7 +482,7 @@ class VideoDetailViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         states = statesBak;
         notifyListeners();
         return result;

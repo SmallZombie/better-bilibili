@@ -5,14 +5,14 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class CollectionTabViewModel extends SafeChangeNotifier {
-  final ArticleRepository _articleRepository;
+  final ArticleRepository articleRepository;
 
   final String collectionId;
 
   CollectionTabViewModel({
-    required ArticleRepository articleRepository,
+    required this.articleRepository,
     required this.collectionId,
-  }) : _articleRepository = articleRepository {
+  }) {
     loadData = Command0(_getCollection)..execute();
   }
 
@@ -22,11 +22,11 @@ class CollectionTabViewModel extends SafeChangeNotifier {
   ArticleCollection? get collection => _collection;
 
   Future<Result<void>> _getCollection() async {
-    final result = await _articleRepository.getCollectionDetail( collectionId);
+    final result = await articleRepository.getCollectionDetail(collectionId);
     switch (result) {
       case Ok(:final value):
         _collection = value;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

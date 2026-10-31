@@ -25,7 +25,7 @@ import 'package:better_bilibili/domain/models/bilibili/bilibili.dart';
 import 'package:better_bilibili/domain/models/bilibili/danmaku.dart';
 import 'package:better_bilibili/domain/models/bilibili/play_info.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
@@ -67,7 +67,8 @@ class BiliVideoWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -378,7 +379,7 @@ class BiliVideoWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/web-interface/archive/like',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'aid': videoId,
           'like': like ? 1 : 2,
@@ -422,7 +423,7 @@ class BiliVideoWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/web-interface/coin/add',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'aid': videoId,
           'multiply': count,
@@ -821,7 +822,7 @@ class BiliVideoWebApiService {
       if (subscription) {
         final resp = await client.post(
           'https://api.bilibili.com/x/v3/fav/season/fav',
-          options: Options(contentType: 'application/x-www-form-urlencoded'),
+          options: Options(contentType: Headers.formUrlEncodedContentType),
           data: {
             'platform': 'web',
             'season_id': collectionId,
@@ -835,7 +836,7 @@ class BiliVideoWebApiService {
       } else {
         final resp = await client.post(
           'https://api.bilibili.com/x/v3/fav/season/unfav',
-          options: Options(contentType: 'application/x-www-form-urlencoded'),
+          options: Options(contentType: Headers.formUrlEncodedContentType),
           data: {
             'platform': 'web',
             'season_id': collectionId,
@@ -926,7 +927,7 @@ class BiliVideoWebApiService {
           account.wbiImgKey,
           account.wbiSubKey,
         ),
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           // 首次开始播放时的秒级时间戳
           'start_ts': firstPlaybackTime,
@@ -1107,9 +1108,13 @@ class BiliVideoWebApiService {
           }
 
           double beginX = toDouble(json[0]);
-          if (beginX > 1) beginX /= 1920;
           double beginY = toDouble(json[1]);
-          if (beginY > 1) beginY /= 1080;
+
+          // 整数时为绝对坐标，浮点时为相对坐标 (存疑)
+          // https://commentcorelibrary.readthedocs.io/en/latest/data-formats/bilibili-xml/#:~:text=基础属性
+          // 已知网页端发送高级弹幕时，相对坐标的取值范围为 0~0.99 不包括 1
+          // 此处可能为字符串所以统一用 "." 来判断
+          bool useRelativePosition = '${json[0]} ${json[1]}'.contains('.');
 
           List<String> alphaArr = (json[2] as String).split('-');
           double beginAlpha;
@@ -1137,7 +1142,7 @@ class BiliVideoWebApiService {
           bool border = false;
           String? fontFamily;
 
-          bool isQuadraticEaseOut = false;
+          bool useLinearEaseIn = false;
 
           text = json[4] as String;
 
@@ -1148,12 +1153,12 @@ class BiliVideoWebApiService {
 
           if (json.length >= 8) {
             endX = toDouble(json[7]);
-            if (endX > 1) endX /= 1920;
+            useRelativePosition = json[7].toString().contains('.');
           }
 
           if (json.length >= 9) {
             endY = toDouble(json[8]);
-            if (endY > 1) endY /= 1080;
+            useRelativePosition = json[8].toString().contains('.');
           }
 
           if (json.length >= 10) {
@@ -1174,12 +1179,13 @@ class BiliVideoWebApiService {
 
           // Linear.easeIn or Quadratic.easeOut
           if (json.length >= 14) {
-            isQuadraticEaseOut = toBool(json[13]);
+            useLinearEaseIn = toBool(json[13]);
           }
 
           extra = ExtraAnimation(
             beginX: beginX,
             beginY: beginY,
+            useRelativePosition: useRelativePosition,
             endX: endX,
             endY: endY,
             beginAlpha: beginAlpha,
@@ -1192,7 +1198,7 @@ class BiliVideoWebApiService {
             duration: duration,
             border: border,
             fontFamily: fontFamily,
-            isQuadraticEaseOut: isQuadraticEaseOut,
+            useLinearEaseIn: useLinearEaseIn,
           );
         }
 
@@ -1286,7 +1292,7 @@ class BiliVideoWebApiService {
       final resp = await client.post(
         'https://api.bilibili.com/x/web-interface/feedback/dislike',
         queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'app_id': 100,
           'platform': 5,
@@ -1328,7 +1334,7 @@ class BiliVideoWebApiService {
       final resp = await client.post(
         'https://api.bilibili.com/x/web-interface/feedback/dislike/cancel',
         queryParameters: buildWbiParams({}, account.wbiImgKey, account.wbiSubKey),
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'app_id': 100,
           'platform': 5,

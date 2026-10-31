@@ -6,19 +6,18 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class UserFansViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
-  final AuthRepository _authRepository;
+  final UserRepository userRepository;
+  final AuthRepository authRepository;
 
   final String userId;
 
   UserFansViewModel({
-    required UserRepository userRepository,
-    required AuthRepository authRepository,
+    required this.userRepository,
+    required this.authRepository,
     required this.userId,
-  }) : _userRepository = userRepository,
-       _authRepository = authRepository {
+  }) {
     loadData = Command0(_loadData)..execute();
-    deleteFan = Command1((userId) => _deleteFan(userId));
+    deleteFan = Command1(_deleteFan);
   }
 
   late final Command0 loadData;
@@ -34,7 +33,7 @@ class UserFansViewModel extends SafeChangeNotifier {
   int get total => _total;
 
   final List<FanUser> _fans = [];
-  late final List<FanUser> fans = List.unmodifiable(_fans);
+  List<FanUser> get fans => List.unmodifiable(_fans);
 
   int _fansVersion = 0;
   int get fansVersion => _fansVersion;
@@ -43,15 +42,17 @@ class UserFansViewModel extends SafeChangeNotifier {
   bool get isCurrentUser => _isCurrentUser;
 
   Future<Result<void>> _loadData() async {
-    final result = await _userRepository.getFans(userId: userId, pn: _pn);
+    final result = await userRepository.getFans(userId: userId, pn: _pn);
     switch (result) {
       case Ok(:final value):
         _fans.addAll(value.list);
         _fansVersion++;
         _total = value.total;
-        _isCurrentUser = userId == (await _authRepository.getAccount()).userId;
-      case Error():
+        _isCurrentUser = userId == (await authRepository.getAccount()).userId;
+      case Err():
     }
+
+    notifyListeners();
     return result;
   }
 
@@ -64,13 +65,13 @@ class UserFansViewModel extends SafeChangeNotifier {
   late final Command1<void, String> deleteFan;
 
   Future<Result<void>> _deleteFan(String userId) async {
-    final result = await _userRepository.deleteFans(userId);
+    final result = await userRepository.deleteFans(userId);
     switch (result) {
       case Ok():
         _fans.removeWhere((fan) => fan.id == userId);
         _fansVersion++;
         _total--;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

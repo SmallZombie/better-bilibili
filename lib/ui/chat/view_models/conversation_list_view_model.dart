@@ -9,7 +9,10 @@ class ConversationListViewModel extends ChangeNotifier {
   final AuthRepository authRepository;
   final ChatRepository chatRepository;
 
-  ConversationListViewModel({required this.authRepository, required this.chatRepository}) {
+  ConversationListViewModel({
+    required this.authRepository,
+    required this.chatRepository,
+  }) {
     init = Command0(_init)..execute();
     loadMore = Command0(_loadMore);
   }
@@ -44,7 +47,7 @@ class ConversationListViewModel extends ChangeNotifier {
       case Ok(:final value):
         _data.addAll(value.data.where((v) => v.type == .user));
         _nextCursur = value.nextCursor;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

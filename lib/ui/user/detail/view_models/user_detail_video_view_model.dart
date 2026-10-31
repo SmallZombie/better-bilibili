@@ -12,17 +12,14 @@ const _orderValues = [
 ];
 
 class UserDetailVideoViewModel extends SafeChangeNotifier {
-  final VideoRepository _videoRepository;
+  final VideoRepository videoRepository;
 
   final String userId;
 
-  UserDetailVideoViewModel({
-    required VideoRepository videoRepository,
-    required this.userId,
-  }) : _videoRepository = videoRepository {
-    loadData = CancellableCommand0(
+  UserDetailVideoViewModel({required this.videoRepository, required this.userId}) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (resp) => loadDataSuccess(resp),
+      onSuccess: loadDataSuccess,
       onCancel: () {},
     )..execute();
   }
@@ -37,7 +34,7 @@ class UserDetailVideoViewModel extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetVideosWithUserIdResponse> loadData;
 
   int _pn = 1;
   int get pn => _pn;
@@ -56,8 +53,8 @@ class UserDetailVideoViewModel extends SafeChangeNotifier {
   final List<VideoItem> _videos = [];
   List<VideoItem> get videos => List.unmodifiable(_videos);
 
-  Future<Result<void>> _loadData() async {
-    final result = await _videoRepository.getVideosWithUser(
+  Future<Result<GetVideosWithUserIdResponse>> _loadData() async {
+    final result = await videoRepository.getVideosWithUser(
       userId: userId,
       pn: _pn,
       ps: ps,

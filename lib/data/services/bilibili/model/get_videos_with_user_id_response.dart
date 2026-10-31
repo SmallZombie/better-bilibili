@@ -1,5 +1,5 @@
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 
 enum GetVideosWithUserTypeEnum {
   all,

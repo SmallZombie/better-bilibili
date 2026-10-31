@@ -49,6 +49,15 @@ class _AppBarWithSearchState extends State<AppBarWithSearch> {
   TextEditingController get searchController => widget.searchController ?? (_searchController ??= TextEditingController());
   FocusNode get searchFocusNode => widget.searchFocusNode ?? (_searchFocusNode ??= FocusNode());
 
+  @override
+  void didUpdateWidget(covariant AppBarWithSearch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!oldWidget.searchMode && widget.searchMode) {
+      _searchFocusNode?.requestFocus();
+    }
+  }
+
   void _onToggleSearchMode() {
     setState(() {
       _searchMode = !_searchMode;

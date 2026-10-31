@@ -9,35 +9,34 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class CommentPanelViewModel extends SafeChangeNotifier {
-  final CommentRepository _commentRepository;
-  final CommonRepository _commonRepository;
+  final CommentRepository commentRepository;
+  final CommonRepository commonRepository;
 
   final BiliContentTypeEnum type;
   final String id;
 
   CommentPanelViewModel({
-    required CommentRepository commentRepository,
-    required CommonRepository commonRepository,
+    required this.commentRepository,
+    required this.commonRepository,
     required this.type,
     required this.id,
-  }) : _commentRepository = commentRepository,
-       _commonRepository = commonRepository {
-    loadData = CancellableCommand0(
+  }) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (result) => _loadDataSuccess(result),
+      onSuccess: _loadDataSuccess,
       onCancel: () {},
     )..execute();
-    post = Command1((req) => _post(req));
-    deleteComment = Command1((commentId) => _deleteComment(commentId));
-    loadMentionUserList = CancellableCommand1(
+    post = Command1(_post);
+    deleteComment = Command1(_deleteComment);
+    loadMentionUserList = Command1(
       _loadMentionUserList,
-      onSuccess: (result) => _loadMentionedUserListSuccess(result),
+      onSuccess: _loadMentionedUserListSuccess,
       onCancel: () {},
     );
     loadStickers = Command0(_loadStickers);
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetCommentListResponse> loadData;
 
   String? _nextCursor;
   bool _hasMore = true;
@@ -46,8 +45,8 @@ class CommentPanelViewModel extends SafeChangeNotifier {
   final List<Comment> _comments = [];
   List<Comment> get comments => _comments;
 
-  Future<Result<void>> _loadData() async {
-    final result = await _commentRepository.getList(
+  Future<Result<GetCommentListResponse>> _loadData() async {
+    final result = await commentRepository.getList(
       id: id,
       type: type,
       cursor: _nextCursor,
@@ -91,11 +90,11 @@ class CommentPanelViewModel extends SafeChangeNotifier {
     _images[index] = image;
     notifyListeners();
 
-    final result = await _commonRepository.uploadImageForDynamic( image.localPath);
+    final result = await commonRepository.uploadImageForDynamic(image.localPath);
     switch (result) {
       case Ok(:final value):
         _images[_images.indexOf(image)] = image.copyWith(status: .success, result: value);
-      case Error():
+      case Err():
         _images[_images.indexOf(image)] = image.copyWith(status: .failed);
     }
     notifyListeners();
@@ -121,7 +120,7 @@ class CommentPanelViewModel extends SafeChangeNotifier {
   }
 
   Future<Result<Comment>> _post(PostRequest req) async {
-    final result = await _commentRepository.post(
+    final result = await commentRepository.post(
       type: type,
       contextId: _replyTarget?.contextId ?? id,
       rootId: _replyTarget?.id,
@@ -143,7 +142,7 @@ class CommentPanelViewModel extends SafeChangeNotifier {
         } else {
           _comments.insert(0, value);
         }
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -153,7 +152,7 @@ class CommentPanelViewModel extends SafeChangeNotifier {
   late final Command1<void, Comment> deleteComment;
 
   Future<Result<void>> _deleteComment(Comment comment) async {
-    final result = await _commentRepository.delete(
+    final result = await commentRepository.delete(
       contextId: id,
       type: type,
       commentId: comment.id,
@@ -170,19 +169,19 @@ class CommentPanelViewModel extends SafeChangeNotifier {
         } catch (_) {
           _comments.removeWhere((v) => v.id == comment.id);
         }
-      case Error():
+      case Err():
     }
 
     return result;
   }
 
-  late final CancellableCommand1<List<MentionUser>, String?> loadMentionUserList;
+  late final Command1<List<MentionUser>, String?> loadMentionUserList;
 
   final List<MentionUser> _mentionUserList = [];
   List<MentionUser> get mentionUserList => List.unmodifiable(_mentionUserList);
 
   Future<Result<List<MentionUser>>> _loadMentionUserList(String? keyword) async {
-    final result = _commentRepository.getMentionList(
+    final result = commentRepository.getMentionList(
       type: type,
       keyword: keyword,
     );
@@ -206,11 +205,11 @@ class CommentPanelViewModel extends SafeChangeNotifier {
   List<StickerPack> get stickers => List.unmodifiable(_stickers);
 
   Future<Result<void>> _loadStickers() async {
-    final result = await _commentRepository.getStickerList();
+    final result = await commentRepository.getStickerList();
     switch (result) {
       case Ok(:final value):
         _stickers.addAll(value);
-      case Error():
+      case Err():
     }
 
     notifyListeners();

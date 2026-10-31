@@ -1,6 +1,6 @@
 import 'package:better_bilibili/ui/core/share/base_card.dart';
 import 'package:better_bilibili/ui/core/share/save_image.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:better_bilibili/utils/base_util.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
@@ -59,9 +59,9 @@ class CourseCard extends StatelessWidget {
       contentItems: [
         MetadataItemGroup(
           items: [
-            if (watchTime != null) MetadataItem(key: '观看于', value: formatTimeToHumanReadable(watchTime!)),
-            if (favoriteTime != null) MetadataItem(key: '收藏于', value: formatTimeToHumanReadable(favoriteTime!)),
-            if (watchLaterTime != null) MetadataItem(key: '添加于', value: formatTimeToHumanReadable(watchLaterTime!)),
+            if (watchTime != null) MetadataItem(key: '观看于', value: '观看于${formatTimeToHumanReadable(watchTime!)}'),
+            if (favoriteTime != null) MetadataItem(key: '收藏于', value: '收藏于${formatTimeToHumanReadable(favoriteTime!)}'),
+            if (watchLaterTime != null) MetadataItem(key: '添加于', value: '添加于${formatTimeToHumanReadable(watchLaterTime!)}'),
           ],
           separator: const Text(' · '),
         ),

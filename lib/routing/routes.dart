@@ -31,12 +31,14 @@ abstract final class Routes {
   static const watchHistory = '/watch_history';
   static const watchLater = '/watch_later';
   static const favorites = '/favorites';
-  static const searchFavorites = '/search_favorites';
-  static const favoritesDetail = '/favorites/:favoritesId';
+  static const favoriteFolderDetail = '/favorite_folder/:favoritesId';
+  static const searchInFavoriteFolder = '/search_in_favorite_folder';
+  static const favoriteFolderReorder = '/favorite_folder_reorder';
   static const playlistDetail = '/playlist/:playlistId';
   // static const webView = '/web_view';
   static const articleDetail = '/article/:articleId';
   static const postDetail = '/post/:postId';
+  static const followings = '/followings';
 
   static const setting = RoutePath(path: '/setting', name: '');
   static const settingGeneral = RoutePath(path: '/setting/general', name: 'general');
@@ -74,7 +76,7 @@ abstract final class Routes {
   }
 
   static String buildFavoritesDetail(String favoritesId) {
-    return favoritesDetail.replaceAll(':favoritesId', favoritesId);
+    return favoriteFolderDetail.replaceAll(':favoritesId', favoritesId);
   }
 
   static String buildPlaylistDetail(String playlistId) {

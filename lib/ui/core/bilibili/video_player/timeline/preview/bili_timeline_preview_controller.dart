@@ -76,7 +76,7 @@ class BiliTimelinePreviewController extends SafeChangeNotifier implements Timeli
     switch (previewResult) {
       case Ok(:final value):
         data = value;
-      case Error():
+      case Err():
         return previewResult;
     }
 

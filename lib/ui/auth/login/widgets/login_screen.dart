@@ -7,24 +7,25 @@ import 'package:better_bilibili/ui/auth/login/widgets/qr_login_view.dart';
 import 'package:better_bilibili/ui/auth/login/view_models/login_view_model.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final LoginViewModel viewModel;
+
+  const LoginScreen({super.key, required this.viewModel});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  late LoginViewModel _viewModel;
+  LoginViewModel get viewModel => widget.viewModel;
+
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
 
-    _viewModel = context.read();
     _tabController = TabController(length: LoginViewModel.tabCount, vsync: this);
     _tabController.addListener(_onTabControllerTick);
   }
@@ -39,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   void _onTabControllerTick() {
     if (_tabController.indexIsChanging) return;
-    _viewModel.onTabChanged(_tabController.index);
+    viewModel.onTabChanged(_tabController.index);
   }
 
   @override
@@ -90,11 +91,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     constraints: const BoxConstraints(maxWidth: 500),
                     child: TabBarView(
                       controller: _tabController,
-                      children: const [
-                        PasswordLoginView(),
-                        CodeLoginView(),
-                        QrLoginView(),
-                        CookieLoginView(),
+                      children: [
+                        const PasswordLoginView(),
+                        const CodeLoginView(),
+                        QrLoginView(viewModel: viewModel),
+                        const CookieLoginView(),
                       ],
                     ),
                   ),

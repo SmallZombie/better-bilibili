@@ -18,11 +18,9 @@ const _durationOptions = [
 ];
 
 class WatchLaterViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
+  final UserRepository userRepository;
 
-  WatchLaterViewModel({
-    required UserRepository userRepository,
-  }) : _userRepository = userRepository {
+  WatchLaterViewModel({required this.userRepository}) {
     loadData = Command0(_loadWatchLater)..execute();
     copySelectedItemsToFavorites = Command1<void, String>((targetId) => _copySelectedItemsToFavorites(targetId));
     moveSelectedItemsToFavorites = Command1<void, String>((targetId) => _moveSelectedItemsToFavorites(targetId));
@@ -54,7 +52,7 @@ class WatchLaterViewModel extends SafeChangeNotifier {
   bool get hasMore => _hasMore;
 
   Future<Result<void>> _loadWatchLater() async {
-    final result = await _userRepository.getWatchLater(
+    final result = await userRepository.getWatchLater(
       pn: _pn,
       keyword: _keyword,
       minAddTime: _resolveAddTimeRangeSec().$1,
@@ -69,7 +67,7 @@ class WatchLaterViewModel extends SafeChangeNotifier {
         _watchLater.addAll(value.list);
         _pn++;
         _hasMore = _watchLater.length != value.total;
-      case Error():
+      case Err():
     }
     return result;
   }
@@ -239,7 +237,7 @@ class WatchLaterViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _copySelectedItemsToFavorites(String targetId) async {
     final List<String> ids = _selectedItems.map((item) => _getItemId(item)).toList();
-    final result = await _userRepository.copyFromWatchLaterToFavorites(ids: ids, targetFavoritesId: targetId);
+    final result = await userRepository.copyFromWatchLaterToFavorites(ids: ids, targetFavoritesId: targetId);
     return result;
   }
 
@@ -247,13 +245,13 @@ class WatchLaterViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _moveSelectedItemsToFavorites(String targetId) async {
     final List<String> ids = _selectedItems.map((item) => _getItemId(item)).toList();
-    final result = await _userRepository.moveFromWatchLaterToFavorites(ids: ids, targetFavoritesId: targetId);
+    final result = await userRepository.moveFromWatchLaterToFavorites(ids: ids, targetFavoritesId: targetId);
     switch (result) {
       case Ok():
         _watchLater.removeWhere((item) => _selectedItems.contains(item));
         _selectedItems.clear();
         _multiSelectMode = false;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -264,13 +262,13 @@ class WatchLaterViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _deleteSelectedItems() async {
     final List<String> ids = _selectedItems.map((item) => _getItemId(item)).toList();
-    final result = await _userRepository.deleteVideosFromWatchLater(ids);
+    final result = await userRepository.deleteVideosFromWatchLater(ids);
     switch (result) {
       case Ok():
         _watchLater.removeWhere((item) => _selectedItems.contains(item));
         _selectedItems.clear();
         _multiSelectMode = false;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -280,11 +278,11 @@ class WatchLaterViewModel extends SafeChangeNotifier {
   late final Command0<void> clearWatched;
 
   Future<Result<void>> _clearWatched() async {
-    final result = await _userRepository.clearWatchedInWatchLater();
+    final result = await userRepository.clearWatchedInWatchLater();
     switch (result) {
       case Ok():
         reload();
-      case Error():
+      case Err():
     }
     return result;
   }

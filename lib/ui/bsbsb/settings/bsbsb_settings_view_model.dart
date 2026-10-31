@@ -10,10 +10,11 @@ class BsbsbSettingsViewModel extends SafeChangeNotifier {
   final BsbsbRepository bsbsbRepository;
 
   BsbsbSettingsViewModel({required this.config, required this.bsbsbRepository}) {
-    loadData.execute();
+    loadData = Command0(_loadData)..execute();
+    modifyUsername = Command1(_modifyUsername);
   }
 
-  late final Command0 loadData = Command0(_loadData);
+  late final Command0 loadData;
 
   UserInfo? userInfo;
 
@@ -22,21 +23,21 @@ class BsbsbSettingsViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok(:final value):
         userInfo = value;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
     return result;
   }
 
-  late final Command1 modifyUsername = Command1((username) => _modifyUsername(username));
+  late final Command1<void, String> modifyUsername;
 
   Future<Result<void>> _modifyUsername(String username) async {
     final result = await bsbsbRepository.modifyUsername(username);
     switch (result) {
       case Ok _:
         userInfo = userInfo?.copyWith(userName: username);
-      case Error _:
+      case Err _:
     }
 
     notifyListeners();
@@ -55,7 +56,7 @@ class BsbsbSettingsViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok(:final value):
         _myRank = value;
-      case Error _:
+      case Err _:
     }
 
     notifyListeners();

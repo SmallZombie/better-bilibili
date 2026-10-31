@@ -24,6 +24,7 @@ class BiliTimelineWaveformController extends ChangeNotifier implements TimelineW
     _disposed = true;
     super.dispose();
   }
+
   @override
   List<double> get data => List.unmodifiable(_data);
 
@@ -33,7 +34,7 @@ class BiliTimelineWaveformController extends ChangeNotifier implements TimelineW
     switch (result) {
       case Ok(:final value):
         _data.addAll(value);
-      case Error():
+      case Err():
     }
   }
 }

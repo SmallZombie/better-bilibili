@@ -47,7 +47,7 @@ class ChatRepositoryLogin implements ChatRepository {
       case Ok(:final value):
         data1 = value;
         data1.data.sort((a, b) => b.unreadCount - a.unreadCount);
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
 
@@ -62,7 +62,7 @@ class ChatRepositoryLogin implements ChatRepository {
     switch (result2) {
       case Ok(:final value):
         data2 = value;
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
 
@@ -95,7 +95,7 @@ class ChatRepositoryLogin implements ChatRepository {
     switch (result1) {
       case Ok(:final value):
         data1 = value;
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
 
@@ -111,7 +111,7 @@ class ChatRepositoryLogin implements ChatRepository {
     switch (result2) {
       case Ok(:final value):
         data2 = value;
-      case Error(:final error):
+      case Err(:final error):
         return Result.error(error);
     }
 

@@ -24,7 +24,7 @@ extension SaveImage on BuildContext {
         switch (result) {
           case Ok():
             showInfo('已保存');
-          case Error():
+          case Err():
             showError('保存失败: ${result.error.toString()}');
         }
       } else if (isMobile) {
@@ -36,7 +36,7 @@ extension SaveImage on BuildContext {
         switch (result) {
           case Ok():
             showInfo('已保存');
-          case Error():
+          case Err():
             showError('保存失败: ${result.error.toString()}');
         }
       } else {
@@ -72,7 +72,7 @@ extension SaveImage on BuildContext {
         if (!mounted) return;
 
         for (final i in results) {
-          if (i is Error) showError('保存时发生错误: ${i.error.toString()}');
+          if (i is Err) showError('保存时发生错误: ${i.error.toString()}');
         }
 
         if (results.every((v) => v is Ok)) {
@@ -94,7 +94,7 @@ extension SaveImage on BuildContext {
 
         final results = await Future.wait(futures);
         for (final i in results) {
-          if (i is Error) showError('保存时发生错误: ${i.error.toString()}');
+          if (i is Err) showError('保存时发生错误: ${i.error.toString()}');
         }
 
         if (results.every((v) => v is Ok)) {

@@ -29,7 +29,7 @@ class FollowTextButtonViewModel extends SafeChangeNotifier {
     switch (result) {
       case Ok():
         return result;
-      case Error():
+      case Err():
         followed = !action;
     }
 

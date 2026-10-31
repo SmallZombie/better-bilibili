@@ -1,4 +1,4 @@
-import 'package:better_bilibili/utils/bili/bili_danmaku_mask_parser.dart';
+import 'package:better_bilibili/utils/bilibili/danmaku_mask_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 

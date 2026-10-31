@@ -11,18 +11,19 @@ class EditVideoInFavoriteFolderSheetViewModel extends SafeChangeNotifier {
   final AuthRepository authRepository;
 
   EditVideoInFavoriteFolderSheetViewModel({required this.userRepository, required this.authRepository}) {
-    getFavorites = Command1<void, String?>((videoId) => _getFavorites(videoId));
-    createFavorites = Command1<void, CreateFavoritesRequest>((favorites) => _createFavorites(favorites));
+    getFavorites = Command1(_getFavorites);
+    createFavorites = Command1(_createFavorites);
   }
 
   final List<SimpleFavorites> _favorites = [];
   List<SimpleFavorites> get favorites => List.unmodifiable(_favorites);
+
   final Set<String> _initialSelectedFavoritesIds = {};
   Set<String> get initialSelectedFavoritesIds => Set.unmodifiable(_initialSelectedFavoritesIds);
 
-  late final Command1<void, String?> getFavorites;
+  late final Command1<GetFavoritesSimpleListResponse, String?> getFavorites;
 
-  Future<Result<void>> _getFavorites(String? videoId) async {
+  Future<Result<GetFavoritesSimpleListResponse>> _getFavorites(String? videoId) async {
     final account = await authRepository.getAccount();
     final result = await userRepository.getFavoritesSimpleList(userId: account.userId, videoId: videoId);
     switch (result) {
@@ -32,19 +33,19 @@ class EditVideoInFavoriteFolderSheetViewModel extends SafeChangeNotifier {
         _initialSelectedFavoritesIds
           ..clear()
           ..addAll(value.ids);
-      case Error():
+      case Err():
     }
     return result;
   }
 
-  late final Command1<void, CreateFavoritesRequest> createFavorites;
+  late final Command1<FavoriteFolder, CreateFavoritesRequest> createFavorites;
 
-  Future<Result<Favorites>> _createFavorites(CreateFavoritesRequest favorites) async {
+  Future<Result<FavoriteFolder>> _createFavorites(CreateFavoritesRequest favorites) async {
     return userRepository.createFavorites(
       name: favorites.name,
       description: favorites.description,
       isPrivate: favorites.isPrivate,
-      coverUrl: favorites.coverUrl,
+      cover: favorites.cover,
     );
   }
 
@@ -58,12 +59,12 @@ class CreateFavoritesRequest {
   final String name;
   final String description;
   final bool isPrivate;
-  final String? coverUrl;
+  final String? cover;
 
   CreateFavoritesRequest({
     required this.name,
     required this.description,
     required this.isPrivate,
-    required this.coverUrl,
+    required this.cover,
   });
 }

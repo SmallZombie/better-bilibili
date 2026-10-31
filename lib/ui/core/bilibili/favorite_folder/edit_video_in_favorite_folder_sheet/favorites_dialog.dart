@@ -130,7 +130,7 @@ extension SimpleSnackBar on BuildContext {
     return result;
   }
 
-  Future<Favorites?> showCreateFavoritesDialog() async {
+  Future<FavoriteFolder?> showCreateFavoritesDialog() async {
     final EditVideoInFavoriteFolderSheetViewModel viewModel = read();
 
     final formKey = GlobalKey<FormState>();
@@ -138,7 +138,7 @@ extension SimpleSnackBar on BuildContext {
     final descriptionController = TextEditingController();
     bool isPublic = false;
 
-    return showDialog<Favorites>(
+    return showDialog<FavoriteFolder>(
       context: this,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
@@ -212,7 +212,7 @@ extension SimpleSnackBar on BuildContext {
                           name: nameController.text,
                           description: descriptionController.text,
                           isPrivate: isPublic == false,
-                          coverUrl: null,
+                          cover: null,
                         ),
                       );
 
@@ -221,7 +221,7 @@ extension SimpleSnackBar on BuildContext {
                       switch (viewModel.createFavorites.result) {
                         case Ok(:final value):
                           context.pop(value);
-                        case Error(:final error):
+                        case Err(:final error):
                           showError(error.toString());
                         default:
                           break;

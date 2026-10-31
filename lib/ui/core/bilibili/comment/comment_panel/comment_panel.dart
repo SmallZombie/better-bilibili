@@ -211,7 +211,7 @@ class _CommentInputState extends State<_CommentInput> {
   }
 
   void _onResult() {
-    if (widget.viewModel.post.completed) {
+    if (widget.viewModel.post.success) {
       _editingController.clear();
       widget.viewModel.clearImage();
       widget.viewModel.setReplyTarget(null);

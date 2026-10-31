@@ -1,7 +1,7 @@
 import 'package:better_bilibili/data/services/bilibili/model/get_subscribed_manga.dart';
 import 'package:better_bilibili/ui/core/bilibili/manga/manga_poster.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
 import 'package:better_bilibili/ui/user/subscriptions/view_models/manga_tab_view_model.dart';
 import 'package:material_ui/material_ui.dart';
@@ -48,7 +48,7 @@ class _MangaTabState extends State<MangaTabView> with AutomaticKeepAliveClientMi
 
   void _onResult() {
     if (widget.viewModel.unsubscribe.error) {
-      final message = (widget.viewModel.unsubscribe.result as result.Error).toString();
+      final message = (widget.viewModel.unsubscribe.result as result.Err).toString();
       context.showError('取消订阅失败: $message');
       widget.viewModel.unsubscribe.clearResult();
     }
@@ -79,14 +79,14 @@ class _MangaTabState extends State<MangaTabView> with AutomaticKeepAliveClientMi
 
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
-      child: GridLayoutBuilder(
+      child: CardLayoutBuilder(
         minColumns: 1,
         maxColumns: 6,
         minItemWidth: 240,
         imageAspectRatio: 1 / 1.4,
         extraHeight: 80,
-        horizontalPadding: 16,
-        builder: (context, constraints, gridDelegate) {
+        padding: const .fromLTRB(16.0, 0, 16.0, kBottomNavigationBarHeight),
+        builder: (context, constraints, gridDelegate, padding) {
           return ListenableBuilder(
             listenable: widget.viewModel.loadData,
             builder: (context, child) {
@@ -102,15 +102,15 @@ class _MangaTabState extends State<MangaTabView> with AutomaticKeepAliveClientMi
               }
 
               if (widget.viewModel.mangas.isEmpty) {
-                return const Center(child: Text('暂无记录'));
+                return const Center(child: Text('暂无内容'));
               }
 
               return Selector<MangaTabViewModel, List<SubscribedManga>>(
                 selector: (context, vm) => vm.mangas,
                 builder: (context, mangas, _) => GridView.builder(
                   gridDelegate: gridDelegate,
+                  padding: padding,
                   itemCount: mangas.length,
-                  padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, kBottomNavigationBarHeight),
                   itemBuilder: (context, index) {
                     final item = mangas[index];
                     return MangaPoster(

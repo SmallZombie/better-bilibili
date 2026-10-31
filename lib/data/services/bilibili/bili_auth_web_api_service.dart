@@ -34,7 +34,8 @@ class BiliAuthWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -101,10 +102,11 @@ class BiliAuthWebApiService {
     }
   }
 
-  /// 获取账户基本信息，等同于 nav
+  /// 获取 wbi 签名相关的两个 key，等同于 nav，
   /// 该接口不会因为未登录而报 -101
-  /// 传入 session 返回登录后的信息，否则返回 wbi 签名
-  Future<Result<GetSelfInfoResponse>> getSelfInfo() async {
+  ///
+  /// 获取用户信息请使用 [BiliUserWebApiService.getSelfInfo]
+  Future<Result<GetSelfInfoResponse>> getWbiKeys() async {
     final client = await getClient();
 
     try {
@@ -144,7 +146,7 @@ class BiliAuthWebApiService {
     }
   }
 
-  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus( String key) async {
+  Future<Result<GetQrCodeStatusResponse>> getQrCodeStatus(String key) async {
     assert(key.isNotEmpty);
 
     final client = await getClient();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
@@ -8,35 +10,35 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class PostViewModel extends SafeChangeNotifier {
-  final PostRepository _postRepository;
-  final BiliBackgroundService _biliBackgroundService;
-  final AuthRepository _authRepository;
+  final PostRepository postRepository;
+  final BiliBackgroundService biliBackgroundService;
+  final AuthRepository authRepository;
+
+  late final StreamSubscription _accountChangeSubscription;
 
   PostViewModel({
-    required PostRepository postRepository,
-    required BiliBackgroundService biliBackgroundService,
-    required AuthRepository authRepository,
-  }) : _postRepository = postRepository,
-       _authRepository = authRepository,
-       _biliBackgroundService = biliBackgroundService {
-    getPosts = CancellableCommand0(
+    required this.postRepository,
+    required this.biliBackgroundService,
+    required this.authRepository,
+  }) {
+    getPosts = Command0(
       _getPosts,
-      onSuccess: (result) => _getPostsSuccess(result),
+      onSuccess: _getPostsSuccess,
       onCancel: () {},
     )..execute();
     getUsers = Command0(_getUsers)..execute();
 
-    _authRepository.addListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription = authRepository.stream.current.listen(_onAccountChanged);
   }
 
   @override
   void dispose() {
-    _authRepository.removeListener(_onAuthRepositoryChanged);
+    _accountChangeSubscription.cancel();
 
     super.dispose();
   }
 
-  late final CancellableCommand0 getPosts;
+  late final Command0<GetPostListResponse> getPosts;
 
   int _pn = 1;
   String? _offset;
@@ -56,14 +58,14 @@ class PostViewModel extends SafeChangeNotifier {
     reload();
   }
 
-  Future<Result<void>> _getPosts() async {
-    final result = await _postRepository.getList(
+  Future<Result<GetPostListResponse>> _getPosts() async {
+    final result = await postRepository.getList(
       pn: _pn,
       offset: _offset,
       type: switch (_selectedTypeIndex) {
-        1 => GetPostListTypeEnum.video,
-        2 => GetPostListTypeEnum.article,
-        _ => GetPostListTypeEnum.all,
+        1 => .video,
+        2 => .article,
+        _ => .all,
       },
       userId: _selectedUserIndex == -1 ? null : _users[_selectedUserIndex].id,
     );
@@ -77,7 +79,7 @@ class PostViewModel extends SafeChangeNotifier {
     _offset = result.offset;
     _hasMore = result.hasMore;
 
-    _biliBackgroundService.clearUnreadPostCount();
+    biliBackgroundService.clearUnreadPostCount();
     notifyListeners();
   }
 
@@ -97,11 +99,11 @@ class PostViewModel extends SafeChangeNotifier {
   List<User> get users => List.unmodifiable(_users);
 
   Future<Result<void>> _getUsers() async {
-    final result = await _postRepository.getActiveUserList();
+    final result = await postRepository.getActiveUserList();
     switch (result) {
       case Ok(:final value):
         _users.addAll(value);
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -119,12 +121,12 @@ class PostViewModel extends SafeChangeNotifier {
     getPosts.execute();
   }
 
-  void _onAuthRepositoryChanged() {
+  void _onAccountChanged(String event) {
     _posts.clear();
     _pn = 1;
     _offset = null;
     _hasMore = true;
-    _biliBackgroundService.clearUnreadPostCount();
+    biliBackgroundService.clearUnreadPostCount();
     _selectedTypeIndex = 0;
 
     _users.clear();

@@ -45,7 +45,7 @@ class UserDetailPlaylistViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         _playlists.addAll(value.list);
         _total = value.total;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

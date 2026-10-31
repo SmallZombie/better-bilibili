@@ -38,33 +38,24 @@ class DmSegMobileReply extends $pb.GeneratedMessage {
 
   DmSegMobileReply._();
 
-  factory DmSegMobileReply.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmSegMobileReply.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DmSegMobileReply.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmSegMobileReply.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DmSegMobileReply',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
-    ..pPM<DanmakuElem>(1, _omitFieldNames ? '' : 'elems',
-        subBuilder: DanmakuElem.create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DmSegMobileReply',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
+    ..pPM<DanmakuElem>(1, _omitFieldNames ? '' : 'elems', subBuilder: DanmakuElem.create)
     ..aI(2, _omitFieldNames ? '' : 'state')
-    ..aOM<DanmakuAIFlag>(3, _omitFieldNames ? '' : 'aiFlag',
-        subBuilder: DanmakuAIFlag.create)
-    ..pPM<DmColorful>(5, _omitFieldNames ? '' : 'colorfulSrc',
-        protoName: 'colorfulSrc', subBuilder: DmColorful.create)
+    ..aOM<DanmakuAIFlag>(3, _omitFieldNames ? '' : 'aiFlag', subBuilder: DanmakuAIFlag.create)
+    ..pPM<DmColorful>(5, _omitFieldNames ? '' : 'colorfulSrc', protoName: 'colorfulSrc', subBuilder: DmColorful.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmSegMobileReply clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmSegMobileReply copyWith(void Function(DmSegMobileReply) updates) =>
-      super.copyWith((message) => updates(message as DmSegMobileReply))
-          as DmSegMobileReply;
+      super.copyWith((message) => updates(message as DmSegMobileReply)) as DmSegMobileReply;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -74,8 +65,7 @@ class DmSegMobileReply extends $pb.GeneratedMessage {
   @$core.override
   DmSegMobileReply createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DmSegMobileReply getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DmSegMobileReply>(create);
+  static DmSegMobileReply getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DmSegMobileReply>(create);
   static DmSegMobileReply? _defaultInstance;
 
   /// 弹幕列表
@@ -148,18 +138,13 @@ class DanmakuElem extends $pb.GeneratedMessage {
 
   DanmakuElem._();
 
-  factory DanmakuElem.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuElem.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DanmakuElem.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuElem.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DanmakuElem',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DanmakuElem',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'id')
     ..aI(2, _omitFieldNames ? '' : 'progress')
     ..aI(3, _omitFieldNames ? '' : 'mode')
@@ -174,16 +159,13 @@ class DanmakuElem extends $pb.GeneratedMessage {
     ..aOS(12, _omitFieldNames ? '' : 'idStr', protoName: 'idStr')
     ..aI(13, _omitFieldNames ? '' : 'attr')
     ..aOS(22, _omitFieldNames ? '' : 'animation')
-    ..aE<DmColorfulType>(24, _omitFieldNames ? '' : 'colorful',
-        enumValues: DmColorfulType.values)
+    ..aE<DmColorfulType>(24, _omitFieldNames ? '' : 'colorful', enumValues: DmColorfulType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmakuElem clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DanmakuElem copyWith(void Function(DanmakuElem) updates) =>
-      super.copyWith((message) => updates(message as DanmakuElem))
-          as DanmakuElem;
+  DanmakuElem copyWith(void Function(DanmakuElem) updates) => super.copyWith((message) => updates(message as DanmakuElem)) as DanmakuElem;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -193,8 +175,7 @@ class DanmakuElem extends $pb.GeneratedMessage {
   @$core.override
   DanmakuElem createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DanmakuElem getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DanmakuElem>(create);
+  static DanmakuElem getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DanmakuElem>(create);
   static DanmakuElem? _defaultInstance;
 
   /// 弹幕dmid
@@ -359,28 +340,21 @@ class DanmakuAIFlag extends $pb.GeneratedMessage {
 
   DanmakuAIFlag._();
 
-  factory DanmakuAIFlag.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuAIFlag.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DanmakuAIFlag.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuAIFlag.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DanmakuAIFlag',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
-    ..pPM<DanmakuFlag>(1, _omitFieldNames ? '' : 'dmFlags',
-        subBuilder: DanmakuFlag.create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DanmakuAIFlag',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
+    ..pPM<DanmakuFlag>(1, _omitFieldNames ? '' : 'dmFlags', subBuilder: DanmakuFlag.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmakuAIFlag clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmakuAIFlag copyWith(void Function(DanmakuAIFlag) updates) =>
-      super.copyWith((message) => updates(message as DanmakuAIFlag))
-          as DanmakuAIFlag;
+      super.copyWith((message) => updates(message as DanmakuAIFlag)) as DanmakuAIFlag;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -390,8 +364,7 @@ class DanmakuAIFlag extends $pb.GeneratedMessage {
   @$core.override
   DanmakuAIFlag createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DanmakuAIFlag getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DanmakuAIFlag>(create);
+  static DanmakuAIFlag getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DanmakuAIFlag>(create);
   static DanmakuAIFlag? _defaultInstance;
 
   /// 弹幕ai云屏蔽条目
@@ -412,18 +385,13 @@ class DanmakuFlag extends $pb.GeneratedMessage {
 
   DanmakuFlag._();
 
-  factory DanmakuFlag.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuFlag.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DanmakuFlag.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuFlag.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DanmakuFlag',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DanmakuFlag',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'dmid')
     ..aI(2, _omitFieldNames ? '' : 'flag', fieldType: $pb.PbFieldType.OU3)
     ..hasRequiredFields = false;
@@ -431,9 +399,7 @@ class DanmakuFlag extends $pb.GeneratedMessage {
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmakuFlag clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DanmakuFlag copyWith(void Function(DanmakuFlag) updates) =>
-      super.copyWith((message) => updates(message as DanmakuFlag))
-          as DanmakuFlag;
+  DanmakuFlag copyWith(void Function(DanmakuFlag) updates) => super.copyWith((message) => updates(message as DanmakuFlag)) as DanmakuFlag;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -443,8 +409,7 @@ class DanmakuFlag extends $pb.GeneratedMessage {
   @$core.override
   DanmakuFlag createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DanmakuFlag getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DanmakuFlag>(create);
+  static DanmakuFlag getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DanmakuFlag>(create);
   static DanmakuFlag? _defaultInstance;
 
   /// 弹幕dmid
@@ -481,28 +446,21 @@ class DmColorful extends $pb.GeneratedMessage {
 
   DmColorful._();
 
-  factory DmColorful.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmColorful.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DmColorful.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmColorful.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DmColorful',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
-    ..aE<DmColorfulType>(1, _omitFieldNames ? '' : 'type',
-        enumValues: DmColorfulType.values)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DmColorful',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
+    ..aE<DmColorfulType>(1, _omitFieldNames ? '' : 'type', enumValues: DmColorfulType.values)
     ..aOS(2, _omitFieldNames ? '' : 'src')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmColorful clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DmColorful copyWith(void Function(DmColorful) updates) =>
-      super.copyWith((message) => updates(message as DmColorful)) as DmColorful;
+  DmColorful copyWith(void Function(DmColorful) updates) => super.copyWith((message) => updates(message as DmColorful)) as DmColorful;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -512,8 +470,7 @@ class DmColorful extends $pb.GeneratedMessage {
   @$core.override
   DmColorful createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DmColorful getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DmColorful>(create);
+  static DmColorful getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DmColorful>(create);
   static DmColorful? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -550,18 +507,13 @@ class DmSegConfig extends $pb.GeneratedMessage {
 
   DmSegConfig._();
 
-  factory DmSegConfig.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmSegConfig.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DmSegConfig.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmSegConfig.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DmSegConfig',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DmSegConfig',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'pageSize', protoName: 'pageSize')
     ..aInt64(2, _omitFieldNames ? '' : 'total')
     ..hasRequiredFields = false;
@@ -569,9 +521,7 @@ class DmSegConfig extends $pb.GeneratedMessage {
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmSegConfig clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DmSegConfig copyWith(void Function(DmSegConfig) updates) =>
-      super.copyWith((message) => updates(message as DmSegConfig))
-          as DmSegConfig;
+  DmSegConfig copyWith(void Function(DmSegConfig) updates) => super.copyWith((message) => updates(message as DmSegConfig)) as DmSegConfig;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -581,8 +531,7 @@ class DmSegConfig extends $pb.GeneratedMessage {
   @$core.override
   DmSegConfig createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DmSegConfig getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DmSegConfig>(create);
+  static DmSegConfig getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DmSegConfig>(create);
   static DmSegConfig? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -619,18 +568,13 @@ class DanmakuFlagConfig extends $pb.GeneratedMessage {
 
   DanmakuFlagConfig._();
 
-  factory DanmakuFlagConfig.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuFlagConfig.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DanmakuFlagConfig.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmakuFlagConfig.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DanmakuFlagConfig',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DanmakuFlagConfig',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aI(1, _omitFieldNames ? '' : 'recFlag', protoName: 'recFlag')
     ..aOS(2, _omitFieldNames ? '' : 'recText', protoName: 'recText')
     ..aI(3, _omitFieldNames ? '' : 'recSwitch', protoName: 'recSwitch')
@@ -640,8 +584,7 @@ class DanmakuFlagConfig extends $pb.GeneratedMessage {
   DanmakuFlagConfig clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmakuFlagConfig copyWith(void Function(DanmakuFlagConfig) updates) =>
-      super.copyWith((message) => updates(message as DanmakuFlagConfig))
-          as DanmakuFlagConfig;
+      super.copyWith((message) => updates(message as DanmakuFlagConfig)) as DanmakuFlagConfig;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -651,8 +594,7 @@ class DanmakuFlagConfig extends $pb.GeneratedMessage {
   @$core.override
   DanmakuFlagConfig createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DanmakuFlagConfig getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DanmakuFlagConfig>(create);
+  static DanmakuFlagConfig getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DanmakuFlagConfig>(create);
   static DanmakuFlagConfig? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -713,18 +655,13 @@ class CommandDm extends $pb.GeneratedMessage {
 
   CommandDm._();
 
-  factory CommandDm.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory CommandDm.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory CommandDm.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory CommandDm.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'CommandDm',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CommandDm',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'id')
     ..aInt64(2, _omitFieldNames ? '' : 'oid')
     ..aInt64(3, _omitFieldNames ? '' : 'mid')
@@ -740,8 +677,7 @@ class CommandDm extends $pb.GeneratedMessage {
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   CommandDm clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CommandDm copyWith(void Function(CommandDm) updates) =>
-      super.copyWith((message) => updates(message as CommandDm)) as CommandDm;
+  CommandDm copyWith(void Function(CommandDm) updates) => super.copyWith((message) => updates(message as CommandDm)) as CommandDm;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -751,8 +687,7 @@ class CommandDm extends $pb.GeneratedMessage {
   @$core.override
   CommandDm createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static CommandDm getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CommandDm>(create);
+  static CommandDm getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CommandDm>(create);
   static CommandDm? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -896,18 +831,13 @@ class DanmuWebPlayerConfig extends $pb.GeneratedMessage {
 
   DanmuWebPlayerConfig._();
 
-  factory DanmuWebPlayerConfig.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmuWebPlayerConfig.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DanmuWebPlayerConfig.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DanmuWebPlayerConfig.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DanmuWebPlayerConfig',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DanmuWebPlayerConfig',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aOB(1, _omitFieldNames ? '' : 'dmSwitch', protoName: 'dmSwitch')
     ..aOB(2, _omitFieldNames ? '' : 'aiSwitch', protoName: 'aiSwitch')
     ..aI(3, _omitFieldNames ? '' : 'aiLevel', protoName: 'aiLevel')
@@ -934,8 +864,7 @@ class DanmuWebPlayerConfig extends $pb.GeneratedMessage {
   DanmuWebPlayerConfig clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DanmuWebPlayerConfig copyWith(void Function(DanmuWebPlayerConfig) updates) =>
-      super.copyWith((message) => updates(message as DanmuWebPlayerConfig))
-          as DanmuWebPlayerConfig;
+      super.copyWith((message) => updates(message as DanmuWebPlayerConfig)) as DanmuWebPlayerConfig;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -945,8 +874,7 @@ class DanmuWebPlayerConfig extends $pb.GeneratedMessage {
   @$core.override
   DanmuWebPlayerConfig createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DanmuWebPlayerConfig getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DanmuWebPlayerConfig>(create);
+  static DanmuWebPlayerConfig getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DanmuWebPlayerConfig>(create);
   static DanmuWebPlayerConfig? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -1159,40 +1087,30 @@ class DmWebViewReply extends $pb.GeneratedMessage {
 
   DmWebViewReply._();
 
-  factory DmWebViewReply.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmWebViewReply.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DmWebViewReply.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+  factory DmWebViewReply.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DmWebViewReply',
-      package: const $pb.PackageName(
-          _omitMessageNames ? '' : 'bilibili.community.service.dm.v1'),
-      createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DmWebViewReply',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'bilibili.community.service.dm.v1'), createEmptyInstance: create)
     ..aI(1, _omitFieldNames ? '' : 'state')
     ..aOS(2, _omitFieldNames ? '' : 'text')
     ..aOS(3, _omitFieldNames ? '' : 'textSide', protoName: 'textSide')
-    ..aOM<DmSegConfig>(4, _omitFieldNames ? '' : 'dmSge',
-        protoName: 'dmSge', subBuilder: DmSegConfig.create)
-    ..aOM<DanmakuFlagConfig>(5, _omitFieldNames ? '' : 'flag',
-        subBuilder: DanmakuFlagConfig.create)
+    ..aOM<DmSegConfig>(4, _omitFieldNames ? '' : 'dmSge', protoName: 'dmSge', subBuilder: DmSegConfig.create)
+    ..aOM<DanmakuFlagConfig>(5, _omitFieldNames ? '' : 'flag', subBuilder: DanmakuFlagConfig.create)
     ..pPS(6, _omitFieldNames ? '' : 'specialDms', protoName: 'specialDms')
     ..aOB(7, _omitFieldNames ? '' : 'checkBox', protoName: 'checkBox')
     ..aInt64(8, _omitFieldNames ? '' : 'count')
-    ..pPM<CommandDm>(9, _omitFieldNames ? '' : 'commandDms',
-        protoName: 'commandDms', subBuilder: CommandDm.create)
-    ..aOM<DanmuWebPlayerConfig>(10, _omitFieldNames ? '' : 'dmSetting',
-        protoName: 'dmSetting', subBuilder: DanmuWebPlayerConfig.create)
+    ..pPM<CommandDm>(9, _omitFieldNames ? '' : 'commandDms', protoName: 'commandDms', subBuilder: CommandDm.create)
+    ..aOM<DanmuWebPlayerConfig>(10, _omitFieldNames ? '' : 'dmSetting', protoName: 'dmSetting', subBuilder: DanmuWebPlayerConfig.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmWebViewReply clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   DmWebViewReply copyWith(void Function(DmWebViewReply) updates) =>
-      super.copyWith((message) => updates(message as DmWebViewReply))
-          as DmWebViewReply;
+      super.copyWith((message) => updates(message as DmWebViewReply)) as DmWebViewReply;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -1202,8 +1120,7 @@ class DmWebViewReply extends $pb.GeneratedMessage {
   @$core.override
   DmWebViewReply createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DmWebViewReply getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DmWebViewReply>(create);
+  static DmWebViewReply getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DmWebViewReply>(create);
   static DmWebViewReply? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -1291,7 +1208,5 @@ class DmWebViewReply extends $pb.GeneratedMessage {
   DanmuWebPlayerConfig ensureDmSetting() => $_ensure(9);
 }
 
-const $core.bool _omitFieldNames =
-    $core.bool.fromEnvironment('protobuf.omit_field_names');
-const $core.bool _omitMessageNames =
-    $core.bool.fromEnvironment('protobuf.omit_message_names');
+const $core.bool _omitFieldNames = $core.bool.fromEnvironment('protobuf.omit_field_names');
+const $core.bool _omitMessageNames = $core.bool.fromEnvironment('protobuf.omit_message_names');

@@ -35,7 +35,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
       case Ok(:final value):
         comment.replies.addAll(value);
         _pn++;
-      case Error():
+      case Err():
     }
 
     return result;
@@ -59,7 +59,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
           likeCount: comment.likeCount + (action ? 1 : -1),
           isDisliked: action ? false : comment.isDisliked,
         );
-      case Error():
+      case Err():
     }
 
     return result;
@@ -83,7 +83,7 @@ class CommentTileViewModel extends SafeChangeNotifier {
           isLiked: action ? false : comment.isLiked,
           likeCount: action && comment.isLiked ? comment.likeCount - 1 : comment.likeCount,
         );
-      case Error():
+      case Err():
     }
 
     return result;

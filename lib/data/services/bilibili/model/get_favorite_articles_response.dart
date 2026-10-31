@@ -27,7 +27,8 @@ class FavoriteArticle {
 
   factory FavoriteArticle.fromJson(Map<String, dynamic> json) {
     /// 用于将字符串形式的 `time_text` 转回秒级时间戳
-    /// 可能出现的情况：`刚刚`、`57分钟前`、`1小时前`、`昨天 14:32`、`2天前`、`04月28日`、`2025年04月29日`、`2小时前`
+    /// 可能出现的情况：`刚刚`、`57分钟前`、`1小时前`、`昨天 14:32`、`2天前`、`04月28日`、`2025年04月29日`、`2小时前`、`6月11日`
+    /// 10/17: 这怎么之前还是对其到2长度的现在又不对其了
     int coverTimeStrToInt(String str) {
       final now = DateTime.now();
 
@@ -43,7 +44,7 @@ class FavoriteArticle {
         }
       }
 
-      // x小时前 (兼容1小时前、2小时前等)
+      // x小时前
       final hourReg = RegExp(r'^(\d+)小时前$');
       final matchHour = hourReg.firstMatch(str);
       if (matchHour != null) {
@@ -76,8 +77,8 @@ class FavoriteArticle {
         }
       }
 
-      // 今年的xx月xx日
-      final monthDayReg = RegExp(r'^(\d{2})月(\d{2})日$');
+      // [x]x月[x]x日
+      final monthDayReg = RegExp(r'^(\d{1,2})月(\d{1,2})日$');
       final matchMonthDay = monthDayReg.firstMatch(str);
       if (matchMonthDay != null) {
         final month = int.tryParse(matchMonthDay.group(1)!);
@@ -88,8 +89,8 @@ class FavoriteArticle {
         }
       }
 
-      // xx年xx月xx日
-      final yearMonthDayReg = RegExp(r'^(\d{4})年(\d{2})月(\d{2})日$');
+      // xxxx年[x]x月[x]x日
+      final yearMonthDayReg = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日$');
       final matchYearMonthDay = yearMonthDayReg.firstMatch(str);
       if (matchYearMonthDay != null) {
         final year = int.tryParse(matchYearMonthDay.group(1)!);
@@ -101,7 +102,7 @@ class FavoriteArticle {
         }
       }
 
-      throw FormatException('未能识别的时间格式: $str');
+      throw FormatException('Unparseable time: $str');
     }
 
     return FavoriteArticle(

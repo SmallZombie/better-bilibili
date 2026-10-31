@@ -50,7 +50,7 @@ class _ConversationDetailViewState extends State<ConversationDetailView> {
   }
 
   void _onResult() {
-    if (viewModel.loadMore.completed) {
+    if (viewModel.loadMore.success) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       });

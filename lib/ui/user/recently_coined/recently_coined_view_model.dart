@@ -4,14 +4,13 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:better_bilibili/utils/safe_change_notifier.dart';
 
 class RecentlyCoinedViewModel extends SafeChangeNotifier {
-  final UserRepository _userRepository;
-
+  final UserRepository userRepository;
   final String userId;
 
   RecentlyCoinedViewModel({
-    required UserRepository userRepository,
+    required this.userRepository,
     required this.userId,
-  }) : _userRepository = userRepository {
+  }) {
     loadData = Command0(_loadData)..execute();
   }
 
@@ -21,11 +20,11 @@ class RecentlyCoinedViewModel extends SafeChangeNotifier {
   List<dynamic> get videos => List.unmodifiable(_videos);
 
   Future<Result<void>> _loadData() async {
-    final result = await _userRepository.getCoinedVideos(userId);
+    final result = await userRepository.getCoinedVideos(userId);
     switch (result) {
       case Ok(:final value):
         _videos.addAll(value);
-      case Error():
+      case Err():
     }
 
     notifyListeners();

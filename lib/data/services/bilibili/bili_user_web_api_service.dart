@@ -28,7 +28,7 @@ import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
@@ -66,7 +66,8 @@ class BiliUserWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -304,7 +305,7 @@ class BiliUserWebApiService {
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/history/shadow/set',
         options: Options(
-          contentType: 'application/x-www-form-urlencoded',
+          contentType: Headers.formUrlEncodedContentType,
         ),
         data: {
           'switch': enable == false,
@@ -332,7 +333,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/history/delete',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'kid': ids.join(','),
           'csrf': account.biliJct,
@@ -355,7 +356,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/history/clear',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'business': '',
           'csrf': account.biliJct,
@@ -566,8 +567,6 @@ class BiliUserWebApiService {
   /// 从稍后观看中删除视频，支持批量操作
   ///
   /// 与观看历史所使用的 id 不同，此处为常规 `videoId`
-  ///
-  /// 你可能会好奇番剧在这里是怎么处理的，详见开发文档 [B站番剧部分的工作原理]
   Future<Result<void>> deleteVideosFromWatchLater(List<String> ids) async {
     assert(ids.isNotEmpty);
 
@@ -625,9 +624,9 @@ class BiliUserWebApiService {
 
       _checkResponse(resp);
 
-      final List<Favorites> list = [];
+      final List<FavoriteFolder> list = [];
       for (final item in resp.data['data']['list']) {
-        list.add(Favorites.fromJson(item));
+        list.add(FavoriteFolder.fromJson(item));
       }
 
       return Result.ok(
@@ -689,11 +688,11 @@ class BiliUserWebApiService {
   }
 
   /// 创建收藏夹
-  Future<Result<Favorites>> createFavorites({
+  Future<Result<FavoriteFolder>> createFavorites({
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   }) async {
     assert(name.isNotEmpty);
 
@@ -703,31 +702,31 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/folder/add',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'title': name,
           'intro': description,
           'privacy': isPrivate ? 1 : 0,
-          'cover': coverUrl ?? '',
+          'cover': cover ?? '',
           'csrf': account.biliJct,
         },
       );
 
       _checkResponse(resp);
 
-      return Result.ok(Favorites.fromJson(resp.data['data']));
+      return Result.ok(FavoriteFolder.fromJson(resp.data['data']));
     } catch (e) {
       return _handleError(e);
     }
   }
 
   /// 修改收藏夹，必须带上全量的参数请求，而不是只携带修改过的参数
-  Future<Result<void>> modifyFavorites({
+  Future<Result<void>> modifyFavoriteFolder({
     required String favoritesId,
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   }) async {
     assert(favoritesId.isNotEmpty && name.isNotEmpty);
 
@@ -736,14 +735,14 @@ class BiliUserWebApiService {
     try {
       final account = await _getLoginedAccount();
       final resp = await client.post(
-        'https://api.bilibili.com/x/v3/fav/folder/add',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        'https://api.bilibili.com/x/v3/fav/folder/edit',
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'media_id': favoritesId,
           'title': name,
           'intro': description,
           'privacy': isPrivate ? 1 : 0,
-          'cover': coverUrl ?? '',
+          'cover': cover ?? '',
           'csrf': account.biliJct,
         },
       );
@@ -785,7 +784,7 @@ class BiliUserWebApiService {
   }
 
   /// 重新排序收藏夹
-  Future<Result<void>> reorderFavorites({
+  Future<Result<void>> reorderFavoriteFolder({
     required List<String> ids,
   }) async {
     final client = await getClient();
@@ -812,12 +811,11 @@ class BiliUserWebApiService {
   ///
   /// 使用 `pn`+`ps`+`hasMore` 翻页
   ///
-  /// [favoritesId]: 只有当此参数存在时B站才会返回 `info`，才能拿到 `info.total`，此参数也被用作归属判断，
-  /// 传入收藏夹ID或传入任意收藏夹ID+withAll来在全部收藏夹中搜索
+  /// [favoritesId]: 只有当此参数存在时B站才会返回 `info`，才能拿到 `info.total`，传入收藏夹ID + scope=global 来在全部收藏夹中搜索
   ///
-  /// 可用排序方式：`favorite_time_desc` = 收藏时间降序(默认)，`view_desc` = 播放量降序，`release_time_desc` = 发布时间降序
+  /// [order]: favoriteTimeDesc = 收藏时间降序(默认), viewDesc = 播放量降序, releaseTimeDesc = 发布时间降序
   ///
-  /// 返回值包含: [FavoritesVideo] | [FavoritesMovie]
+  /// 可能的返回值: [FavoritesVideo] | [FavoritesMovie]
   ///
   /// 注意当存在 `keyword` 时，`total` 为筛选后的总内容数，而不是收藏夹的总内容数(这是人能写出来的接口?)，此时没办法拿到总数，需要提前缓存
   Future<Result<GetFavoritesDetailResponse>> getFavoritesDetail({
@@ -828,6 +826,7 @@ class BiliUserWebApiService {
     String? keyword,
     GetFavoritesDetailScopeEnum scope = .local,
   }) async {
+    assert(favoritesId.isNotEmpty);
     assert(pn > 0 && ps > 0);
 
     final client = await getClient();
@@ -893,7 +892,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/resource/copy',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'resources': ids.join(','),
           'src_media_id': sourceFavoritesId,
@@ -932,7 +931,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/resource/move',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'resources': ids.join(','),
           'src_media_id': sourceFavoritesId,
@@ -967,7 +966,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/resource/batch-del',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'resources': ids.join(','),
           'media_id': favoritesId,
@@ -992,7 +991,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/resource/clean',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'media_id': favoritesId,
           'platform': 'web',
@@ -1025,7 +1024,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v3/fav/resource/deal',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'rid': videoId,
           'type': 2,
@@ -1569,7 +1568,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/modify',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {'statistics': '{"appId":100,"platform":5}'},
         data: {
           // 此函数模拟从用户主页关注/取消关注用户，如果需要模拟从其他地方关注，比如视频详情页，需要成套替换下面的参数！
@@ -1725,7 +1724,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/v2/history/report',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'aid': articleId,
           'type': 5,
@@ -1777,7 +1776,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/tag/create',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
         data: {
           'tag': name,
@@ -1862,7 +1861,12 @@ class BiliUserWebApiService {
 
         _checkResponse(resp);
 
-        return Result.ok((resp.data['data']['list'] as List).map((v) => FollowingUser.fromJson(v)).toList());
+        return Result.ok(
+          (resp.data['data']['list'] as List).map((v) {
+            // 获取悄悄关注和关注分组内的用户均不会返回实际关注状态
+            return FollowingUser.fromJson(v, followOverride: true);
+          }).toList(),
+        );
       } catch (e) {
         return _handleError(e);
       }
@@ -1882,7 +1886,12 @@ class BiliUserWebApiService {
 
         _checkResponse(resp);
 
-        return Result.ok((resp.data['data'] as List).map((v) => FollowingUser.fromJson(v)).toList());
+        return Result.ok(
+          (resp.data['data'] as List).map((v) {
+            // 获取悄悄关注和关注分组内的用户均不会返回实际关注状态
+            return FollowingUser.fromJson(v, followOverride: true);
+          }).toList(),
+        );
       } catch (e) {
         return _handleError(e);
       }
@@ -2023,7 +2032,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/tags/addUsers',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
         data: {
           'fids': userIds.join(','),
@@ -2053,7 +2062,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/tag/update',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
         data: {
           'tagid': groupId,
@@ -2079,7 +2088,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/tag/del',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}'},
         data: {
           'tagid': groupId,
@@ -2143,7 +2152,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/modify',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {
           'statistics': '{"appId":100,"platform":5}',
           'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
@@ -2181,7 +2190,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/relation/modify',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         queryParameters: {
           'statistics': '{"appId":100,"platform":5}',
           'x-bili-device-req-json': '{"platform":"web","device":"pc","spmid":"333.1387"}',
@@ -2352,7 +2361,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/space/setting',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'field': field.value,
           'value': value,
@@ -2382,7 +2391,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/space/index/order/modify',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'index_order': moduleSorting.join(','),
           'csrf': account.biliJct,
@@ -2405,7 +2414,7 @@ class BiliUserWebApiService {
       final account = await _getLoginedAccount();
       final resp = await client.post(
         'https://api.bilibili.com/x/space/acc/tags/set',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'tags': tags == null ? '' : tags.join(','),
           'csrf': account.biliJct,

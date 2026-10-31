@@ -18,7 +18,7 @@ class LeaderboardViewModel extends ChangeNotifier {
     switch (result) {
       case Ok(:final value):
         data = value;
-      case Error():
+      case Err():
     }
 
     notifyListeners();

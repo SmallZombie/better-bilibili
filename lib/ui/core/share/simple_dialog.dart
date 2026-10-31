@@ -7,7 +7,7 @@ extension SimpleDialog on BuildContext {
     required String content,
     Color? confirmColor,
     String? confirmText,
-    bool canDismissible = false,
+    bool canDismissible = true,
   }) async {
     final choice = await showDialog<bool>(
       context: this,

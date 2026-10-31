@@ -6,7 +6,7 @@ import 'package:better_bilibili/data/services/bilibili/model/get_user_anthologys
 import 'package:better_bilibili/domain/exceptions/bili_http_exception.dart';
 import 'package:better_bilibili/domain/exceptions/not_logged_in_exception.dart';
 import 'package:better_bilibili/domain/models/bilibili/account.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
@@ -32,7 +32,8 @@ class BiliArticleWebApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -74,7 +75,7 @@ class BiliArticleWebApiService {
     }
   }
 
-  Future<Result<ArticleDetail>> getDetail( String articleId) async {
+  Future<Result<ArticleDetail>> getDetail(String articleId) async {
     assert(articleId.isNotEmpty);
 
     final account = await getAccount();
@@ -118,7 +119,7 @@ class BiliArticleWebApiService {
 
       final resp = await client.post(
         'https://api.bilibili.com/x/article/like',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'id': articleId,
           'type': like ? 1 : 2,
@@ -160,7 +161,7 @@ class BiliArticleWebApiService {
 
       final resp = await client.post(
         favorite ? 'https://api.bilibili.com/x/article/favorites/add' : 'https://api.bilibili.com/x/article/favorites/del',
-        options: Options(contentType: 'application/x-www-form-urlencoded'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         data: {
           'csrf': account.biliJct,
           'id': articleId,
@@ -176,7 +177,7 @@ class BiliArticleWebApiService {
   }
 
   /// 获取文集详细信息及文章列表，此接口可一次性返回全部文章
-  Future<Result<ArticleCollection>> getCollectionDetail( String collectionId) async {
+  Future<Result<ArticleCollection>> getCollectionDetail(String collectionId) async {
     assert(collectionId.isNotEmpty);
 
     final account = await getAccount();

@@ -164,7 +164,7 @@ class UserRepositoryLogin implements UserRepository {
           }
         }
         return Result.ok(isExist);
-      case Error():
+      case Err():
         return Result.error(result.error);
     }
   }
@@ -197,17 +197,17 @@ class UserRepositoryLogin implements UserRepository {
   }
 
   @override
-  Future<Result<void>> addVideoToWatchLater( String videoId) async {
-    return userApiService.addVideoToWatchLater( videoId);
+  Future<Result<void>> addVideoToWatchLater(String videoId) async {
+    return userApiService.addVideoToWatchLater(videoId);
   }
 
   @override
-  Future<Result<void>> deleteVideosFromWatchLater( List<String> ids) async {
+  Future<Result<void>> deleteVideosFromWatchLater(List<String> ids) async {
     return userApiService.deleteVideosFromWatchLater(ids);
   }
 
   @override
-Future<Result<GetFavoritesResponse>> getFavoritesList({
+  Future<Result<GetFavoritesResponse>> getFavoritesList({
     required String userId,
     int pn = 1,
     int ps = 20,
@@ -224,47 +224,47 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<Favorites>> createFavorites({
+  Future<Result<FavoriteFolder>> createFavorites({
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   }) async {
     return userApiService.createFavorites(
       name: name,
       description: description,
       isPrivate: isPrivate,
-      coverUrl: coverUrl,
+      cover: cover,
     );
   }
 
   @override
-  Future<Result<void>> modifyFavorites({
+  Future<Result<void>> modifyFavoriteFolder({
     required String favoritesId,
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   }) async {
-    return userApiService.modifyFavorites(
+    return userApiService.modifyFavoriteFolder(
       favoritesId: favoritesId,
       name: name,
       description: description,
       isPrivate: isPrivate,
-      coverUrl: coverUrl,
+      cover: cover,
     );
   }
 
   @override
-  Future<Result<void>> deleteFavorites( String favoritesId) async {
-    return userApiService.deleteFavorites( favoritesId);
+  Future<Result<void>> deleteFavorites(String favoritesId) async {
+    return userApiService.deleteFavorites(favoritesId);
   }
 
   @override
-  Future<Result<void>> reorderFavorites({
+  Future<Result<void>> reorderFavoriteFolder({
     required List<String> ids,
   }) async {
-    return userApiService.reorderFavorites(ids: ids);
+    return userApiService.reorderFavoriteFolder(ids: ids);
   }
 
   @override
@@ -321,8 +321,8 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> clearInvalidInFavorites( String favoritesId) async {
-    return userApiService.clearInvalidInFavorites( favoritesId);
+  Future<Result<void>> clearInvalidInFavorites(String favoritesId) async {
+    return userApiService.clearInvalidInFavorites(favoritesId);
   }
 
   @override
@@ -347,8 +347,8 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> deleteFavoritePost( String postId) async {
-    return userApiService.deleteFavoritePost( postId);
+  Future<Result<void>> deleteFavoritePost(String postId) async {
+    return userApiService.deleteFavoritePost(postId);
   }
 
   @override
@@ -361,12 +361,12 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> unsubscribeFavorites( String favoritesId) async {
+  Future<Result<void>> unsubscribeFavorites(String favoritesId) async {
     return userApiService.unsubscribeFavorites(favoritesId);
   }
 
   @override
-  Future<Result<void>> unsubscribePlaylist( String playlistId) async {
+  Future<Result<void>> unsubscribePlaylist(String playlistId) async {
     return userApiService.unsubscribePlaylist(playlistId);
   }
 
@@ -390,7 +390,7 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
 
   @override
   Future<Result<void>> unsubscribeSeries(String seriesId) async {
-    return userApiService.unsubscribeSeries( seriesId);
+    return userApiService.unsubscribeSeries(seriesId);
   }
 
   @override
@@ -412,8 +412,8 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> unsubscribeMovie( String movieId) async {
-    return userApiService.unsubscribeMovie( movieId);
+  Future<Result<void>> unsubscribeMovie(String movieId) async {
+    return userApiService.unsubscribeMovie(movieId);
   }
 
   @override
@@ -427,12 +427,12 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> unsubscribeManga( List<String> mangaIds) async {
+  Future<Result<void>> unsubscribeManga(List<String> mangaIds) async {
     return userApiService.unsubscribeManga(mangaIds);
   }
 
   @override
-  Future<Result<VideoInteraction>> getVideoInteraction( String videoId) async {
+  Future<Result<VideoInteraction>> getVideoInteraction(String videoId) async {
     return userApiService.getVideoInteraction(videoId);
   }
 
@@ -491,12 +491,12 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<ArticleInteraction>> getArticleInteraction( String articleId) async {
+  Future<Result<ArticleInteraction>> getArticleInteraction(String articleId) async {
     return userApiService.getArticleInteraction(articleId);
   }
 
   @override
-  Future<Result<void>> reportArticleHistory( String articleId) async {
+  Future<Result<void>> reportArticleHistory(String articleId) async {
     return userApiService.reportArticleHistory(articleId);
   }
 
@@ -506,7 +506,7 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<UserGroup>> createUserGroup( String name) async {
+  Future<Result<UserGroup>> createUserGroup(String name) async {
     return userApiService.createUserGroup(name);
   }
 
@@ -553,8 +553,8 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<List<String>>> getGroupIdsWithUser( String userId) async {
-    return userApiService.getGroupIdsWithUser( userId);
+  Future<Result<List<String>>> getGroupIdsWithUser(String userId) async {
+    return userApiService.getGroupIdsWithUser(userId);
   }
 
   @override
@@ -571,8 +571,8 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> deleteUserGroup( String groupId) async {
-    return userApiService.deleteUserGroup( groupId);
+  Future<Result<void>> deleteUserGroup(String groupId) async {
+    return userApiService.deleteUserGroup(groupId);
   }
 
   @override
@@ -585,7 +585,7 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> deleteFans( String userId) async {
+  Future<Result<void>> deleteFans(String userId) async {
     return userApiService.deleteFans(userId);
   }
 
@@ -604,22 +604,22 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<GetUserStatsResponse>> getUserStats( String userId) async {
+  Future<Result<GetUserStatsResponse>> getUserStats(String userId) async {
     return userApiService.getUserStats(userId);
   }
 
   @override
-  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount( String userId) async {
+  Future<Result<GetUserTotalLikeAndViewCountResponse>> getUserTotalLikeAndViewCount(String userId) async {
     return userApiService.getUserTotalLikeAndViewCount(userId);
   }
 
   @override
-  Future<Result<List<PinnedVideo>>> getUserPinnedVideos( String userId) async {
+  Future<Result<List<PinnedVideo>>> getUserPinnedVideos(String userId) async {
     return userApiService.getUserPinnedVideos(userId);
   }
 
   @override
-  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings( String userId) async {
+  Future<Result<GetUserProfileSettingsResponse>> getUserProfileSettings(String userId) async {
     return userApiService.getUserProfileSettings(userId);
   }
 
@@ -632,7 +632,7 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<void>> modifyUserModuleSorting( List<int> moduleSorting) async {
+  Future<Result<void>> modifyUserModuleSorting(List<int> moduleSorting) async {
     return userApiService.modifyUserModuleSorting(moduleSorting);
   }
 
@@ -642,13 +642,13 @@ Future<Result<GetFavoritesResponse>> getFavoritesList({
   }
 
   @override
-  Future<Result<GetUserCountersResponse>> getUserCounters( String userId) async {
+  Future<Result<GetUserCountersResponse>> getUserCounters(String userId) async {
     return userApiService.getUserCounters(userId);
   }
 
   @override
-  Future<Result<GetUserRelationResponse>> getUserRelation( String userId) async {
-    return userApiService.getUserRelation( userId);
+  Future<Result<GetUserRelationResponse>> getUserRelation(String userId) async {
+    return userApiService.getUserRelation(userId);
   }
 
   @override

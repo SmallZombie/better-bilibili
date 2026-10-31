@@ -1,4 +1,5 @@
 import 'package:better_bilibili/data/repositories/bilibili/post_repository/post_repository.dart';
+import 'package:better_bilibili/data/services/bilibili/model/get_post_detail_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_post_list_response.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_user_posts_response.dart';
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
@@ -18,13 +19,18 @@ class PostRepositoryMock implements PostRepository {
   }
 
   @override
-  Future<Result<dynamic>> getDetail(String postId) {
+  Future<Result<PostDetail>> getDetail(String postId) {
     // TODO: implement getDetail
     throw UnimplementedError();
   }
 
   @override
-  Future<Result<GetPostListResponse>> getList({int pn = 1, String? offset, GetPostListTypeEnum type = GetPostListTypeEnum.all, String? userId}) {
+  Future<Result<GetPostListResponse>> getList({
+    int pn = 1,
+    String? offset,
+    GetPostListTypeEnum type = GetPostListTypeEnum.all,
+    String? userId,
+  }) {
     // TODO: implement getList
     throw UnimplementedError();
   }

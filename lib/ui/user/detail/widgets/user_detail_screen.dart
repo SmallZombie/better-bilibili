@@ -5,6 +5,7 @@ import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_
 import 'package:better_bilibili/ui/core/bilibili/user/follow_text_button/follow_text_button_view_model.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/image_wapper.dart';
+import 'package:better_bilibili/ui/core/share/responsive/max_width_viewport.dart';
 import 'package:better_bilibili/ui/core/theme/theme.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_anthology_view_model.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_article_view_model.dart';
@@ -24,8 +25,9 @@ import 'package:better_bilibili/ui/user/detail/widgets/user_detail_post_view.dar
 import 'package:better_bilibili/ui/user/detail/widgets/user_detail_shop_view.dart';
 import 'package:better_bilibili/ui/user/detail/widgets/user_detail_video_view.dart';
 import 'package:better_bilibili/utils/base_util.dart';
-import 'package:better_bilibili/utils/bili/bili_util.dart';
+import 'package:better_bilibili/utils/bilibili/bili_util.dart';
 import 'package:better_bilibili/utils/hex_color.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -81,20 +83,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
     return ListenableBuilder(
       listenable: widget.viewModel.loadData,
       builder: (context, child) {
-        if (widget.viewModel.loadData.running) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
         if (widget.viewModel.loadData.error) {
           return Scaffold(
             appBar: AppBar(),
             body: CenterErrorMessage(
-              errorMessage: widget.viewModel.loadData.result.toString(),
+              errorMessage: getErrorMessage(widget.viewModel.loadData.result!),
               onRetry: widget.viewModel.loadData.execute,
             ),
+          );
+        }
+        if (widget.viewModel.loadData.running) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -119,9 +120,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
                 expandedHeight: 450,
                 floating: false,
                 pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: _buildHeader(),
-                ),
+                flexibleSpace: FlexibleSpaceBar(background: _buildHeader()),
                 actions: [
                   IconButton(
                     onPressed: () {},
@@ -147,6 +146,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
                   TabBar(
                     controller: _tabController,
                     tabs: tabs.map((e) => Tab(text: e)).toList(),
+                    dividerColor: Colors.transparent,
                   ),
                 ),
                 pinned: true,
@@ -247,219 +247,229 @@ class _UserDetailScreenState extends State<UserDetailScreen> with SingleTickerPr
         Expanded(
           child: ImageWapper(
             image: NetworkImage(userInfo.banner),
-            fit: BoxFit.cover,
-            width: double.infinity,
+            fit: .cover,
+            width: .infinity,
           ),
         ),
-        Padding(
-          padding: const .symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            crossAxisAlignment: .start,
-            spacing: 8.0,
-            children: [
-              Transform.translate(
-                offset: Offset(0.0, _avatarSize / 2 * -1),
-                child: BiliUserAvatar(
-                  url: userInfo.avatar,
-                  frameImage: userInfo.avatarFrame == null ? null : NetworkImage(userInfo.avatarFrame!.url),
-                  size: _avatarSize,
-                  suffix: '@128w_128h_1c_1s',
+        MaxWidthViewport(
+          maxWidth: 2100,
+          child: Padding(
+            padding: const .symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              crossAxisAlignment: .start,
+              spacing: 8.0,
+              children: [
+                Transform.translate(
+                  offset: Offset(0.0, _avatarSize / 2 * -1),
+                  child: BiliUserAvatar(
+                    url: userInfo.avatar,
+                    frameImage: userInfo.avatarFrame == null ? null : NetworkImage(userInfo.avatarFrame!.url),
+                    size: _avatarSize,
+                    suffix: '@256w_256h_1c_1s',
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: .start,
-                  spacing: 8.0,
-                  children: [
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      crossAxisAlignment: .center,
-                      children: [
-                        SelectableText(
-                          userInfo.nickname,
-                          maxLines: 1,
-                          style: TextStyle(fontSize: 24.0, overflow: .ellipsis),
-                        ),
-                        SvgPicture.asset(
-                          getLevelIconPath(userInfo.level.level),
-                          height: 20,
-                        ),
-                        if (userInfo.vip != null)
-                          Image.network(
-                            userInfo.vip!.labelImage,
-                            height: 22,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: .start,
+                    spacing: 8.0,
+                    children: [
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        crossAxisAlignment: .center,
+                        children: [
+                          SelectableText(
+                            userInfo.nickname,
+                            maxLines: 1,
+                            style: TextStyle(fontSize: 24.0, overflow: .ellipsis),
                           ),
-                        if (userInfo.achievement != null)
-                          Tooltip(
-                            message: '${userInfo.achievement!.name}: ${userInfo.achievement!.description}',
-                            child: Image.network(
-                              userInfo.achievement!.icon,
-                              height: 26.0,
-                            ),
+                          SvgPicture.asset(
+                            getLevelIconPath(userInfo.level.level),
+                            height: 20,
                           ),
-                        if (userInfo.fanBadge != null)
-                          Container(
-                            padding: const .symmetric(horizontal: 8.0, vertical: 2.0),
-                            decoration: BoxDecoration(
-                              color: HexColor(userInfo.fanBadge!.backgroundColorStart),
-                              borderRadius: kInfiniteBorderRadius,
-                              border: .all(color: HexColor(userInfo.fanBadge!.borderColor)),
+                          if (userInfo.vip != null)
+                            Image.network(
+                              userInfo.vip!.labelImage,
+                              height: 22,
                             ),
-                            child: Row(
-                              mainAxisSize: .min,
-                              spacing: 2.0,
-                              children: [
-                                Text(
-                                  userInfo.fanBadge!.name,
-                                  style: TextStyle(
-                                    color: HexColor(userInfo.fanBadge!.nameColor),
-                                    fontSize: 10,
+                          if (userInfo.achievement != null)
+                            Tooltip(
+                              message: '${userInfo.achievement!.name}: ${userInfo.achievement!.description}',
+                              child: Image.network(
+                                userInfo.achievement!.icon,
+                                height: 26.0,
+                              ),
+                            ),
+                          if (userInfo.fanBadge != null)
+                            Container(
+                              padding: const .symmetric(horizontal: 8.0, vertical: 2.0),
+                              decoration: BoxDecoration(
+                                color: HexColor(userInfo.fanBadge!.backgroundColorStart),
+                                borderRadius: kInfiniteBorderRadius,
+                                border: .all(color: HexColor(userInfo.fanBadge!.borderColor)),
+                              ),
+                              child: Row(
+                                mainAxisSize: .min,
+                                spacing: 2.0,
+                                children: [
+                                  Text(
+                                    userInfo.fanBadge!.name,
+                                    style: TextStyle(
+                                      color: HexColor(userInfo.fanBadge!.nameColor),
+                                      fontSize: 10,
+                                    ),
                                   ),
+                                  Text(
+                                    userInfo.fanBadge!.level.toString(),
+                                    style: TextStyle(
+                                      fontSize: 10.0,
+                                      fontWeight: .bold,
+                                      color: HexColor(userInfo.fanBadge!.levelColor),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          widget.viewModel.isCurrentAccount
+                              ? TextButton(onPressed: () {}, child: Text('编辑资料'))
+                              : ChangeNotifierProvider(
+                                  create: (context) => FollowTextButtonViewModel(
+                                    userRepository: context.read(),
+                                    userId: userInfo.id,
+                                    initState: userRelation.imFans,
+                                  ),
+                                  builder: (context, _) => FollowTextButton(viewModel: context.read()),
+                                ),
+                        ],
+                      ),
+                      if (userInfo.description != null)
+                        SelectableText(
+                          userInfo.description!,
+                          style: TextStyle(color: colorScheme.outline),
+                        ),
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: [
+                          if (userInfo.verified != null)
+                            Row(
+                              mainAxisSize: .min,
+                              spacing: 4.0,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/images/verified_icon.svg',
+                                  height: 20.0,
                                 ),
                                 Text(
-                                  userInfo.fanBadge!.level.toString(),
-                                  style: TextStyle(
-                                    fontSize: 10.0,
-                                    fontWeight: .bold,
-                                    color: HexColor(userInfo.fanBadge!.levelColor),
-                                  ),
+                                  userInfo.verified!,
+                                  style: TextStyle(color: colorScheme.outline),
                                 ),
                               ],
                             ),
-                          ),
-                        widget.viewModel.isCurrentAccount
-                            ? TextButton(onPressed: () {}, child: Text('编辑资料'))
-                            : ChangeNotifierProvider(
-                                create: (context) => FollowTextButtonViewModel(
-                                  userRepository: context.read(),
-                                  userId: userInfo.id,
-                                  initState: userRelation.imFans,
+                          if (userInfo.organizationVerified != null)
+                            Row(
+                              mainAxisSize: .min,
+                              spacing: 4.0,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/images/organization_verified_icon.svg',
+                                  height: 20.0,
                                 ),
-                                builder: (context, _) => FollowTextButton(viewModel: context.read()),
-                              ),
-                      ],
-                    ),
-                    if (userInfo.description != null)
-                      SelectableText(
-                        userInfo.description!,
-                        style: TextStyle(color: colorScheme.outline),
-                      ),
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      children: [
-                        if (userInfo.verified != null)
-                          Row(
-                            mainAxisSize: .min,
-                            spacing: 4.0,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/images/verified_icon.svg',
-                                height: 20.0,
-                              ),
-                              Text(
-                                userInfo.verified!,
-                                style: TextStyle(color: colorScheme.outline),
-                              ),
-                            ],
-                          ),
-                        if (userInfo.organizationVerified != null)
-                          Row(
-                            mainAxisSize: .min,
-                            spacing: 4.0,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/images/organization_verified_icon.svg',
-                                height: 20.0,
-                              ),
-                              Text(
-                                userInfo.organizationVerified!,
-                                style: TextStyle(color: colorScheme.outline),
-                              ),
-                            ],
-                          ),
-                        if (userInfo.gender != .unknown)
-                          Row(
-                            mainAxisSize: .min,
-                            spacing: 2.0,
-                            children: [
-                              Icon(
-                                Icons.person_outline,
-                                size: 20.0,
-                                color: colorScheme.outline,
-                              ),
-                              Text(
-                                switch (userInfo.gender) {
-                                  .male => '男',
-                                  .female => '女',
-                                  _ => '',
-                                },
-                                style: TextStyle(color: colorScheme.outline),
-                              ),
-                            ],
-                          ),
-                        if (userInfo.birthDate != null)
-                          Row(
-                            mainAxisSize: .min,
-                            spacing: 2.0,
-                            children: [
-                              Icon(
-                                Icons.cake_outlined,
-                                size: 18.0,
-                                color: colorScheme.outline,
-                              ),
-                              Text(
-                                userInfo.birthDate!,
-                                style: TextStyle(color: colorScheme.outline),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    if (userInfo.tags.isNotEmpty)
-                      Wrap(
-                        spacing: 4.0,
-                        runSpacing: 4.0,
-                        children: userInfo.tags
-                            .map(
-                              (v) => Chip(
-                                label: Text(
-                                  v,
-                                  style: TextStyle(fontSize: 12.0),
+                                Text(
+                                  userInfo.organizationVerified!,
+                                  style: TextStyle(color: colorScheme.outline),
                                 ),
-                                shape: const StadiumBorder(),
-                                padding: const .symmetric(horizontal: 4.0),
-                              ),
-                            )
-                            .toList(),
+                              ],
+                            ),
+                          if (userInfo.gender != .unknown)
+                            Row(
+                              mainAxisSize: .min,
+                              spacing: 2.0,
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  size: 20.0,
+                                  color: colorScheme.outline,
+                                ),
+                                Text(
+                                  switch (userInfo.gender) {
+                                    .male => '男',
+                                    .female => '女',
+                                    _ => '',
+                                  },
+                                  style: TextStyle(color: colorScheme.outline),
+                                ),
+                              ],
+                            ),
+                          if (userInfo.birthDate != null)
+                            Row(
+                              mainAxisSize: .min,
+                              spacing: 2.0,
+                              children: [
+                                Icon(
+                                  Icons.cake_outlined,
+                                  size: 18.0,
+                                  color: colorScheme.outline,
+                                ),
+                                Text(
+                                  userInfo.birthDate!,
+                                  style: TextStyle(color: colorScheme.outline),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
-                    Row(
-                      children: [
-                        _StatChip(
-                          label: '关注',
-                          value: formatCountToHumanReadable(userStats.following),
-                          onTap: () => context.push(Routes.buildUserFollowings(userInfo.id)),
+                      if (userInfo.tags.isNotEmpty)
+                        Wrap(
+                          spacing: 4.0,
+                          runSpacing: 4.0,
+                          children: userInfo.tags
+                              .map(
+                                (v) => Chip(
+                                  label: Text(
+                                    v,
+                                    style: TextStyle(fontSize: 12.0),
+                                  ),
+                                  shape: const StadiumBorder(),
+                                  padding: const .symmetric(horizontal: 4.0),
+                                ),
+                              )
+                              .toList(),
                         ),
-                        _StatChip(
-                          label: '粉丝',
-                          value: formatCountToHumanReadable(userStats.fans),
-                          onTap: () => context.push(Routes.buildUserFans(userInfo.id)),
-                        ),
-                        _StatChip(
-                          label: '总播放',
-                          value: formatCountToHumanReadable(userTotalLikeAndViewCount.viewCount),
-                        ),
-                        _StatChip(
-                          label: '总获赞',
-                          value: formatCountToHumanReadable(userTotalLikeAndViewCount.likeCount),
-                        ),
-                      ],
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisSize: .min,
+                  children: [
+                    _StatChip(
+                      label: '关注',
+                      value: formatCountToHumanReadable(userStats.following),
+                      onTap: () {
+                        if (widget.viewModel.isCurrentAccount) {
+                          context.push(Routes.followings);
+                        } else {
+                          context.push(Routes.buildUserFollowings(userInfo.id));
+                        }
+                      },
+                    ),
+                    _StatChip(
+                      label: '粉丝',
+                      value: formatCountToHumanReadable(userStats.fans),
+                      onTap: () => context.push(Routes.buildUserFans(userInfo.id)),
+                    ),
+                    _StatChip(
+                      label: '总播放',
+                      value: formatCountToHumanReadable(userTotalLikeAndViewCount.viewCount),
+                    ),
+                    _StatChip(
+                      label: '总获赞',
+                      value: formatCountToHumanReadable(userTotalLikeAndViewCount.likeCount),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -515,16 +525,22 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _TabBarHeaderDelegate(this.tabBar);
 
   @override
-  double get minExtent => tabBar.preferredSize.height;
+  double get minExtent => tabBar.preferredSize.height + 1;
 
   @override
-  double get maxExtent => tabBar.preferredSize.height;
+  double get maxExtent => tabBar.preferredSize.height + 1;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: tabBar,
+      child: Column(
+        mainAxisSize: .min,
+        children: [
+          MaxWidthViewport(maxWidth: 2100, child: tabBar),
+          Divider(height: 1),
+        ],
+      ),
     );
   }
 

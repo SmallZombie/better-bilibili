@@ -74,13 +74,28 @@ class TimelineSegmentController extends ChangeNotifier {
 
     _segments.sort((a, b) => a.start.compareTo(b.start));
 
-    for (final segment in _segments) {
+    for (int i = 0; i < _segments.length; i++) {
+      TimelineSegment segment = _segments[i];
+
       assert(segment.type != .mark || segment.end != null);
       assert(segment.end == null || segment.end! > segment.start);
 
-      if (segment.start < .zero || (segment.end != null && segment.end! > duration)) {
-        _log.w('Mark discarded because it exceeded the duration. mark=$segment, duration=$duration');
+      if (segment.start > duration || (segment.end ?? .zero) < .zero) {
+        _log.w('Invalid chapter $segment');
         continue;
+      }
+
+      if (segment.start < .zero) {
+        segment = segment.copyWith(start: .zero);
+        _log.w('Invalid start value, corrected to 0. chapter=${_segments[i]}');
+      }
+      if (segment.end != null && segment.end! > duration) {
+        segment = segment.copyWith(end: duration);
+        _log.w('Invalid end value, corrected to $duration. chapter=${_segments[i]}');
+      }
+
+      if (segment != _segments[i]) {
+        _segments[i] = segment;
       }
 
       switch (segment.type) {

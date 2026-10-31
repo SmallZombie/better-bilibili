@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/bilibili/video/video_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
-import 'package:better_bilibili/ui/core/share/sliver_grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/sliver_card_layout_builder.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_video_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -118,7 +118,7 @@ class _VideoGridSliver extends StatelessWidget {
           );
         }
 
-        return SliverGridLayoutBuilder(
+        return SliverCardLayoutBuilder(
           minColumns: 1,
           maxColumns: 5,
           minItemWidth: 280,

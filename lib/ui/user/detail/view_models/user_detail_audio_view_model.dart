@@ -12,17 +12,14 @@ const _orderValues = [
 ];
 
 class UserDetailAudioViewModel extends SafeChangeNotifier {
-  final AudioRepository _audioRepository;
+  final AudioRepository audioRepository;
 
   final String userId;
 
-  UserDetailAudioViewModel({
-    required AudioRepository audioRepository,
-    required this.userId,
-  }) : _audioRepository = audioRepository {
-    loadData = CancellableCommand0(
+  UserDetailAudioViewModel({required this.audioRepository, required this.userId}) {
+    loadData = Command0(
       _loadData,
-      onSuccess: (resp) => loadDataSuccess(resp),
+      onSuccess: loadDataSuccess,
       onCancel: () {},
     )..execute();
   }
@@ -38,7 +35,7 @@ class UserDetailAudioViewModel extends SafeChangeNotifier {
     reload();
   }
 
-  late final CancellableCommand0 loadData;
+  late final Command0<GetUserAudiosResponse> loadData;
 
   int _pn = 1;
   int get pn => _pn;
@@ -55,8 +52,8 @@ class UserDetailAudioViewModel extends SafeChangeNotifier {
   final List<GetUserAudiosItem> _audios = [];
   List<GetUserAudiosItem> get audios => List.unmodifiable(_audios);
 
-  Future<Result<void>> _loadData() async {
-    final result = await _audioRepository.getUserAudios(
+  Future<Result<GetUserAudiosResponse>> _loadData() async {
+    final result = await audioRepository.getUserAudios(
       userId: userId,
       order: _orderValues[_selectedOrderIndex],
       pn: _pn,

@@ -96,24 +96,24 @@ abstract interface class UserRepository {
     String? videoId,
   });
 
-  Future<Result<Favorites>> createFavorites({
+  Future<Result<FavoriteFolder>> createFavorites({
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   });
 
-  Future<Result<void>> modifyFavorites({
+  Future<Result<void>> modifyFavoriteFolder({
     required String favoritesId,
     required String name,
     String? description,
     bool isPrivate = false,
-    String? coverUrl,
+    String? cover,
   });
 
   Future<Result<void>> deleteFavorites(String favoritesId);
 
-  Future<Result<void>> reorderFavorites({
+  Future<Result<void>> reorderFavoriteFolder({
     required List<String> ids,
   });
 

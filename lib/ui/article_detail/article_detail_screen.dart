@@ -2,7 +2,7 @@ import 'package:better_bilibili/routing/routes.dart';
 import 'package:better_bilibili/ui/article_detail/article_detail_view_model.dart';
 import 'package:better_bilibili/ui/core/bilibili/bili_image_wapper.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/command_builder.dart';
+import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,7 +34,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   }
 
   void _onResult() {
-    if (viewModel.loadData.completed) {
+    if (viewModel.loadData.success) {
       context.replace(
         Routes.buildPostDetail(
           viewModel.articleDetail!.postId,
@@ -48,26 +48,33 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: CommandBuilder(
-        command: viewModel.loadData,
-        loadingBuilder: (context) {
-          if (widget.cover == null) {
-            return const Center(child: CircularProgressIndicator());
-          } else {
-            return Padding(
-              padding: const .all(16.0),
-              child: BiliImageWapper(
-                height: 400.0,
-                url: widget.cover!,
-                aspectRatio: 16 / 9,
-                borderRadius: .circular(16.0),
-              ),
+      body: ListenableBuilder(
+        listenable: viewModel.loadData,
+        builder: (context, child) {
+          if (viewModel.loadData.error) {
+            return CenterErrorMessage(
+              errorMessage: getErrorMessage(viewModel.loadData.result!),
+              onRetry: viewModel.loadData.execute,
             );
           }
-        },
-        successBuilder: (context, value) => SizedBox.shrink(),
-        errorBuilder: (context, error) {
-          return CenterErrorMessage(errorMessage: error, onRetry: viewModel.loadData.execute);
+
+          if (viewModel.loadData.running) {
+            if (widget.cover == null) {
+              return const Center(child: CircularProgressIndicator());
+            } else {
+              return Padding(
+                padding: const .all(16.0),
+                child: BiliImageWapper(
+                  height: 400.0,
+                  url: widget.cover!,
+                  aspectRatio: 16 / 9,
+                  borderRadius: .circular(16.0),
+                ),
+              );
+            }
+          }
+
+          return const SizedBox.shrink();
         },
       ),
     );

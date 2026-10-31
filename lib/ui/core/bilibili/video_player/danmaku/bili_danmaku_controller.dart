@@ -173,7 +173,7 @@ class BiliDanmakuController extends DanmakuController {
           targetChunk.errorCount = 0;
           super.load(value);
           _log.i('chunk $index loaded, length = ${value.length}');
-        case Error():
+        case Err():
           targetChunk.errorCount++;
           targetChunk.nextRetryAt = DateTime.now().add(_gRetryTimeStep * targetChunk.errorCount);
       }
@@ -199,8 +199,10 @@ class BiliDanmakuController extends DanmakuController {
   }
 
   void _onRate(double event) {
+    final videoRate = controller.state.rate;
+    super.setPlaybackRate(videoRate);
+
     if (config.syncPlaybackRate.value) {
-      final videoRate = controller.state.rate;
       if (videoRate == 1) {
         return super.setScrollSpeed(config.scrollSpeed.value);
       }

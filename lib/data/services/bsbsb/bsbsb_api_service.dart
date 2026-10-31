@@ -6,7 +6,7 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:dio/dio.dart';
 
 class BsbsbApiService {
-  final Dio Function() getClient;
+  final Future<Dio> Function() getClient;
   final Future<String> Function() getPrivateId;
 
   const BsbsbApiService({required this.getClient, required this.getPrivateId});
@@ -21,7 +21,8 @@ class BsbsbApiService {
     } else if (error is Exception) {
       return Result.error(error);
     } else if (error is Error) {
-      return Result.error(error.error);
+      assert(false, 'Something went wrong');
+      return Result.error(Exception(error.toString()));
     } else {
       assert(false, 'What did you throw?');
       return Result.error(Exception('Unknown error'));
@@ -29,7 +30,7 @@ class BsbsbApiService {
   }
 
   Future<Result<UserInfo>> getUserInfo(String publicUserId) async {
-    final client = getClient();
+    final client = await getClient();
 
     try {
       final resp = await client.get(
@@ -47,7 +48,7 @@ class BsbsbApiService {
   }
 
   Future<Result<List<Video>>> getSegments(String bvidHashPrefix) async {
-    final client = getClient();
+    final client = await getClient();
 
     try {
       final resp = await client.get('/skipSegments/$bvidHashPrefix');
@@ -58,7 +59,7 @@ class BsbsbApiService {
   }
 
   Future<Result<void>> modifyUsername(String username) async {
-    final client = getClient();
+    final client = await getClient();
     final privateId = await getPrivateId();
 
     try {
@@ -81,7 +82,7 @@ class BsbsbApiService {
     int ps = 20,
   }) async {
     assert(ps > 0 && ps <= 100);
-    final client = getClient();
+    final client = await getClient();
 
     try {
       final resp = await client.get('https://bsbsb.top/stats/api/top-users?sortType=${order.value}&category=${type.value}');

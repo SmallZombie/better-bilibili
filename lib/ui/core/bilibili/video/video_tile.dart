@@ -64,8 +64,8 @@ class VideoTile extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           decoration: isActive
               ? BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8.0),
+                  color: ListTileTheme.of(context).selectedTileColor,
+                  borderRadius: .circular(8.0),
                 )
               : null,
           child: IntrinsicHeight(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:better_bilibili/data/repositories/bilibili/search_repository/search_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
 import 'package:better_bilibili/data/services/bilibili/model/get_trending_list_response.dart';
@@ -125,14 +127,13 @@ enum SearchTypeEnum {
 class SearchViewModel extends SafeChangeNotifier {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'SearchViewModel'));
 
-  final SearchRepository _searchRepository;
-  final UserRepository _userRepository;
+  final SearchRepository searchRepository;
+  final UserRepository userRepository;
 
   SearchViewModel({
-    required SearchRepository searchRepository,
-    required UserRepository userRepository,
-  }) : _searchRepository = searchRepository,
-       _userRepository = userRepository {
+    required this.searchRepository,
+    required this.userRepository,
+  }) {
     getSearchHistory = Command0(_getSearchHistory)..execute();
     getTrendingList = Command0(_getTrendingList)..execute();
     search = Command0(_search);
@@ -144,11 +145,11 @@ class SearchViewModel extends SafeChangeNotifier {
   List<String> get searchHistory => List.unmodifiable(_searchHistory);
 
   Future<Result<void>> _getSearchHistory() async {
-    final result = await _userRepository.getSearchHistory();
+    final result = await userRepository.getSearchHistory();
     switch (result) {
       case Ok(:final value):
         _searchHistory.addAll(value);
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -161,11 +162,11 @@ class SearchViewModel extends SafeChangeNotifier {
   List<Trending> get trendingList => List.unmodifiable(_trendingList);
 
   Future<Result<void>> _getTrendingList() async {
-    final result = await _searchRepository.getTrendingList();
+    final result = await searchRepository.getTrendingList();
     switch (result) {
       case Ok(:final value):
         _trendingList.addAll(value);
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -178,14 +179,14 @@ class SearchViewModel extends SafeChangeNotifier {
 
   Future<void> getSuggestions() async {
     final id = ++latestSuggestionsId;
-    final result = await _searchRepository.getSuggestList( keyword);
+    final result = await searchRepository.getSuggestList(keyword);
 
     if (id != latestSuggestionsId) return;
 
     switch (result) {
       case Ok(:final value):
         _suggestionList = value;
-      case Error():
+      case Err():
     }
 
     notifyListeners();
@@ -278,22 +279,22 @@ class SearchViewModel extends SafeChangeNotifier {
 
   Future<Result<void>> _search() async {
     _searchHistory.add(_keyword);
-    _userRepository.addSearchHistory(_keyword);
+    unawaited(userRepository.addSearchHistory(_keyword));
     _latestSearchKeyword = _keyword;
     notifyListeners();
 
     final type = typeFilter.values[_selectedIndexs[typeFilter] ?? 0].value;
     if (type == .all) {
-      final result = await _searchRepository.getSearchResult(pn: _pn, keyword: _keyword);
+      final result = await searchRepository.getSearchResult(pn: _pn, keyword: _keyword);
       switch (result) {
         case Ok(:final value):
           _searchResponse = value;
-        case Error(:final error):
+        case Err(:final error):
           return Result.error(error);
       }
     } else {
       final releaseTime = _resolveReleaseTimeRange();
-      final result = await _searchRepository.getSearchResultWithFilter(
+      final result = await searchRepository.getSearchResultWithFilter(
         pn: _pn,
         keyword: _keyword,
         type: type.apiType!,
@@ -306,7 +307,7 @@ class SearchViewModel extends SafeChangeNotifier {
       switch (result) {
         case Ok(:final value):
           _searchResponseWithFilter = value;
-        case Error(:final error):
+        case Err(:final error):
           return Result.error(error);
       }
     }
@@ -354,7 +355,7 @@ class SearchViewModel extends SafeChangeNotifier {
 
   void clearSearchHistory() {
     _searchHistory.clear();
-    _userRepository.clearSearchHistory();
+    userRepository.clearSearchHistory();
     notifyListeners();
   }
 
@@ -371,7 +372,7 @@ class SearchViewModel extends SafeChangeNotifier {
 
   void deleteSearchHistory(String keyword) {
     _searchHistory.removeWhere((v) => v == keyword);
-    _userRepository.deleteSearchHistory(keyword);
+    userRepository.deleteSearchHistory(keyword);
     notifyListeners();
   }
 

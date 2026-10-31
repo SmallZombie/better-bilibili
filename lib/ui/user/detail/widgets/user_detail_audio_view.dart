@@ -1,7 +1,7 @@
 import 'package:better_bilibili/ui/core/bilibili/audio/audio_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
 import 'package:better_bilibili/ui/core/share/paginator.dart';
-import 'package:better_bilibili/ui/core/share/sliver_grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/sliver_card_layout_builder.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_audio_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -100,7 +100,7 @@ class _AudioGridSliver extends StatelessWidget {
           );
         }
 
-        return SliverGridLayoutBuilder(
+        return SliverCardLayoutBuilder(
           minColumns: 1,
           maxColumns: 7,
           minItemWidth: 200,

@@ -1,7 +1,7 @@
 import 'package:better_bilibili/domain/models/bilibili/user.dart';
 import 'package:better_bilibili/ui/core/bilibili/post/post_card.dart';
 import 'package:better_bilibili/ui/core/share/center_error_message.dart';
-import 'package:better_bilibili/ui/core/share/grid_layout_builder.dart';
+import 'package:better_bilibili/ui/core/share/card_layout_builder.dart';
 import 'package:better_bilibili/ui/user/detail/view_models/user_detail_article_view_model.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -56,16 +56,11 @@ class _UserDetailArticleViewState extends State<UserDetailArticleView> with Auto
 
           return NotificationListener<ScrollNotification>(
             onNotification: _onScroll,
-            child: GridLayoutBuilder(
-              minColumns: 1,
-              maxColumns: 5,
-              minItemWidth: 280,
-              imageAspectRatio: 16 / 9,
-              extraHeight: 100,
-              horizontalPadding: 16,
-              builder: (context, constraints, gridDelegate) {
+            child: CardLayoutBuilder(
+              padding: const .symmetric(horizontal: 16.0, vertical: 4.0),
+              builder: (context, constraints, gridDelegate, padding) {
                 return GridView.builder(
-                  padding: const .symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding: padding,
                   gridDelegate: gridDelegate,
                   itemCount: viewModel.articles.length,
                   itemBuilder: (context, index) {

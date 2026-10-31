@@ -11,10 +11,14 @@ import 'package:better_bilibili/ui/bsbsb/settings/bsbsb_settings_view_model.dart
 import 'package:better_bilibili/ui/chat/chat_shell.dart';
 import 'package:better_bilibili/ui/eagle/settings/eagle_settings_screen.dart';
 import 'package:better_bilibili/ui/echo_cave/echo_cave_screen.dart';
+import 'package:better_bilibili/ui/favorite_folder_reorder/favorite_folder_reorder_screen.dart';
+import 'package:better_bilibili/ui/favorite_folder_reorder/favorite_folder_reorder_view_model.dart';
 import 'package:better_bilibili/ui/favorites/widgets/favorites_screen.dart';
-import 'package:better_bilibili/ui/favorites/view_models/favorites_tab_view_model.dart';
-import 'package:better_bilibili/ui/favorites_detail/favorites_detail_screen.dart';
-import 'package:better_bilibili/ui/favorites_detail/favorites_detail_view_model.dart';
+import 'package:better_bilibili/ui/favorites/view_models/favorite_folder_tab_view_model.dart';
+import 'package:better_bilibili/ui/favorite_folder_detail/favorite_folder_detail_screen.dart';
+import 'package:better_bilibili/ui/favorite_folder_detail/favorite_folder_detail_view_model.dart';
+import 'package:better_bilibili/ui/followings/followings_screen.dart';
+import 'package:better_bilibili/ui/followings/followings_view_model.dart';
 import 'package:better_bilibili/ui/home/view_models/article_home_view_model.dart';
 import 'package:better_bilibili/ui/home/view_models/me_view_model.dart';
 import 'package:better_bilibili/ui/home/view_models/post_view_model.dart';
@@ -29,6 +33,8 @@ import 'package:better_bilibili/ui/post_detail/view_models/post_detail_view_mode
 import 'package:better_bilibili/ui/settings/developer/developer_setting_screen.dart';
 import 'package:better_bilibili/ui/settings/developer/test_app_title_bar_screen.dart';
 import 'package:better_bilibili/ui/settings/general_settings_screen.dart';
+import 'package:better_bilibili/ui/user/mutual_follows/user_mutual_follows_screen.dart';
+import 'package:better_bilibili/ui/user/mutual_follows/user_mutual_follows_view_model.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_screen.dart';
 import 'package:better_bilibili/ui/user/recently_coined/recently_coined_view_model.dart';
 import 'package:better_bilibili/ui/user/recently_liked/recently_liked_screen.dart';
@@ -41,8 +47,8 @@ import 'package:better_bilibili/ui/settings/developer/test_users_screen.dart';
 import 'package:better_bilibili/ui/settings/developer/test_videos_screen.dart';
 import 'package:better_bilibili/ui/user/subscriptions/widgets/subscriptions_screen.dart';
 import 'package:better_bilibili/ui/search/search_screen.dart';
-import 'package:better_bilibili/ui/search_favorites/search_favorites_screen.dart';
-import 'package:better_bilibili/ui/search_favorites/search_favorites_view_model.dart';
+import 'package:better_bilibili/ui/search_in_favorite_folder/search_in_favorite_folder_screen.dart';
+import 'package:better_bilibili/ui/search_in_favorite_folder/search_in_favorite_folder_view_model.dart';
 import 'package:better_bilibili/ui/settings/account_manager/account_manager_screen.dart';
 import 'package:better_bilibili/ui/settings/account_manager/account_manager_view_model.dart';
 import 'package:better_bilibili/ui/settings/settings_screen.dart';
@@ -242,7 +248,7 @@ final GoRouter router = GoRouter(
                   authRepository: context.read(),
                   userRepository: context.read(),
                 ),
-                builder: (context, _) => const MeView(),
+                builder: (context, _) => MeView(viewModel: context.read()),
               ),
             ),
           ],
@@ -309,7 +315,7 @@ final GoRouter router = GoRouter(
       path: Routes.login,
       builder: (context, state) => ChangeNotifierProvider(
         create: (_) => LoginViewModel(authRepository: context.read()),
-        child: const LoginScreen(),
+        builder: (context, _) => LoginScreen(viewModel: context.read()),
       ),
     ),
     GoRoute(
@@ -329,6 +335,7 @@ final GoRouter router = GoRouter(
           mediaSessionController: context.read(),
           bsbsbRepository: context.read(),
           bsbsbConfig: context.read(),
+          appConfig: context.read(),
         ),
         builder: (context, child) => VideoDetailScreen(
           viewModel: context.read(),
@@ -342,10 +349,8 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.watchHistory,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => WatchHistoryViewModel(
-          userRepository: context.read(),
-        ),
-        child: const WatchHistoryScreen(),
+        create: (_) => WatchHistoryViewModel(userRepository: context.read()),
+        builder: (context, _) => WatchHistoryScreen(viewModel: context.read()),
       ),
     ),
     GoRoute(
@@ -360,30 +365,44 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.favorites,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => FavoritesTabViewModel(
+        create: (_) => FavoritesViewModel(
           userRepository: context.read(),
           authRepository: context.read(),
         ),
-        child: const FavoritesScreen(),
+        builder: (context, _) => FavoritesScreen(viewModel: context.read()),
       ),
     ),
     GoRoute(
-      path: Routes.searchFavorites,
+      path: Routes.favoriteFolderDetail,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => SearchFavoritesViewModel(
+        create: (_) => FavoriteFolderDetailViewModel(
+          favoriteFolderId: state.pathParameters['favoritesId']!,
+          userRepository: context.read(),
+        ),
+        builder: (context, _) => FavoriteFolderDetailScreen(viewModel: context.read()),
+      ),
+    ),
+    GoRoute(
+      path: Routes.searchInFavoriteFolder,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (_) => SearchInFavoriteFolderViewModel(
           userRepository: context.read(),
           authRepository: context.read(),
         ),
-        child: SearchFavoritesScreen(initFavoritesId: state.uri.queryParameters['favoritesId']),
+        builder: (context, _) => SearchInFavoriteFolderScreen(
+          viewModel: context.read(),
+          initialFavoriteFolderId: state.uri.queryParameters['favoritesId'],
+        ),
       ),
     ),
     GoRoute(
-      path: Routes.favoritesDetail,
+      path: Routes.favoriteFolderReorder,
       builder: (context, state) => ChangeNotifierProvider(
-        create: (_) => FavoritesDetailViewModel(
+        create: (_) => FavoriteFolderReorderViewModel(
           userRepository: context.read(),
+          authRepository: context.read(),
         ),
-        child: FavoritesDetailScreen(favoritesId: state.pathParameters['favoritesId']!),
+        builder: (context, _) => FavoriteFolderReorderScreen(viewModel: context.read()),
       ),
     ),
 
@@ -429,10 +448,20 @@ final GoRouter router = GoRouter(
         create: (context) => UserFollowingsViewModel(
           userRepository: context.read(),
           authRepository: context.read(),
-          userDialogViewModel: context.read(),
           userId: state.pathParameters['userId']!,
         ),
         builder: (context, _) => UserFollowingsScreen(viewModel: context.read()),
+      ),
+    ),
+    GoRoute(
+      path: Routes.userMutualFollowings.path,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => UserMutualFollowsViewModel(
+          userRepository: context.read(),
+          authRepository: context.read(),
+          userId: state.pathParameters['userId']!,
+        ),
+        builder: (context, _) => UserMutualFollowsScreen(viewModel: context.read()),
       ),
     ),
     GoRoute(
@@ -558,6 +587,17 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.eagleSettings,
       builder: (context, state) => EagleSettingsScreen(config: context.read()),
+    ),
+    GoRoute(
+      path: Routes.followings,
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => FollowingsViewModel(
+          userRepository: context.read(),
+          authRepository: context.read(),
+          userDialogViewModel: context.read(),
+        ),
+        builder: (context, _) => FollowingsScreen(viewModel: context.read()),
+      ),
     ),
   ],
 );

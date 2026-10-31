@@ -18,12 +18,12 @@ import 'package:better_bilibili/ui/core/app/app_title_bar.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/appearance/appearance_manager.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
-import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -40,7 +40,14 @@ void main() async {
   final configDir = await getApplicationSupportDirectory();
   await Hive.initFlutter(configDir.absolute.path);
 
-  final appConfig = AppConfig();
+  final packageInfo = await PackageInfo.fromPlatform();
+
+  final appConfig = AppConfig(
+    appName: packageInfo.appName,
+    appPackageName: packageInfo.packageName,
+    appVersion: packageInfo.version,
+    appBuildNumber: packageInfo.buildNumber,
+  );
   final accountConfig = AccountConfig();
   final playerConfig = PlayerConfig();
   final danmakuConfig = DanmakuConfig();
@@ -56,22 +63,16 @@ void main() async {
   ]);
 
   if (Platform.isWindows) {
-    // https://github.com/wyrindev/flutter-media-session/blob/main/doc/windows_setup.md#the-challenge
-    if (kDebugMode) {
-      await FlutterMediaSession().setWindowsAppUserModelId(
-        kAppId,
-        displayName: kAppName,
-      );
-    }
+    await FlutterMediaSession().setWindowsAppUserModelId('SmallZombie.BetterBilibili');
 
     await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
+    final windowOptions = WindowOptions(
       size: Size(1635, 920),
       minimumSize: Size(kMinWindowWidth, kMinWindowHeight),
       center: true,
       titleBarStyle: .hidden,
       windowButtonVisibility: false,
-      title: kAppName,
+      title: appConfig.appName,
     );
     await windowManager.waitUntilReadyToShow(windowOptions);
     await windowManager.show();
@@ -106,15 +107,19 @@ void main() async {
           create: (_) => eagleConfig,
           dispose: (_, value) => value.dispose(),
         ),
-        ...providersOnline,
+        ...onlineProviders,
+        ...mockProviders,
+        ...generalProviders,
       ],
-      child: const App(),
+      child: App(config: appConfig),
     ),
   );
 }
 
 class App extends StatefulWidget {
-  const App({super.key});
+  final AppConfig config;
+
+  const App({required this.config, super.key});
 
   @override
   State<App> createState() => _AppState();
@@ -157,7 +162,7 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     final appearanceManager = context.watch<AppearanceManager>();
     return MaterialApp.router(
-      title: kAppName,
+      title: widget.config.appName,
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: appearanceManager.lightTheme,
@@ -180,7 +185,7 @@ class _AppState extends State<App> {
 
         return Column(
           children: [
-            if (showTitleBar) const AppTitleBar(),
+            if (showTitleBar) AppTitleBar(config: widget.config),
             Expanded(child: child ?? const SizedBox.shrink()),
           ],
         );

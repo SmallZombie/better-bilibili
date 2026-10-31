@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:better_bilibili/data/repositories/bilibili/auth_repository/auth_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/chat_repository/chat_repository.dart';
 import 'package:better_bilibili/data/repositories/bilibili/user_repository/user_repository.dart';
@@ -11,24 +13,20 @@ import 'package:better_bilibili/utils/result.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ConversationDetailViewModel extends ChangeNotifier {
-  final AuthRepository _authRepository;
-  final ChatRepository _chatRepository;
-  final UserRepository _userRepository;
-  final VideoRepository _videoRepository;
+  final AuthRepository authRepository;
+  final ChatRepository chatRepository;
+  final UserRepository userRepository;
+  final VideoRepository videoRepository;
 
   final String conversationId;
 
   ConversationDetailViewModel({
-    required AuthRepository authRepository,
-    required ChatRepository chatRepository,
     required this.conversationId,
-    required UserRepository userRepository,
-    required VideoRepository videoRepository,
-  }) : _videoRepository = videoRepository,
-       _userRepository = userRepository,
-       _chatRepository = chatRepository,
-       _authRepository = authRepository,
-       _headerInfo = HeaderInfo(
+    required this.authRepository,
+    required this.chatRepository,
+    required this.userRepository,
+    required this.videoRepository,
+  }) : _headerInfo = HeaderInfo(
          userId: conversationId,
          nickname: '...',
          avatar: kDefaultUserAvatar,
@@ -47,14 +45,14 @@ class ConversationDetailViewModel extends ChangeNotifier {
   HeaderInfo get headerInfo => _headerInfo;
 
   Future<Result<void>> _init() async {
-    final account = await _authRepository.getAccount();
+    final account = await authRepository.getAccount();
     _currentUser = User(
       id: account.userId,
       nickname: '',
       avatar: '',
     );
 
-    final result = await _userRepository.getUserCard(conversationId);
+    final result = await userRepository.getUserCard(conversationId);
     switch (result) {
       case Ok(:final value):
         _headerInfo = HeaderInfo(
@@ -63,12 +61,13 @@ class ConversationDetailViewModel extends ChangeNotifier {
           avatar: value.avatar,
           description: value.description,
         );
-      case Error(:final error):
-        return Result.error(error);
+      case Err():
     }
 
     await loadMore.execute();
-    return Result.ok(null);
+
+    notifyListeners();
+    return result;
   }
 
   late final Command0 loadMore;
@@ -80,18 +79,21 @@ class ConversationDetailViewModel extends ChangeNotifier {
   bool get hasMore => _hasMore;
 
   Future<Result<void>> _loadMore() async {
-    final result = await _chatRepository.getMessages(conversationId: conversationId, messageId: _data.lastOrNull?.id);
+    final result = await chatRepository.getMessages(
+      conversationId: conversationId,
+      messageId: _data.lastOrNull?.id,
+    );
 
     switch (result) {
       case Ok(:final value):
         _hasMore = value.hasMore;
         _data.addAll(value.list);
-      case Error():
+      case Err():
     }
 
-    notifyListeners();
+    unawaited(getAllCardInfoIfNeeded());
 
-    getAllCardInfoIfNeeded();
+    notifyListeners();
     return result;
   }
 
@@ -138,14 +140,14 @@ class ConversationDetailViewModel extends ChangeNotifier {
       _getVideoInfoStateMap[i] = .pending;
     }
 
-    final result = await _videoRepository.getVideoCards(videoIds);
+    final result = await videoRepository.getVideoCards(videoIds);
     switch (result) {
       case Ok(:final value):
         for (final i in value.entries) {
           _getVideoInfoStateMap.remove(i.key);
           _videoInfoMap[i.key] = i.value;
         }
-      case Error():
+      case Err():
         for (final i in videoIds) {
           _getVideoInfoStateMap[i] = .failed;
         }

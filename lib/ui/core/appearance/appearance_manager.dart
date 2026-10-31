@@ -62,11 +62,16 @@ class AppearanceManager extends ChangeNotifier {
         side: .none,
         shadowColor: Colors.black.withAlpha(150),
       ),
-      appBarTheme: AppBarThemeData(actionsPadding: const .only(right: 16.0)),
+      appBarTheme: AppBarThemeData(
+        actionsPadding: const .only(right: 16.0),
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: .floating,
         shape: RoundedRectangleBorder(borderRadius: .circular(12)),
         width: 600,
+      ),
+      listTileTheme: ListTileThemeData(
+        selectedTileColor: lightColorScheme.primary.withAlpha(35),
       ),
     );
 
@@ -79,11 +84,16 @@ class AppearanceManager extends ChangeNotifier {
         side: .none,
         shadowColor: Colors.black.withAlpha(150),
       ),
-      appBarTheme: AppBarThemeData(actionsPadding: const .only(right: 16.0)),
+      appBarTheme: AppBarThemeData(
+        actionsPadding: const .only(right: 16.0),
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: .floating,
         shape: RoundedRectangleBorder(borderRadius: .circular(12)),
         width: 600,
+      ),
+      listTileTheme: ListTileThemeData(
+        selectedTileColor: lightColorScheme.primary.withAlpha(35),
       ),
     );
 

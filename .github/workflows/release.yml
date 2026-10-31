@@ -1,0 +1,251 @@
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve Version
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+
+          if ($tag -notmatch '^v(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$') {
+            throw "Invalid release tag: $tag. Expected v1.2.3"
+          }
+
+          $version = $Matches['version']
+          $buildNumber = [int]$env:GITHUB_RUN_NUMBER
+
+          # Windows 文件版本的每个数字部分最大为 65535
+          $components = @(
+            $version.Split('.') | ForEach-Object { [int]$_ }
+          ) + $buildNumber
+
+          foreach ($component in $components) {
+            if ($component -gt 65535) {
+              throw "Version component exceeds Windows version limit."
+            }
+          }
+
+          "APP_VERSION=$version" >> $env:GITHUB_ENV
+          "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_ENV
+
+          Write-Host "App Version: $version"
+          Write-Host "Build Number: $buildNumber"
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # - name: Run Tests
+      #   run: flutter test
+
+      - name: Build Windows
+        shell: pwsh
+        run: |
+          flutter build windows `
+            --release `
+            "--build-name=$env:APP_VERSION" `
+            "--build-number=$env:BUILD_NUMBER"
+
+      # 检查 exe 是否包含正确的版本信息
+      - name: Verify Application Metadata
+        shell: pwsh
+        run: |
+          $exe = "build/windows/x64/runner/Release/BetterBilibili.exe"
+
+          if (-not (Test-Path $exe)) {
+            throw "Flutter executable not found: $exe"
+          }
+
+          $info = (Get-Item $exe).VersionInfo
+          $expected = "$env:APP_VERSION+$env:BUILD_NUMBER"
+
+          Write-Host "Product Name: $($info.ProductName)"
+          Write-Host "Product Version: $($info.ProductVersion)"
+
+          if ($info.ProductVersion -ne $expected) {
+            throw "Unexpected product version: $($info.ProductVersion)"
+          }
+
+      - name: Setup Inno
+        shell: pwsh
+        run: |
+          winget install `
+            --id JRSoftware.InnoSetup.7 `
+            --exact `
+            --version 7.1.1 `
+            --silent `
+            --accept-package-agreements `
+            --accept-source-agreements
+
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          $roots = @(
+            "$env:ProgramFiles\Inno Setup 7",
+            "${env:ProgramFiles(x86)}\Inno Setup 7"
+          )
+
+          $iscc = $null
+
+          foreach ($root in $roots) {
+            $candidate = Join-Path $root "ISCC.exe"
+
+            if (Test-Path $candidate) {
+              $iscc = $candidate
+              break
+            }
+          }
+
+          if (-not $iscc) {
+            throw "Inno Setup Compiler not found."
+          }
+
+          & $iscc "windows\installer\inno_setup.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed."
+          }
+
+      - name: Generate SHA256
+        shell: pwsh
+        run: |
+          $installer = "build/installer/BetterBilibiliSetup.exe"
+
+          if (-not (Test-Path $installer)) {
+            throw "Installer not found: $installer"
+          }
+
+          $hash = (
+            Get-FileHash $installer -Algorithm SHA256
+          ).Hash.ToLowerInvariant()
+
+          "$hash  BetterBilibiliSetup.exe" |
+            Set-Content "build/installer/SHA256SUMS.txt" -Encoding ascii
+
+          Write-Host "SHA256: $hash"
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer
+          path: |
+            build/installer/BetterBilibiliSetup.exe
+            build/installer/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  prepare-release:
+    name: Prepare Release
+    needs: build-windows
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-installer
+          path: release-assets/windows
+
+      - name: Create or Update Draft Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          assets=(release-assets/windows/*)
+
+          if (( ${#assets[@]} == 0 )); then
+            echo "::error::No release assets found."
+            exit 1
+          fi
+
+          if is_draft=$(gh release view "$TAG" \
+            --json isDraft \
+            --jq '.isDraft' 2>/dev/null); then
+
+            if [[ "$is_draft" != "true" ]]; then
+              echo "::error::Release $TAG is already published."
+              exit 1
+            fi
+
+            echo "Updating existing draft release..."
+            gh release upload "$TAG" "${assets[@]}" --clobber
+
+          else
+
+            echo "Creating draft release..."
+            gh release create "$TAG" "${assets[@]}" \
+              --draft \
+              --verify-tag \
+              --generate-notes \
+              --title "Better Bilibili $TAG"
+
+          fi
+
+  publish-release:
+    name: Publish Immutable Release
+    needs: prepare-release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    environment:
+      name: release
+
+    steps:
+      - name: Publish Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          gh release edit "$TAG" \
+            --draft=false \
+            --verify-tag
+
+      - name: Verify Immutable Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release verify "$TAG"

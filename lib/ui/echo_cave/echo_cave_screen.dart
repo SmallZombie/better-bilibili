@@ -5,14 +5,14 @@ import 'package:better_bilibili/utils/base_util.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
-class Echo {
+class _Echo {
   final String? prefix;
   final List<String> validValues;
   final String? suffix;
   final ValueChanged<BuildContext> onSubmit;
   final Color? color;
 
-  const Echo({
+  const _Echo({
     this.prefix,
     required this.validValues,
     this.suffix,
@@ -22,7 +22,7 @@ class Echo {
 }
 
 final _data = [
-  Echo(
+  _Echo(
     prefix: '谎言的谎言，',
     validValues: [
       '这便可瞬间颠倒正反',
@@ -32,7 +32,7 @@ final _data = [
     ],
     onSubmit: (context) => context.replace(Routes.buildVideoDetail(videoId: '114324815220956')),
   ),
-  Echo(
+  _Echo(
     prefix: '在日渐沉没的世界里，',
     validValues: [
       '我找到了你',
@@ -40,14 +40,14 @@ final _data = [
     ],
     onSubmit: (context) => context.replace(Routes.buildVideoDetail(videoId: '1955707906')),
   ),
-  Echo(
+  _Echo(
     prefix: '天若无能制裁邪恶，',
     validValues: [
       '吾等将于黑暗之中给予消逝',
     ],
     onSubmit: (context) => context.replace(Routes.buildVideoDetail(videoId: '14522631')),
   ),
-  Echo(
+  _Echo(
     prefix: '我们之中混入了一位魔女',
     validValues: [
       '月代雪',
@@ -57,7 +57,7 @@ final _data = [
     onSubmit: (context) => context.replace(Routes.buildVideoDetail(videoId: '114116593259152')),
     color: Colors.red,
   ),
-  Echo(
+  _Echo(
     prefix: '一个对所有人',
     suffix: '的地方，依然是遥远的理想',
     validValues: [
@@ -76,7 +76,7 @@ class EchoCaveScreen extends StatefulWidget {
 }
 
 class _EchoCaveScreenState extends State<EchoCaveScreen> {
-  late final Echo _echo;
+  late final _Echo _echo;
   final TextEditingController _controller = TextEditingController();
 
   @override

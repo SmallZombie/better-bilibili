@@ -160,7 +160,7 @@ class Chapter {
       name: obj['content'],
       cover: obj['imgUrl'],
       start: Duration(seconds: obj['from']),
-      end: Duration(seconds: obj['to']) - Duration(milliseconds: 1),
+      end: Duration(seconds: obj['to']) - const Duration(milliseconds: 1),
     );
   }
 }
