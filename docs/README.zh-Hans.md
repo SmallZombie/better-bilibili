@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="../assets/icons/icon.png" alt="Better Bilibili" width="180">
+  <img src="../assets/icons/icon_256x256.png" alt="Better Bilibili" width="180">
 
   <h1>Better Bilibili</h1>
   <p align="center">采用 Material Design 重新设计的哔哩哔哩客户端 🥰</p>

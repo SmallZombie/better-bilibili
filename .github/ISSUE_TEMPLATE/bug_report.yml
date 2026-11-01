@@ -1,0 +1,108 @@
+name: "🐛 Bug 反馈"
+description: "报告 Better Bilibili 中的问题或异常行为。"
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你帮助改进 Better Bilibili。
+
+        提交前请先搜索现有 Issues，确认没有相同的问题。请尽可能提供清晰的复现步骤和必要信息。
+
+  - type: checkboxes
+    id: existing-issues
+    attributes:
+      label: 检查现有问题
+      options:
+        - label: 我已搜索现有 Issues，确认没有相同的问题。
+          required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Better Bilibili 版本
+      description: "请填写应用版本；如果使用自行构建的版本，请填写对应的版本号或 Commit。"
+      placeholder: "例如：1.2.0 或 commit hash"
+    validations:
+      required: true
+
+  # - type: input
+  #   id: operating-system
+  #   attributes:
+  #     label: 操作系统
+  #     description: "请填写系统名称及版本。"
+  #     placeholder: "例如：Windows 11 24H2"
+  #   validations:
+  #     required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: 问题描述
+      description: "发生了什么？请描述实际看到的现象，以及触发问题的大致场景。"
+      placeholder: "清晰、具体地描述问题……"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 复现步骤
+      description: "请按顺序列出触发问题的操作步骤；如果暂时无法稳定复现，也请说明。"
+      placeholder: |
+        1. 打开……
+        2. 进入……
+        3. 点击 / 执行……
+        4. 出现问题……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 预期行为
+      description: "你原本期望发生什么？"
+      placeholder: "描述正常情况下应该出现的结果……"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 问题出现频率
+      options:
+        - 每次都能复现
+        - 偶尔出现
+        - 只出现过一次
+        - 暂时无法确定
+    validations:
+      required: true
+
+  # - type: textarea
+  #   id: logs
+  #   attributes:
+  #     label: 日志
+  #     description: "请粘贴与问题相关的日志。提交前请移除 Cookie、Access Token、账号标识等个人或敏感信息。"
+  #     placeholder: "将相关日志粘贴到这里……"
+  #     render: shell
+  #   validations:
+  #     required: false
+
+  - type: upload
+    id: attachments
+    attributes:
+      label: 截图或其他附件
+      description: "可以上传截图、录屏或其他有助于定位问题的文件。请勿上传包含账号凭据或个人信息的内容。"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 补充信息
+      description: "其他可能有帮助的信息，例如相关链接、出现问题前后的操作或临时解决办法。"
+      placeholder: "可选"
+    validations:
+      required: false

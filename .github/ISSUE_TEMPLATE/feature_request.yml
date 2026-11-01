@@ -1,0 +1,73 @@
+name: "✨ 新功能提议"
+description: "提出 Better Bilibili 的新功能或现有功能改进建议。"
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你为 Better Bilibili 提出建议。
+
+        欢迎提出新功能，也欢迎针对现有功能提出改进方案。请尽量说明实际使用场景和希望解决的问题。
+
+  - type: checkboxes
+    id: existing-issues
+    attributes:
+      label: 检查现有提议
+      options:
+        - label: 我已搜索现有 Issues，确认没有相同或相近的提议。
+          required: true
+
+  - type: input
+    id: feature-summary
+    attributes:
+      label: 功能概述
+      description: "用一句话概括你希望增加或改进的功能。"
+      placeholder: "例如：支持记忆播放器的窗口大小"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 需求背景与使用场景
+      description: "目前遇到了什么问题？在什么场景下会需要这个功能？"
+      placeholder: "描述当前不便之处，以及这个需求解决的问题……"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 期望的功能或解决方案
+      description: "你希望 Better Bilibili 如何实现或表现？可以描述交互流程、配置方式或预期结果。"
+      placeholder: "描述你期望的行为……"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 备选方案
+      description: "是否考虑过其他实现方式？如果有，请说明。"
+      placeholder: "可选"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 补充信息
+      description: "可以附上参考链接、示意图、其他软件中的类似实现等。"
+      placeholder: "可选"
+    validations:
+      required: false
+
+  - type: upload
+    id: attachments
+    attributes:
+      label: 图片或其他附件
+      description: "可以上传界面示意图、参考截图或其他辅助材料。"
+    validations:
+      required: false
