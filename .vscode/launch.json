@@ -6,6 +6,10 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
+            "toolArgs": [
+                "--dart-define",
+                "APP_PRERELEASE=alpha.2",
+            ]
         },
         {
             "name": "better_bilibili (profile mode)",
@@ -19,26 +23,5 @@
             "type": "dart",
             "flutterMode": "release"
         },
-        {
-            "name": "better_bilibili (dev debug mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "debug",
-            "program": "lib/main_development.dart"
-        },
-        {
-            "name": "better_bilibili (dev profile mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile",
-            "program": "lib/main_development.dart"
-        },
-        {
-            "name": "better_bilibili (dev release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release",
-            "program": "lib/main_development.dart"
-        }
     ]
 }

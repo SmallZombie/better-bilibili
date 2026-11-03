@@ -49,7 +49,7 @@ void main() async {
     appName: packageInfo.appName,
     appPackageName: packageInfo.packageName,
     appVersion: packageInfo.version,
-    appPrerelease: String.fromEnvironment('APP_PRERELEASE'),
+    appPrerelease: const String.fromEnvironment('APP_PRERELEASE'),
     appBuildNumber: packageInfo.buildNumber,
   );
   final accountConfig = AccountConfig();
