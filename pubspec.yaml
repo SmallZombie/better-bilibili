@@ -113,6 +113,8 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
   assets:
+    - assets/fonts/
+    - assets/icons/
     - assets/images/
     - assets/images/bsbsb/
     - assets/images/eagle/

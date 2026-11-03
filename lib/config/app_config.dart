@@ -32,6 +32,9 @@ class AppConfig {
   }
 
   late final viewOriginalImage = ConfigItem(box: box, key: 'view_original_image', defaultValue: ViewOriginalImageEnum.auto);
+
+  late final enableAutoUpdate = ConfigItem(box: box, key: 'enable_auto_update', defaultValue: true);
+  late final enablePreReleaseUpdate = ConfigItem(box: box, key: 'enable_pre_release_update', defaultValue: appPrerelease.isNotEmpty);
 }
 
 enum ViewOriginalImageEnum {

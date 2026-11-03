@@ -27,7 +27,7 @@ class SettingSwitchTile extends StatelessWidget {
       icon: icon,
       action: Switch(value: value, onChanged: onChanged),
       onTap: onTap ?? () => onChanged?.call(!value),
-      hideArrow: onTap == null,
+      arrow: onTap == null ? null : const Icon(Icons.keyboard_arrow_right_rounded),
     );
   }
 }

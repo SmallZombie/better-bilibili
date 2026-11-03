@@ -30,6 +30,7 @@ import 'package:better_bilibili/ui/home/widgets/post_view.dart';
 import 'package:better_bilibili/ui/home/widgets/video_home_view.dart';
 import 'package:better_bilibili/ui/post_detail/widgets/post_detail_screen.dart';
 import 'package:better_bilibili/ui/post_detail/view_models/post_detail_view_model.dart';
+import 'package:better_bilibili/ui/settings/about_screen.dart';
 import 'package:better_bilibili/ui/settings/developer/developer_setting_screen.dart';
 import 'package:better_bilibili/ui/settings/developer/test_app_title_bar_screen.dart';
 import 'package:better_bilibili/ui/settings/general_settings_screen.dart';
@@ -74,7 +75,11 @@ final GoRouter router = GoRouter(
   observers: [appRouteObserver],
   routes: [
     StatefulShellRoute.indexedStack(
-      builder: (context, state, rootNavShell) => RootShell(navigationShell: rootNavShell),
+      builder: (context, state, rootNavShell) => RootShell(
+        navigationShell: rootNavShell,
+        config: context.read(),
+        updateService: context.read(),
+      ),
       branches: [
         StatefulShellBranch(
           routes: [
@@ -493,6 +498,13 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: Routes.settingGeneral.name,
           builder: (context, state) => GeneralSettingsScreen(config: context.read()),
+        ),
+        GoRoute(
+          path: Routes.settingAbout.name,
+          builder: (context, state) => AboutScreen(
+            config: context.read(),
+            updateService: context.read(),
+          ),
         ),
 
         GoRoute(

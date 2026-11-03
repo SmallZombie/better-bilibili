@@ -769,7 +769,7 @@ class _BsbsbSettingsScreenState extends State<BsbsbSettingsScreen> {
                 SettingTile(
                   title: Text('源代码'),
                   subtitle: Text('前往此项目的源代码仓库'),
-                  icon: const Icon(Icons.info_outline),
+                  icon: const Icon(Icons.code_rounded),
                   onTap: () {
                     context.openUrl('https://github.com/hanydd/BilibiliSponsorBlock');
                   },

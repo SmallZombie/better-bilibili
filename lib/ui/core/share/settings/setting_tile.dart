@@ -6,8 +6,8 @@ class SettingTile extends StatelessWidget {
   final Widget? icon;
   final VoidCallback? onTap;
   final Widget? action;
-  final bool hideArrow;
   final Widget? trailing;
+  final Widget? arrow;
 
   const SettingTile({
     super.key,
@@ -16,8 +16,8 @@ class SettingTile extends StatelessWidget {
     this.icon,
     this.onTap,
     this.action,
-    this.hideArrow = false,
     this.trailing,
+    this.arrow = const Icon(Icons.keyboard_arrow_right_rounded),
   });
 
   @override
@@ -37,7 +37,7 @@ class SettingTile extends StatelessWidget {
               style: TextStyle(fontSize: 14.0),
               child: trailing!,
             ),
-          if (onTap != null && !hideArrow) const Icon(Icons.keyboard_arrow_right_rounded),
+          if (onTap != null && arrow != null) arrow!,
           if (action != null && trailing != null)
             Center(
               child: FractionallySizedBox(

@@ -1,4 +1,6 @@
+import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/routing/routes.dart';
+import 'package:better_bilibili/ui/core/share/open_url.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_group.dart';
 import 'package:better_bilibili/ui/core/share/settings/setting_tile.dart';
 import 'package:flutter/foundation.dart';
@@ -82,14 +84,15 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('反馈'),
                 icon: const Icon(Icons.feedback_outlined),
                 onTap: () {
-                  // context.push(Routes.settingFeedback);
+                  context.openUrl(kIssuesUrl);
                 },
+                arrow: Icon(Icons.open_in_new_outlined, size: 20),
               ),
               SettingTile(
                 title: const Text('关于'),
                 icon: const Icon(Icons.info_outline),
                 onTap: () {
-                  // context.push(Routes.settingAbout);
+                  context.push(Routes.settingAbout.path);
                 },
               ),
             ],

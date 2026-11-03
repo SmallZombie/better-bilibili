@@ -35,6 +35,7 @@ import 'package:better_bilibili/data/repositories/eagle/eagle_repository_remote.
 import 'package:better_bilibili/data/services/network_manager.dart';
 import 'package:better_bilibili/data/services/storage_service.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
+import 'package:better_bilibili/data/services/update_service.dart';
 import 'package:better_bilibili/ui/core/app/app_controller.dart';
 import 'package:better_bilibili/ui/core/app/media_session_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/comment/comment_report_sheet/comment_report_sheet_view_model.dart';
@@ -130,6 +131,7 @@ List<SingleChildWidget> get onlineProviders => [
   Provider(
     create: (context) => EagleRepositoryRemote(config: context.read()) as EagleRepository,
   ),
+  Provider(create: (context) => UpdateService(config: context.read())),
 ];
 
 List<SingleChildWidget> get mockProviders => [

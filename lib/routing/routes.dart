@@ -44,6 +44,8 @@ abstract final class Routes {
   static const settingGeneral = RoutePath(path: '/setting/general', name: 'general');
   static const settingAccountManager = RoutePath(path: '/setting/account_manager', name: 'account_manager');
   static const settingNotification = RoutePath(path: '/setting/notification', name: 'notification');
+  static const settingAbout = RoutePath(path: '/setting/about', name: 'about');
+
   static const settingDeveloper = RoutePath(path: '/setting/developer', name: 'developer');
   static const settingDevTestUsers = RoutePath(path: '/setting/developer/test_users', name: 'test_users');
   static const settingDevTestVideos = RoutePath(path: '/setting/developer/test_videos', name: 'test_videos');

@@ -1,5 +1,9 @@
+import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/data/services/bilibili/bili_background_service.dart';
+import 'package:better_bilibili/data/services/update_service.dart';
 import 'package:better_bilibili/l10n/l10n_util.dart';
+import 'package:better_bilibili/ui/core/share/simple_snackbar.dart';
+import 'package:better_bilibili/ui/core/share/update_dialog.dart';
 import 'package:better_bilibili/ui/home/widgets/home_shell.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
@@ -7,14 +11,48 @@ import 'package:provider/provider.dart';
 
 class RootShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
+  final AppConfig config;
+  final UpdateService updateService;
 
-  const RootShell({super.key, required this.navigationShell});
+  const RootShell({
+    super.key,
+    required this.navigationShell,
+    required this.config,
+    required this.updateService,
+  });
 
   @override
   State<RootShell> createState() => _RootShellState();
 }
 
 class _RootShellState extends State<RootShell> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.config.enableAutoUpdate.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdates());
+    }
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final updateInfo = await widget.updateService.checkForUpdates();
+      if (!mounted || updateInfo == null) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => UpdateDialog(
+          updateInfo: updateInfo,
+          updateService: widget.updateService,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      context.showError('检查更新失败: $e');
+    }
+  }
+
   void _onNavDestinationSelected(int index) {
     widget.navigationShell.goBranch(index);
   }
