@@ -14,4 +14,5 @@ const kPreReleaseUpdateUrl = 'https://api.github.com/repos/SmallZombie/better-bi
 
 const kGitHubUrl = 'https://github.com/SmallZombie/better-bilibili';
 const kIssuesUrl = 'https://github.com/SmallZombie/better-bilibili/issues';
+const kLicenseUrl = 'https://github.com/SmallZombie/better-bilibili/blob/main/LICENSE.md';
 const kPrivacyPolicyUrl = 'https://github.com/SmallZombie/better-bilibili/blob/main/PRIVACY.md';

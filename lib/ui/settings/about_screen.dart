@@ -138,14 +138,14 @@ class AboutScreen extends StatelessWidget {
                 title: Text('开源许可'),
                 subtitle: Text('查看项目使用的许可证'),
                 icon: const Icon(Icons.description_outlined),
-                onTap: () => context.openUrl(kGitHubUrl),
+                onTap: () => context.openUrl(kLicenseUrl),
                 arrow: const Icon(Icons.open_in_new_outlined, size: 20),
               ),
               SettingTile(
                 title: Text('隐私政策'),
                 subtitle: Text('了解应用如何处理数据'),
                 icon: const Icon(Icons.privacy_tip_outlined),
-                onTap: () => context.openUrl(kIssuesUrl),
+                onTap: () => context.openUrl(kPrivacyPolicyUrl),
                 arrow: const Icon(Icons.open_in_new_outlined, size: 20),
               ),
               SettingTile(
