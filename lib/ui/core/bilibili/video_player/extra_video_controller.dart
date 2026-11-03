@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 
 class ExtraVideoController extends VideoController {
   ExtraVideoController([String? title])
@@ -37,6 +38,7 @@ class ExtraVideoController extends VideoController {
   void play() => player.play();
   void pause() => player.pause();
   void setVolume(double volume) {
+    volume = volume.clamp(0, 100);
     player.setVolume(volume);
 
     if (state.muted) {
@@ -54,15 +56,17 @@ class ExtraVideoController extends VideoController {
       _pendingSeekSubscription = stream.duration.listen((_) {
         if (_disposed) return;
 
-        player.seek(newPosition);
-        stream._seekController.add(newPosition);
+        final position = newPosition.clamp(.zero, state.duration);
+        player.seek(position);
+        stream._seekController.add(position);
 
         _pendingSeekSubscription?.cancel();
         _pendingSeekSubscription = null;
       });
     } else {
-      player.seek(newPosition);
-      stream._seekController.add(newPosition);
+      final position = newPosition.clamp(.zero, state.duration);
+      player.seek(position);
+      stream._seekController.add(position);
     }
   }
 
@@ -82,21 +86,25 @@ class ExtraVideoController extends VideoController {
   }
 
   void enterFullscreen() {
+    if (state.fullscreen) return;
     state = state.copyWith(fullscreen: true);
     stream._fullscreenController.add(true);
   }
 
   void exitFullscreen() {
+    if (!state.fullscreen) return;
     state = state.copyWith(fullscreen: false);
     stream._fullscreenController.add(false);
   }
 
   void enterWindowFullscreen() {
+    if (state.windowFullscreen) return;
     state = state.copyWith(windowFullscreen: true);
     stream._windowFullscreenController.add(true);
   }
 
   void exitWindowFullscreen() {
+    if (!state.windowFullscreen) return;
     state = state.copyWith(windowFullscreen: false);
     stream._windowFullscreenController.add(false);
   }

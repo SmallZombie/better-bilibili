@@ -96,6 +96,15 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
 
   int _depth = 0;
 
+  /// 由于新增了使用鼠标或键盘快捷键来返回/前进，因此全屏/窗口全屏除了通过 ui 按钮退出，
+  /// 还可以通过直接 pop 路由退出，进入/退出全屏必须调用 controller 上的方法以修改和广播新状态，
+  /// 但如果是通过 pop 退出的全屏，则会像这样触发两次 pop：
+  ///
+  /// pop -> onRouteChanged -> controller.exitXXX -> update state and add stream -> onFullscreen -> pop
+  ///
+  /// 暂时没想到更好的解决方法，这里用一个标志位来表示是否要在 onFullscreen 时跳过一次 pop
+  bool _exitFullscreenFromPopFlag = false;
+
   void _onRouteChanged(AppRouteEvent event) {
     if (event is AppRoutePushEvent) {
       final name = event.route.settings.name;
@@ -109,12 +118,20 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
       }
     } else if (event is AppRoutePopEvent) {
       final name = event.route.settings.name;
-      if (name == null) return;
+      if (name == null) {
+        if (controller.state.fullscreen) {
+          _exitFullscreenFromPopFlag = true;
+          controller.exitFullscreen();
+        } else if (controller.state.windowFullscreen) {
+          _exitFullscreenFromPopFlag = true;
+          controller.exitWindowFullscreen();
+        }
+      } else {
+        _depth--;
 
-      _depth--;
-
-      if (_depth == 0) {
-        widget.onFrontend?.call();
+        if (_depth == 0) {
+          widget.onFrontend?.call();
+        }
       }
     }
 
@@ -155,7 +172,11 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
     if (event) {
       _pushToNewRoute(forWindowFullscreen: true);
     } else {
-      context.pop();
+      if (_exitFullscreenFromPopFlag) {
+        _exitFullscreenFromPopFlag = false;
+      } else {
+        context.pop();
+      }
     }
   }
 
@@ -163,7 +184,11 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
     if (event) {
       _pushToNewRoute();
     } else {
-      context.pop();
+      if (_exitFullscreenFromPopFlag) {
+        _exitFullscreenFromPopFlag = false;
+      } else {
+        context.pop();
+      }
     }
 
     windowManager.setFullScreen(event);
@@ -302,8 +327,8 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
   final Duration controlsTransitionDuration = const Duration(milliseconds: 200);
   final Duration controlsHoverDuration = const Duration(seconds: 5);
   final double buttonBarHeight = 42;
-  final EdgeInsets topBarMargin = EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
-  final EdgeInsets bottomBarMargin = EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0);
+  final EdgeInsets topBarMargin = .symmetric(horizontal: 16.0, vertical: 8.0);
+  final EdgeInsets bottomBarMargin = .symmetric(horizontal: 8.0, vertical: 4.0);
 
   bool visible = false;
   Timer? visibleTimer;
@@ -342,81 +367,141 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
     visibleTimer?.cancel();
   }
 
+  bool _isArrowRightPressed = false;
   Timer? _longPressSpeedUpTimer;
-
   double? _restoreRate;
-  LogicalKeyboardKey? _currentPressedKey;
 
-  void _onKeyDown(KeyDownEvent event) {
+  bool get _hasModifierPressed {
+    final keyboard = HardwareKeyboard.instance;
+    return keyboard.isControlPressed || keyboard.isShiftPressed || keyboard.isAltPressed || keyboard.isMetaPressed;
+  }
+
+  KeyEventResult _onKeyDown(KeyDownEvent event) {
     _log.i('onKeyEvent KeyDownEvent: $event');
 
-    _currentPressedKey = event.logicalKey;
+    if (_hasModifierPressed) return .ignored;
 
     switch (event.logicalKey) {
       case .escape:
         if (controller.state.fullscreen) {
           controller.exitFullscreen();
-          return;
+          return .handled;
         }
         if (controller.state.windowFullscreen) {
           controller.exitWindowFullscreen();
+          return .handled;
         }
+        return .ignored;
+
       case .keyF:
         if (controller.state.fullscreen) {
           controller.exitFullscreen();
         } else {
           controller.enterFullscreen();
         }
+        return .handled;
+
       case .keyW:
         if (controller.state.fullscreen) {
-          return;
+          return .ignored;
         }
+
         if (controller.state.windowFullscreen) {
           controller.exitWindowFullscreen();
         } else {
           controller.enterWindowFullscreen();
         }
+        return .handled;
+
       case .space:
         controller.playOrPause();
+        return .handled;
+
       case .arrowLeft:
-        final position = controller.state.position - const Duration(seconds: 5);
-        controller.seek(position.isNegative ? .zero : position);
+        controller.seek(controller.state.position - const Duration(seconds: 5));
+        return .handled;
+
       case .arrowRight:
-        if (controller.state.rate >= 3.0) {
-          return;
+        if (_isArrowRightPressed) {
+          return .handled;
         }
+
+        _isArrowRightPressed = true;
+
+        if (controller.state.rate >= 3.0) {
+          return .handled;
+        }
+
         _longPressSpeedUpTimer = Timer(const Duration(milliseconds: 300), () {
-          if (_currentPressedKey != .arrowRight) {
-            return;
-          }
+          if (!_isArrowRightPressed) return;
+
           _restoreRate = controller.state.rate;
           controller.setPlaybackRate(3.0);
         });
+
+        return .handled;
+
       case .arrowUp:
         controller.setVolume(controller.state.volume + 5);
+        return .handled;
+
       case .arrowDown:
         controller.setVolume(controller.state.volume - 5);
+        return .handled;
+
       case .keyM:
         controller.setMuted(!controller.muted);
+        return .handled;
+
+      case _:
+        return .ignored;
     }
   }
 
-  void _onKeyUp(KeyUpEvent event) {
-    _log.i('onKeyEvent KeyUpEvent: $event');
+  KeyEventResult _onKeyRepeat(KeyRepeatEvent event) {
+    _log.i('_onKeyRepeat KeyRepeatEvent=$event');
 
-    _currentPressedKey = null;
-    _longPressSpeedUpTimer?.cancel();
+    if (_hasModifierPressed) return .ignored;
 
     switch (event.logicalKey) {
       case .arrowRight:
-        if (_restoreRate != null) {
-          controller.setPlaybackRate(_restoreRate!);
-          _restoreRate = null;
-        } else {
-          final position = controller.state.position + const Duration(seconds: 5);
-          controller.seek(position > controller.state.duration ? controller.state.duration : position);
-        }
+        return .handled;
+
+      case .arrowLeft:
+        final position = controller.state.position - const Duration(seconds: 5);
+        controller.seek(position.isNegative ? .zero : position);
+        return .handled;
+
+      case .arrowUp:
+        controller.setVolume(controller.state.volume + 5);
+        return .handled;
+
+      case .arrowDown:
+        controller.setVolume(controller.state.volume - 5);
+        return .handled;
+
+      case _:
+        return .ignored;
     }
+  }
+
+  KeyEventResult _onKeyUp(KeyUpEvent event) {
+    if (event.logicalKey != .arrowRight || !_isArrowRightPressed) {
+      return .ignored;
+    }
+
+    _isArrowRightPressed = false;
+    _longPressSpeedUpTimer?.cancel();
+    _longPressSpeedUpTimer = null;
+
+    if (_restoreRate != null) {
+      controller.setPlaybackRate(_restoreRate!);
+      _restoreRate = null;
+    } else {
+      controller.seek(controller.state.position + const Duration(seconds: 5));
+    }
+
+    return .handled;
   }
 
   double _timelineHeight = 0;
@@ -449,13 +534,12 @@ class _PlayerOverlayState extends State<_PlayerOverlay> {
       // [: 上一章节 TODO
       // ]: 下一章节 TODO
       onKeyEvent: (_, event) {
-        if (event is KeyDownEvent) {
-          _onKeyDown(event);
-        } else if (event is KeyUpEvent) {
-          _onKeyUp(event);
-        }
-
-        return .handled;
+        return switch (event) {
+          KeyDownEvent() => _onKeyDown(event),
+          KeyRepeatEvent() => _onKeyRepeat(event),
+          KeyUpEvent() => _onKeyUp(event),
+          _ => .ignored,
+        };
       },
       child: Material(
         elevation: 0.0,
@@ -661,6 +745,7 @@ class ControlButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   const ControlButton({
+    super.key,
     required this.label,
     this.onPressed,
   });
@@ -684,6 +769,7 @@ class ControlIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   const ControlIconButton({
+    super.key,
     required this.tooltip,
     required this.icon,
     this.onPressed,
