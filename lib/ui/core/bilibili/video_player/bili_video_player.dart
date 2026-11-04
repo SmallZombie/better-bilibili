@@ -45,10 +45,11 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/windows_taskbar/wi
 import 'package:better_bilibili/ui/core/share/custom_icons.dart';
 import 'package:better_bilibili/ui/core/share/router_helper.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:better_bilibili/utils/platform_util.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 
 class BiliVideoPlayer extends StatefulWidget {
   final ExtraVideoController controller;
@@ -114,6 +115,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
   ExtraVideoPlayerMediaSessionAdapter? _mediaSessionAdapter;
   MediaSession? _mediaSession;
   BsbsbController? bsbsbController;
+  Window? _window;
 
   @override
   void initState() {
@@ -155,6 +157,10 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
       widget.bsbsbConfig.enable.stream.listen(_onBsbsbEnable),
     ]);
+
+    if (isDesktop) {
+      _window = WindowManager.instance.getCurrent();
+    }
   }
 
   @override
@@ -430,7 +436,7 @@ class _BiliVideoPlayerState extends State<BiliVideoPlayer> {
 
                   return GestureDetector(
                     behavior: .translucent,
-                    onPanStart: (_) => windowManager.startDragging(),
+                    onPanStart: (_) => _window?.startDragging(),
                   );
                 },
               ),

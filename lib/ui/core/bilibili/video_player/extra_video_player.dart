@@ -12,13 +12,14 @@ import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/timeline.
 import 'package:better_bilibili/ui/core/bilibili/video_player/extra_video_controller.dart';
 import 'package:better_bilibili/ui/core/bilibili/video_player/timeline/waveform/timeline_waveform_controller.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:better_bilibili/utils/platform_util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 
 class ExtraVideoPlayer extends StatefulWidget {
   final ExtraVideoController controller;
@@ -71,6 +72,8 @@ class ExtraVideoPlayer extends StatefulWidget {
 class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
   ExtraVideoController get controller => widget.controller;
 
+  Window? _window;
+
   final List<StreamSubscription> _subscriptions = [];
 
   @override
@@ -82,6 +85,10 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
       controller.stream.fullscreen.listen(_onFullscreen),
       controller.stream.windowFullscreen.listen(_onWindowFullscreen),
     ]);
+
+    if (isDesktop) {
+      _window = WindowManager.instance.getCurrent();
+    }
   }
 
   @override
@@ -191,7 +198,7 @@ class _ExtraVideoPlayerState extends State<ExtraVideoPlayer> {
       }
     }
 
-    windowManager.setFullScreen(event);
+    _window?.isFullScreen = event;
   }
 
   @override

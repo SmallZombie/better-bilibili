@@ -34,43 +34,45 @@ class _UpdateDialogState extends State<UpdateDialog> {
         padding: const .fromLTRB(24, 24, 24, 16),
         child: Column(
           mainAxisSize: .min,
+          crossAxisAlignment: .start,
           spacing: 16.0,
           children: [
-            ListView(
-              shrinkWrap: true,
+            Row(
+              spacing: 8.0,
               children: [
-                Row(
-                  spacing: 8.0,
-                  children: [
-                    const Icon(Icons.update, size: 30.0),
-                    Text('发现新版本', style: textTheme.headlineSmall),
-                  ],
-                ),
-                SizedBox(height: 16.0),
-                Text('v${widget.updateInfo.version}', style: textTheme.titleMedium),
-                SizedBox(height: 6.0),
-                SelectableText(widget.updateInfo.releaseNotes),
-                SizedBox(height: 16.0),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(text: '您可以在 '),
-                      TextSpan(
-                        text: '设置-关于',
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            context.pop();
-                            context.push(Routes.settingAbout.path);
-                          },
-                      ),
-                      const TextSpan(text: ' 中关闭自动更新'),
-                    ],
-                  ),
-                ),
+                const Icon(Icons.update, size: 30.0),
+                Text('发现新版本', style: textTheme.headlineSmall),
               ],
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: 300),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Text('v${widget.updateInfo.version}', style: textTheme.titleMedium),
+                  SizedBox(height: 6.0),
+                  SelectableText(widget.updateInfo.releaseNotes),
+                ],
+              ),
+            ),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: '您可以在 '),
+                  TextSpan(
+                    text: '设置-关于',
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        context.pop();
+                        context.push(Routes.settingAbout.path);
+                      },
+                  ),
+                  const TextSpan(text: ' 中关闭自动更新'),
+                ],
+              ),
             ),
             if (_errorMessage != null) Text('$_errorMessage', style: TextStyle(color: colorScheme.error)),
             Row(

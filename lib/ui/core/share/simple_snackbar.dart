@@ -3,10 +3,15 @@ import 'package:material_ui/material_ui.dart';
 extension SimpleSnackBar on BuildContext {
   void showError(String message) {
     if (!mounted) return;
+
+    final colorScheme = Theme.of(this).colorScheme;
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Text(
+          message,
+          style: TextStyle(color: colorScheme.onError),
+        ),
+        backgroundColor: colorScheme.error,
       ),
     );
   }

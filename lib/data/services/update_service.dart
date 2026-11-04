@@ -1,19 +1,25 @@
 import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/config/constants.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:better_bilibili/utils/platform_util.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:window_manager/window_manager.dart';
 
 class UpdateService {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'UpdateService'));
 
   final AppConfig config;
+  Window? _window;
 
-  UpdateService({required this.config});
+  UpdateService({required this.config}) {
+    if (isDesktop) {
+      _window = WindowManager.instance.getCurrent();
+    }
+  }
 
   late final Dio _client = Dio();
 
@@ -78,7 +84,7 @@ class UpdateService {
       rethrow;
     }
 
-    await windowManager.close();
+    _window?.close();
   }
 }
 

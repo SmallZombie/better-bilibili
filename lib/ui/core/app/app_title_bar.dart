@@ -1,7 +1,7 @@
 import 'package:better_bilibili/config/app_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 
 class AppTitleBar extends StatefulWidget {
   final AppConfig config;
@@ -14,42 +14,46 @@ class AppTitleBar extends StatefulWidget {
   State<AppTitleBar> createState() => _AppTitleBarState();
 }
 
-class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
+class _AppTitleBarState extends State<AppTitleBar> {
+  Window? _window;
+  int? _windowListenerId;
+
   var _isMaximized = false;
 
   @override
   void initState() {
     super.initState();
 
-    windowManager.addListener(this);
+    _window = WindowManager.instance.getCurrent();
+
+    final window = _window;
+    if (window == null) return;
+
+    _windowListenerId = window.addListener(_onWindowEvent);
     _syncMaximized();
   }
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
+    if (_windowListenerId != null) {
+      _window?.removeListener(_windowListenerId!);
+    }
 
     super.dispose();
   }
 
-  @override
-  void onWindowMaximize() {
-    _setMaximized(true);
-  }
-
-  @override
-  void onWindowUnmaximize() {
-    _setMaximized(false);
-  }
-
-  @override
-  void onWindowRestore() {
-    _syncMaximized();
+  void _onWindowEvent(WindowEvent event) {
+    if (event is WindowMaximizedEvent) {
+      _setMaximized(true);
+    } else if (event is WindowRestoredEvent) {
+      _syncMaximized();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final backgroundColor = colorScheme.surfaceContainerHighest;
 
     return Container(
@@ -59,21 +63,18 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
         crossAxisAlignment: .stretch,
         children: [
           Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onPanStart: (_) => windowManager.startDragging(),
-              onDoubleTap: _toggleMaximize,
-              onSecondaryTap: () => windowManager.popUpWindowMenu(),
+            child: DragToMoveArea(
+              window: _window,
               child: Padding(
-                padding: const EdgeInsets.only(left: 16),
+                padding: const .only(left: 16),
                 child: Row(
                   spacing: 6.0,
                   children: [
                     Text(
                       widget.config.appName,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      overflow: .ellipsis,
+                      style: textTheme.titleSmall?.copyWith(
                         color: colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
                       ),
@@ -81,7 +82,7 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
                     if (kDebugMode)
                       Text(
                         '(Debug mode)',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        style: textTheme.titleSmall?.copyWith(
                           color: colorScheme.outline,
                         ),
                       ),
@@ -93,7 +94,7 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
           _WindowButton(
             tooltip: '最小化',
             icon: Icons.remove_rounded,
-            onPressed: () => windowManager.minimize(),
+            onPressed: () => _window?.minimize(),
           ),
           _WindowButton(
             tooltip: _isMaximized ? '还原' : '最大化',
@@ -104,24 +105,28 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
             tooltip: '关闭',
             icon: Icons.close_rounded,
             isClose: true,
-            onPressed: () => windowManager.close(),
+            onPressed: () => _window?.close(),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _toggleMaximize() async {
-    if (await windowManager.isMaximized()) {
-      await windowManager.unmaximize();
+  void _toggleMaximize() {
+    final window = _window;
+    if (window == null) return;
+
+    if (window.isMaximized) {
+      window.unmaximize();
     } else {
-      await windowManager.maximize();
+      window.maximize();
     }
-    await _syncMaximized();
+
+    _syncMaximized();
   }
 
-  Future<void> _syncMaximized() async {
-    final isMaximized = await windowManager.isMaximized();
+  void _syncMaximized() {
+    final isMaximized = _window?.isMaximized ?? false;
     _setMaximized(isMaximized);
   }
 
@@ -129,22 +134,23 @@ class _AppTitleBarState extends State<AppTitleBar> with WindowListener {
     if (!mounted || _isMaximized == value) {
       return;
     }
+
     setState(() => _isMaximized = value);
   }
 }
 
 class _WindowButton extends StatefulWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool isClose;
+
   const _WindowButton({
     required this.tooltip,
     required this.icon,
     required this.onPressed,
     this.isClose = false,
   });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onPressed;
-  final bool isClose;
 
   @override
   State<_WindowButton> createState() => _WindowButtonState();

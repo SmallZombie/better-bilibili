@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:app_links/app_links.dart';
 import 'package:better_bilibili/config/account_config.dart';
@@ -26,16 +27,13 @@ import 'package:flutter_media_session/flutter_media_session.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:logger/logger.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
-
   Logger.level = .all;
 
   // debugRepaintRainbowEnabled = true;
@@ -69,19 +67,37 @@ void main() async {
   if (Platform.isWindows) {
     await FlutterMediaSession().setWindowsAppUserModelId('SmallZombie.BetterBilibili');
 
-    await windowManager.ensureInitialized();
-    final windowOptions = WindowOptions(
-      size: Size(1635, 920),
-      minimumSize: Size(kMinWindowWidth, kMinWindowHeight),
-      center: true,
-      titleBarStyle: .hidden,
-      windowButtonVisibility: false,
-      title: appConfig.appName,
+    final preferredSize = const Size(1635, 920);
+    final display = DisplayManager.instance.getPrimary();
+    final availableSize = display?.workArea.toRect().size ?? preferredSize;
+
+    final maxWidth = availableSize.width * 0.7;
+    final maxHeight = availableSize.height * 0.7;
+
+    final scale = min(
+      1.0,
+      min(
+        maxWidth / preferredSize.width,
+        maxHeight / preferredSize.height,
+      ),
     );
-    await windowManager.waitUntilReadyToShow(windowOptions);
-    await windowManager.show();
-    await windowManager.focus();
+
+    final windowSize = Size(preferredSize.width * scale, preferredSize.height * scale);
+    final window = WindowManager.instance.getCurrent();
+
+    window!
+      ..title = appConfig.appName
+      ..minimumSize = Size(kMinWindowWidth, kMinWindowHeight).toNative()
+      ..setSize(windowSize.toNative(), false)
+      ..titleBarStyle = .hidden
+      ..isWindowControlButtonsVisible = false
+      ..center();
   }
+
+  // `WidgetsFlutterBinding.ensureInitialized()` 必须在 WindowManager 之后调用，
+  // 否则会导致获取不到 window
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
 
   final appearanceManager = AppearanceManager();
   await appearanceManager.tryUpdateThemeWithDynamicColor();

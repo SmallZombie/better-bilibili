@@ -1,15 +1,21 @@
 import 'package:better_bilibili/config/app_config.dart';
 import 'package:better_bilibili/utils/composable_prefix_printer.dart';
+import 'package:better_bilibili/utils/platform_util.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:nativeapi_flutter/nativeapi_flutter.dart';
 
 class AppController extends ChangeNotifier {
   final Logger _log = Logger(printer: ComposablePrefixPrinter(prefix: 'AppController'));
 
   final AppConfig config;
+  Window? _window;
 
-  AppController({required this.config});
+  AppController({required this.config}) {
+    if (isDesktop) {
+      _window = WindowManager.instance.getCurrent();
+    }
+  }
 
   bool _showTitleBar = true;
   bool get showTitleBar => _showTitleBar;
@@ -50,7 +56,7 @@ class AppController extends ChangeNotifier {
     }
 
     _log.i('Update title to "$title"');
-    windowManager.setTitle(title);
+    _window?.title = title;
   }
 }
 
